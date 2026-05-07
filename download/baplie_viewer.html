@@ -809,12 +809,10 @@ function passF_noTrt(c){
   if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
   // 2. POL
   if(GF.polEsvlc&&c.pol!=='ESVLC')return false;
-  // 2. F/E (Full/Empty): mutuamente exclusivos
+  // 3. F/E (Full/Empty): mutuamente exclusivos
   if(GF.feMode==='full'&&c.isEmpty)return false;
   if(GF.feMode==='empty'&&!c.isEmpty)return false;
-  // 3. Tipo de carga: GF.hidden = blacklist de tipos a ocultar
-  //    Cada tipo apagado oculta contenedores de ESE tipo.
-  //    GEN oculta los que no son RF/DG/OOG/RS (carga general).
+  // 4. Tipo de carga: GF.hidden = blacklist de tipos a ocultar
   if(GF.hidden.size>0){
     var isSpec=c.isReefer||c.isDangerous||isOog(c)||c.isRemocion;
     if(GF.hidden.has('rf')&&c.isReefer)return false;
@@ -823,19 +821,21 @@ function passF_noTrt(c){
     if(GF.hidden.has('rs')&&c.isRemocion)return false;
     if(GF.hidden.has('gen')&&!isSpec)return false;
   }
-  // 4. POD
+  // 5. POD
   if(c.pod&&Object.keys(GF.pods).length>0&&!GF.pods[c.pod])return false;
-  // 5. Diff only
+  // 6. Diff only
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
-  // 6. Rango de peso (MT excluido si hay filtro de peso)
+  // 7. Rango de peso (MT excluido si hay filtro de peso)
   if(GF.wtMin!==null||GF.wtMax!==null){
     if(c.isEmpty)return false;
     var wt=(c.weight||0)/1000;
     if(GF.wtMin!==null&&wt<GF.wtMin)return false;
     if(GF.wtMax!==null&&wt>GF.wtMax)return false;
   }
-  // 7. Búsqueda como filtro
+  // 8. Búsqueda como filtro
   if(GF.srchFilter&&S.sel&&S.sel.has&&!S.sel.has(c.id))return false;
+  // 9. Bay filter
+  if(GF.bays){var cBayOk=false;for(var pi=0;pi<c.positions.length;pi++){if(bayPassF(c.positions[pi].bay)){cBayOk=true;break;}}if(!cBayOk)return false;}
   return true;
 }
 // passF: con TRT dim-pass
@@ -1629,15 +1629,16 @@ function updateTB(pn){
   var tb=document.getElementById('tb'+pn);var v=F[pn].view;
   tb.innerHTML=
     '<button class="tbtn" onclick="openListado('+pn+')" title="Listado de contenedores editable"><i class="fa-solid fa-table-list" style="font-size:9px;margin-right:3px"></i>Listado</button>'+
-    '<button class="tbtn'+(v==='3b'?' on':'')+'" onclick="swV('+pn+',\'3b\')">Vista 2</button>'+
+    '<button class="tbtn'+(v==='3b'?' on':'')+'" onclick="swV('+pn+',\'3b\')">Vista 1</button>'+
+    '<button class="tbtn'+(v==='5b'?' on':'')+'" onclick="swV('+pn+',\'5b\')">Vista 2</button>'+
     '<button class="tbtn'+(v==='2b'?' on':'')+'" onclick="swV('+pn+',\'2b\')">Vista 3</button>'+
     '<button class="tbtn'+(v==='1b'?' on':'')+'" onclick="swV('+pn+',\'1b\')">Vista 4</button>'+
-    '<button class="tbtn'+(v==='5b'?' on':'')+'" onclick="swV('+pn+',\'5b\')">Vista 5</button>'+
     '<button class="tbtn" onclick="zB('+pn+',-1)"><i class="fa-solid fa-minus" style="font-size:10px"></i></button>'+
     '<button class="tbtn" onclick="zB('+pn+',1)"><i class="fa-solid fa-plus" style="font-size:10px"></i></button>'+
     '<button class="tbtn" onclick="togFS('+pn+')" title="Pantalla completa"><i class="fa-solid fa-expand" style="font-size:10px"></i></button>';
 }
-function swV(pn,m){F[pn].view=m;Z[pn]=1;updateTB(pn);render(pn);}
+function swV(pn,m){F[pn].view=m;Z[pn]=1;updateTB(pn);if(m==='1b'&&S.fs!==pn){closeSidePanels();togFS(pn);}else if(m!=='1b'&&S.fs===pn){togFS(pn);}render(pn);}
+function closeSidePanels(){document.getElementById('lstPanel').classList.remove('open');document.getElementById('diffPanel').classList.remove('open');document.getElementById('sumPanel').classList.remove('open');document.getElementById('movePanel').classList.remove('open');}
 function zB(pn,d){Z[pn]=Math.max(0.3,Math.min(5,Z[pn]+d*0.3));render(pn);}
 function togFS(pn){var col1=document.getElementById('col1'),col2=document.getElementById('col2');if(S.fs===null){S.fs=pn;if(pn===1){col1.style.width='100%';col1.style.borderRight='none';col2.style.display='none';}else{col2.style.width='100%';col2.style.borderRight='none';col1.style.display='none';}}else{S.fs=null;col1.style.width='';col1.style.borderRight='1px solid var(--border)';col1.style.display='';col2.style.width='';col2.style.borderRight='';col2.style.display='';}setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);}
 
@@ -1706,7 +1707,11 @@ function showToast(msg){var t=document.getElementById('copyToast');t.textContent
 /* ── MOUSE EVENTS + CTRL+CLIC MULTI + CTRL+C COPIAR ── */
 function onMM(e,pn){
   var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  var L=pn===1?S._L1:S._L2;if(!L)return;var c=hitTest(mx,my,L);
+  var L=pn===1?S._L1:S._L2;if(!L)return;
+  // Change cursor on bay name header
+  var bayHov=hitTestBayName(mx,my,L);
+  cvEl.style.cursor=bayHov!==null?'pointer':'';
+  var c=hitTest(mx,my,L);
   // El hover también busca en el otro plan para mostrar tooltip completo
   var tc=c;
   if(c){var oC=pn===1?S.c2:S.c1;if(oC)for(var i=0;i<oC.length;i++){if(oC[i].id===c.id){tc=oC[i];break;}}}
@@ -1715,7 +1720,19 @@ function onMM(e,pn){
 }
 function onCl(e,pn){
   var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  var L=pn===1?S._L1:S._L2;if(!L)return;var c=hitTest(mx,my,L);
+  var L=pn===1?S._L1:S._L2;if(!L)return;
+  // Check if click is on a bay name header
+  var bayClicked=hitTestBayName(mx,my,L);
+  if(bayClicked!==null&&bayClicked!==undefined){
+    // Navigate to Vista 4 centered on this bay
+    F[pn].view='1b';Z[pn]=1;
+    if(S.fs!==pn)closeSidePanels();
+    if(S.fs!==pn)togFS(pn);
+    updateTB(pn);render(pn);
+    setTimeout(function(){scrollToBay(pn,bayClicked);},80);
+    return;
+  }
+  var c=hitTest(mx,my,L);
   var clickedPos=hitTestPos(mx,my,L);
   // Intercept for move wizard
   if(MW.active&&mwInterceptClick(c,clickedPos,pn))return;
@@ -1735,6 +1752,26 @@ function onCl(e,pn){
     var firstId=S.sel.size===1?Array.from(S.sel)[0]:Array.from(S.sel)[0];
     scrollToContainer(firstId);
   }
+}
+
+function hitTestBayName(mx,my,L){
+  if(!L)return null;
+  var ev=L.effectiveView||L.view;
+  // Bay name zone: top area of each group (y from 0 to MT_OFF)
+  if(ev==='3b'){
+    for(var i=0;i<L.gP.length;i++){
+      var p=L.gP[i];if(!p)continue;
+      var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;
+      if(lx>=0&&lx<=L.gw&&ly>=0&&ly<=MT_OFF) return p.bay;
+    }
+  }else{
+    for(var i=0;i<L.grps.length;i++){
+      var p=L.gP[i];if(!p)continue;
+      var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;
+      if(lx>=0&&lx<=L.gw&&ly>=0&&ly<=MT_OFF) return L.grps[i][0];
+    }
+  }
+  return null;
 }
 function onML(){if(S.hl){S.hl=null;render(1);render(2);}ttE.classList.add('hidden');}
 
@@ -2775,9 +2812,10 @@ var SUM_DIMS_AVAILABLE=[
   {key:'pol', label:'POL'},
   {key:'sztp',label:'SZTP'},
   {key:'size',label:'Tamaño'},
+  {key:'bay', label:'Bay'},
   {key:'cargo',label:'Carga'},
   {key:'fe',  label:'F/E'},
-  {key:'hd',  label:'Zona'}
+  {key:'hd',  label:'D/H'}
 ];
 var SUM_CFG={dims:['pod','sztp'],sortCol:null,sortDir:1};
 var SUM_DATA=[];
@@ -2788,6 +2826,7 @@ function sumGetVal(c,key){
     case 'pol':return c.pol||'-';
     case 'sztp':return c.type||'-';
     case 'size':return parseSz(c.type)+"'";
+    case 'bay':var b=c.positions[0].bay;return String(b).padStart(3,'0');
     case 'cargo':
       if(c.isDangerous)return'DG';
       if(c.isReefer)return'RF';
@@ -2795,7 +2834,7 @@ function sumGetVal(c,key){
       if(c.isRemocion)return'RS';
       return'GEN';
     case 'fe':return c.isEmpty?'MT':'Full';
-    case 'hd':return c.positions[0].tier>=50?'Deck':'Hold';
+    case 'hd':return c.positions[0].tier>=50?'D':'H';
     default:return'-';
   }
 }
