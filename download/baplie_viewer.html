@@ -224,6 +224,52 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 .mw-btn.primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
 .mw-btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--fg)}.mw-btn.ghost:hover{border-color:var(--accent)}
 
+/* ── SUMMARY PANEL (resumen interactivo) ── */
+#sumPanel{display:none;width:440px;min-width:320px;max-width:560px;flex-shrink:0;flex-direction:column;background:var(--panel);border-left:1px solid var(--border);overflow:hidden}
+#sumPanel.open{display:flex}
+#sumHeader{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--card)}
+#sumTitle{font-weight:700;font-size:13px;flex:1}
+.sum-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:4px}
+.sum-close:hover{color:var(--fg)}
+#sumConfig{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex-shrink:0;background:var(--card);font-size:11px}
+.sum-dim{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.sum-dim-sel{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:2px 7px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer;font-weight:600}
+.sum-dim-sel:hover{border-color:var(--accent)}
+.sum-dim-sel.active{border-color:var(--accent);color:var(--accent);background:rgba(2,136,209,.08)}
+.sum-plus{background:none;border:1px dashed var(--border);color:var(--muted);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:14px;line-height:1}
+.sum-plus:hover{border-color:var(--accent);color:var(--accent)}
+#sumBody{overflow:auto;flex:1;padding:0}
+#sumTable{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px}
+#sumTable th{background:var(--card);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:6px 10px;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:1;cursor:pointer;user-select:none;white-space:nowrap}
+#sumTable th:hover{color:var(--accent)}
+#sumTable th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+#sumTable th .sort-arrow{margin-left:3px;opacity:.3;font-size:8px}
+#sumTable td{padding:4px 10px;border-bottom:1px solid var(--border);color:var(--fg);vertical-align:middle}
+#sumTable tr:hover td{background:rgba(2,136,209,.06)}
+#sumTable td.sum-count{font-weight:700;color:var(--accent);cursor:pointer;text-align:right}
+#sumTable td.sum-count:hover{color:#fff;background:var(--accent);border-radius:3px}
+#sumTable td.sum-wt{text-align:right;color:var(--muted);font-size:10px}
+#sumTable .sum-total td{font-weight:700;border-top:2px solid var(--border);background:var(--card)}
+#sumFooter{padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--card);font-size:11px;color:var(--muted)}
+.sum-excel-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-family:'IBM Plex Mono',monospace;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.sum-excel-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* Dim picker dropdown */
+.sum-dim-dd{position:absolute;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;display:none;min-width:120px}
+.sum-dim-dd.open{display:block}
+.sum-dim-dd-item{padding:5px 10px;cursor:pointer;font-size:11px;border-radius:4px;white-space:nowrap}
+.sum-dim-dd-item:hover{background:rgba(2,136,209,.1);color:var(--accent)}
+
+/* ── LEFT SIDEBAR (filtro bar alternate) ── */
+body.menu-left #mainArea{flex-direction:row}
+body.menu-left #filterBar{flex-direction:column;align-items:stretch;width:210px;min-width:170px;max-width:280px;padding:8px 6px;gap:6px;overflow-y:auto;flex-shrink:0;border-right:1px solid var(--border);border-bottom:none}
+body.menu-left #filterBar > *{width:100%}
+body.menu-left #filterBar .fgroup{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+body.menu-left #filterBar .fgroup-sep{display:none}
+body.menu-left #filterBar .fgroup-label{display:block;margin-bottom:2px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);width:100%}
+body.menu-left #filterBar .gbtn{font-size:10px;padding:2px 6px}
+body.menu-left #filterBar .wrange-wrap{width:auto}
+body.menu-left #filterBar .wrange-inp{width:36px}
+
 
 </style>
 </head>
@@ -238,6 +284,10 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
   <button class="gbtn" id="moveBtn" onclick="openMoveWizard()" title="Mover contenedores y generar nuevo BAPLIE" style="border-color:#7c3aed;color:#7c3aed">
     <i class="fa-solid fa-arrows-up-down-left-right" style="font-size:10px"></i> Mover
   </button>
+  <button class="gbtn" id="sumBtn" onclick="toggleSummary()" title="Resumen interactivo del BAPLIE">
+    <i class="fa-solid fa-chart-pie" style="font-size:10px"></i> Resumen
+  </button>
+  <button class="mbtn" id="menuToggleBtn" onclick="toggleMenuPos()" title="Mover filtros a la izquierda o arriba"><i class="fa-solid fa-bars" style="font-size:12px"></i></button>
   <div class="srch-wrap">
     <input id="srchInput" type="text" placeholder="Buscar contenedor(es)…" oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
     <button id="srchClear" onclick="clearSearch()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
@@ -250,31 +300,29 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
     <label class="fb" id="lb2"><i class="fa-solid fa-file-import text-xs"></i><span id="fn2">Archivo 2</span><input type="file" id="f2" accept=".edi,.txt,.baplie"></label><button class="mbtn" onclick="clearPanel(2)" title="Descargar plan 2" style="width:24px;height:24px;font-size:11px">×</button>
   </div>
 </header>
-<div class="px-4 py-1.5 flex items-center gap-2 shrink-0 flex-wrap" style="background:var(--panel);border-bottom:1px solid var(--border)">
-  <div style="display:inline-flex;align-items:center;gap:4px">
-    <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">Filtros</span>
+<div id="filterBar" class="px-4 py-1.5 flex items-center gap-2 shrink-0 flex-wrap" style="background:var(--panel);border-bottom:1px solid var(--border)">
+  <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px">
+    <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">Filtros</span>
     <button class="gbtn on" id="sizeAllBtn" data-gf="size" data-val="all" onclick="setGF('size','all')">Todos</button>
     <button class="gbtn" data-gf="size" data-val="20" onclick="setGF('size','20')">20'</button>
     <button class="gbtn" data-gf="size" data-val="40" onclick="setGF('size','40')">40'</button>
     <button class="gbtn" data-gf="size" data-val="45" onclick="setGF('size','45')">45'</button>
   </div>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <!-- F/E: mutually exclusive, none=ambos -->
-  <div style="display:inline-flex;align-items:center;gap:4px">
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px">
     <button class="gbtn on" id="feAllBtn" onclick="setFE('all')">F+E</button>
     <button class="gbtn" id="feFullBtn" onclick="setFE('full')">Full</button>
     <button class="gbtn" id="feEmptyBtn" onclick="setFE('empty')">MT</button>
   </div>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <!-- Cargo type: ON=visible, OFF=oculto (exclusion blacklist) -->
-  <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
     <button class="gbtn on" id="showRfBtn" onclick="toggleShow('rf')" title="Reefer — clic para ocultar">RF</button>
     <button class="gbtn on" id="showDgBtn" onclick="toggleShow('dg')" title="Peligrosos — clic para ocultar">DG</button>
     <button class="gbtn on" id="showOogBtn" onclick="toggleShow('oog')" title="Sobredimensionados — clic para ocultar">OOG</button>
     <button class="gbtn on" id="showRsBtn" onclick="toggleShow('rs')" title="Remociones — clic para ocultar">RS</button>
     <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG/RS) — clic para ocultar">GEN</button>
   </div>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <button class="gbtn" id="diffToggleBtn" onclick="toggleDiffFilter()" title="Resaltar en naranja los contenedores con diferencias entre los dos planes">
     <i class="fa-solid fa-code-compare" style="font-size:10px"></i> Diferencias
     <span id="diffToggleBadge" style="display:none;background:var(--diff-chg);color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:2px;font-weight:700"></span>
@@ -282,21 +330,21 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
   <button class="gbtn" id="diffLogBtn" onclick="openDiffModal()" title="Ver log de cambios entre los dos planes" style="display:none">
     <i class="fa-solid fa-list-ul" style="font-size:10px"></i> Ver log
   </button>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
-    <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POD</span>
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+    <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POD</span>
     <button class="gbtn on" id="podAllBtn" onclick="podAll()">Todos</button>
     <button class="gbtn" id="podColorBtn" onclick="openPodColorModal()" title="Cambiar colores de POD"><i class="fa-solid fa-palette" style="font-size:10px"></i></button>
     <div id="podbtns" class="flex items-center gap-1 flex-wrap"></div>
   </div>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
-    <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POL</span>
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+    <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POL</span>
     <button class="gbtn" id="polEsvlcBtn" onclick="togglePolEsvlc()">POL=ESVLC</button>
     <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores con POL distinto de ESVLC">TRT</button>
     <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris todos los contenedores que no cumplan los filtros activos">No-sel</button>
   </div>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <button class="gbtn" id="wtBtn" onclick="toggleWt()" title="Colorear por peso: blanco=vacío, negro=35t">
     <i class="fa-solid fa-weight-hanging" style="font-size:10px"></i> Peso
   </button>
@@ -309,9 +357,8 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
   <button class="gbtn" id="wtFontMinusBtn" onclick="changeWtFont(-1)" title="Reducir fuente de pesos">
     <i class="fa-solid fa-font" style="font-size:10px"></i><i class="fa-solid fa-minus" style="font-size:8px"></i>
   </button>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <!-- PESO RANGO -->
-  <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider mr-1">Peso</span>
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider mr-1">Peso</span>
   <div class="wrange-wrap" id="wrangeWrap">
     <input class="wrange-inp" id="wrangeMin" type="number" min="0" max="99" placeholder="desde" title="Desde (t)" oninput="applyWrange()">
     <span class="wrange-sep">—</span>
@@ -319,13 +366,12 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
     <span class="wrange-sep" style="font-size:9px;margin-left:2px">t</span>
     <button id="wrangeClear" onclick="clearWrange()" style="display:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 2px;margin-left:1px" title="Borrar filtro de peso"><i class="fa-solid fa-xmark"></i></button>
   </div>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <!-- COPIAR FILTRADOS -->
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <button class="gbtn" id="copyFilteredBtn" onclick="copyFilteredContainers()" title="Copiar al portapapeles la lista de contenedores visibles en pantalla">
     <i class="fa-solid fa-clipboard-list" style="font-size:10px"></i> Copiar filtrados
   </button>
-  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
-  <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider mr-1">BAY</span>
+  <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider mr-1">BAY</span>
   <div id="bayFilterWrap" style="position:relative">
     <button class="gbtn on" id="bayAllBtn" onclick="toggleBayPanel()" title="Filtrar por bay">
       <i class="fa-solid fa-layer-group" style="font-size:10px"></i>
@@ -436,6 +482,22 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
       <button id="diffModalClose" onclick="closeDiffModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="diffModalBody"></div>
+</div>
+<!-- SUMMARY PANEL -->
+<div id="sumPanel">
+  <div id="sumHeader">
+    <i class="fa-solid fa-chart-pie" style="color:var(--accent);font-size:12px"></i>
+    <span id="sumTitle">Resumen</span>
+    <button class="sum-excel-btn" onclick="exportSummaryTSV()" title="Copiar tabla"><i class="fa-solid fa-copy" style="font-size:9px"></i></button>
+    <button class="sum-close" onclick="closeSummary()" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="sumConfig">
+    <span class="sum-dim">Agrupar:</span>
+    <span id="sumDims"></span>
+    <button class="sum-plus" id="sumAddDimBtn" onclick="sumAddDim()" title="Añadir dimensión">+</button>
+  </div>
+  <div id="sumBody"><table id="sumTable"><thead id="sumThead"></thead><tbody id="sumTbody"></tbody></table></div>
+  <div id="sumFooter"><span id="sumCount"></span><span class="ml-auto" style="font-size:9px;opacity:.5">Clic en un conteo para seleccionar en el plano</span></div>
 </div>
 </main>
 <!-- POD COLOR PICKER MODAL -->
@@ -1374,7 +1436,7 @@ function setFE(mode){
   document.getElementById('feAllBtn').classList.toggle('on',mode==='all');
   document.getElementById('feFullBtn').classList.toggle('on',mode==='full');
   document.getElementById('feEmptyBtn').classList.toggle('on',mode==='empty');
-  clearSelIfNeeded();lstSyncIfOpen();render(1);render(2);
+  clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 
 // Cargo type blacklist: ON=visible, toggling OFF hides that type
@@ -1382,11 +1444,11 @@ function toggleShow(type){
   if(GF.hidden.has(type))GF.hidden.delete(type);else GF.hidden.add(type);
   var btn=document.getElementById('show'+type.charAt(0).toUpperCase()+type.slice(1)+'Btn');
   if(btn)btn.classList.toggle('on',!GF.hidden.has(type));
-  clearSelIfNeeded();lstSyncIfOpen();render(1);render(2);
+  clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 function rebuildPods(){GF.pods={};for(var i=0;i<POD_ORDER.length;i++)GF.pods[POD_ORDER[i]]=true;var box=document.getElementById('podbtns');var h='';for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;h+='<button class="gbtn on" data-pod="'+k+'" onclick="togglePod(\''+k+'\')"><span class="cdot" style="background:'+POD_MAP[k]+'"></span>'+k+'</button>'}box.innerHTML=h;updateLeg();document.getElementById('podAllBtn').classList.add('on');}
-function togglePod(pod){GF.pods[pod]=!GF.pods[pod];var btn=document.querySelector('[data-pod="'+pod+'"]');if(btn)btn.classList.toggle('on',GF.pods[pod]);var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}document.getElementById('podAllBtn').classList.toggle('on',!anyOff);render(1);render(2);lstSyncIfOpen();}
-function podAll(){var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}var turnAllOn=anyOff;for(var k in GF.pods)GF.pods[k]=turnAllOn;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.toggle('on',turnAllOn)});document.getElementById('podAllBtn').classList.toggle('on',turnAllOn);render(1);render(2);lstSyncIfOpen();updateLeg();}
+function togglePod(pod){GF.pods[pod]=!GF.pods[pod];var btn=document.querySelector('[data-pod="'+pod+'"]');if(btn)btn.classList.toggle('on',GF.pods[pod]);var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}document.getElementById('podAllBtn').classList.toggle('on',!anyOff);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function podAll(){var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}var turnAllOn=anyOff;for(var k in GF.pods)GF.pods[k]=turnAllOn;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.toggle('on',turnAllOn)});document.getElementById('podAllBtn').classList.toggle('on',turnAllOn);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();updateLeg();}
 function openPodColorModal(){
   var body=document.getElementById('podColorBody');
   var h='';
@@ -1403,11 +1465,11 @@ function openPodColorModal(){
 }
 function closePodColorModal(){document.getElementById('podColorModal').style.display='none';}
 function setPodColor(pod,color){POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
-function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;document.getElementById('polEsvlcBtn').classList.toggle('on',GF.polEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();}
-function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.toggle('on',GF.trt);document.getElementById('trtBtn').classList.toggle('trt-on',GF.trt);updateLeg();render(1);render(2);lstSyncIfOpen();}
-function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();}
-function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);}
-function toggleWtRound(){GF.wtRound=!GF.wtRound;document.getElementById('wtRoundBtn').classList.toggle('wt-on',GF.wtRound);render(1);render(2);}
+function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;document.getElementById('polEsvlcBtn').classList.toggle('on',GF.polEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.toggle('on',GF.trt);document.getElementById('trtBtn').classList.toggle('trt-on',GF.trt);updateLeg();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);sumSyncIfOpen();}
+function toggleWtRound(){GF.wtRound=!GF.wtRound;document.getElementById('wtRoundBtn').classList.toggle('wt-on',GF.wtRound);render(1);render(2);sumSyncIfOpen();}
 function changeWtFont(delta){GF.wtFontSize=Math.max(-2,Math.min(6,GF.wtFontSize+delta));render(1);render(2);}
 
 /* ── BÚSQUEDA: selecciona, con opción de modo filtro ── */
@@ -1462,7 +1524,7 @@ function toggleSrchFilter(){
   if(!S.sel||!S.sel.size)return;
   GF.srchFilter=!GF.srchFilter;
   document.getElementById('srchFilterBtn').classList.toggle('on',GF.srchFilter);
-  render(1);render(2);
+  render(1);render(2);sumSyncIfOpen();
 }
 // Capturar pegado desde Excel para procesar inmediatamente
 document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
@@ -1478,11 +1540,11 @@ function resetAllFilters(){
   clearWrange();clearSearch();
   GF.srchFilter=false;
   for(var k in GF.pods)GF.pods[k]=true;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.add('on')});
-  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;render(1);render(2);updateLeg();
+  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;render(1);render(2);updateLeg();sumSyncIfOpen();
 }
 
 /* ── DIFF TOGGLE + LOG ── */
-function toggleDiffFilter(){if(!S.c1||!S.c2)return;GF.diffOnly=!GF.diffOnly;var btn=document.getElementById('diffToggleBtn');btn.classList.toggle('on',GF.diffOnly);btn.classList.toggle('diff-on',GF.diffOnly);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();}
+function toggleDiffFilter(){if(!S.c1||!S.c2)return;GF.diffOnly=!GF.diffOnly;var btn=document.getElementById('diffToggleBtn');btn.classList.toggle('on',GF.diffOnly);btn.classList.toggle('diff-on',GF.diffOnly);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function updateDiffToggleBtn(){var diffCount=DIFF_IDS.size;var badge=document.getElementById('diffToggleBadge');var logBtn=document.getElementById('diffLogBtn');var hasBoth=S.c1&&S.c2;if(hasBoth&&diffCount>0){badge.textContent=diffCount;badge.style.display='';logBtn.style.display='';}else{badge.style.display='none';logBtn.style.display='none';if(!hasBoth){GF.diffOnly=false;document.getElementById('diffToggleBtn').classList.remove('on','diff-on');}}}
 
 /* ── BAY FILTER PANEL ── */
@@ -1490,10 +1552,10 @@ var bayPanelOpen=false;
 function toggleBayPanel(){bayPanelOpen=!bayPanelOpen;document.getElementById('bayFilterPanel').style.display=bayPanelOpen?'block':'none';document.getElementById('bayChevron').style.transform=bayPanelOpen?'rotate(180deg)':'';}
 document.addEventListener('click',function(e){if(bayPanelOpen&&!document.getElementById('bayFilterWrap').contains(e.target)){bayPanelOpen=false;document.getElementById('bayFilterPanel').style.display='none';document.getElementById('bayChevron').style.transform='';}});
 function rebuildBayFilter(){var allCts=[].concat(S.c1||[],S.c2||[]);BAY_TRIPLES=buildTriples(allCts);GF.bays=null;var list=document.getElementById('bayGroupList');if(!BAY_TRIPLES.length){list.innerHTML='<div style="color:var(--muted);font-size:11px">Sin datos</div>';return;}var h='';for(var i=0;i<BAY_TRIPLES.length;i++){var tr=BAY_TRIPLES[i];var label=String(tr.lo).padStart(3,'0');if(tr.mid!==null)label+=' / '+String(tr.mid).padStart(3,'0')+' / '+String(tr.hi).padStart(3,'0');h+='<div class="bay-group"><span class="bay-triple-label">'+label+'</span><button class="bay-triple-btn on" data-bay-lo="'+tr.lo+'" onclick="toggleBayTriple('+i+',this)">Visible</button></div>';}list.innerHTML=h;document.getElementById('bayAllBtn').classList.add('on');updateBayBtnLabel();}
-function toggleBayTriple(idx,btn){btn.classList.toggle('on',!btn.classList.contains('on'));syncBayFilter();document.getElementById('bayAllBtn').classList.remove('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();}
+function toggleBayTriple(idx,btn){btn.classList.toggle('on',!btn.classList.contains('on'));syncBayFilter();document.getElementById('bayAllBtn').classList.remove('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function syncBayFilter(){var btns=document.querySelectorAll('.bay-triple-btn[data-bay-lo]');var anyOff=false;var activeBays=new Set();for(var i=0;i<btns.length;i++){var lo_=parseInt(btns[i].getAttribute('data-bay-lo'));var tr=null;for(var j=0;j<BAY_TRIPLES.length;j++){if(BAY_TRIPLES[j].lo===lo_){tr=BAY_TRIPLES[j];break;}}if(!tr)continue;if(btns[i].classList.contains('on')){activeBays.add(tr.lo);if(tr.mid!==null){activeBays.add(tr.mid);activeBays.add(tr.hi);}}else{anyOff=true;}}GF.bays=anyOff?activeBays:null;}
-function bayFilterAll(){document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){b.classList.add('on')});GF.bays=null;document.getElementById('bayAllBtn').classList.add('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();}
-function bayFilterNone(){document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){b.classList.remove('on')});GF.bays=new Set();document.getElementById('bayAllBtn').classList.remove('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();}
+function bayFilterAll(){document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){b.classList.add('on')});GF.bays=null;document.getElementById('bayAllBtn').classList.add('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function bayFilterNone(){document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){b.classList.remove('on')});GF.bays=new Set();document.getElementById('bayAllBtn').classList.remove('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function updateBayBtnLabel(){var el=document.getElementById('bayBtnLabel');if(!GF.bays){el.textContent='Todos';document.getElementById('bayAllBtn').classList.add('on');}else{var n=0;document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){if(b.classList.contains('on'))n++;});el.textContent=n+' bay'+(n!==1?'s':'');document.getElementById('bayAllBtn').classList.toggle('on',n===BAY_TRIPLES.length);}}
 
 /* ── DIFF MODAL ── */
@@ -1992,14 +2054,14 @@ function applyWrange(){
   var active=GF.wtMin!==null||GF.wtMax!==null;
   document.getElementById('wrangeWrap').classList.toggle('active',active);
   document.getElementById('wrangeClear').style.display=active?'':'none';
-  clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();
+  clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
 }
 function clearWrange(){
   document.getElementById('wrangeMin').value='';document.getElementById('wrangeMax').value='';
   GF.wtMin=null;GF.wtMax=null;
   document.getElementById('wrangeWrap').classList.remove('active');
   document.getElementById('wrangeClear').style.display='none';
-  render(1);render(2);lstSyncIfOpen();
+  render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
 }
 
 /* ── COPIAR FILTRADOS ── */
@@ -2704,6 +2766,257 @@ document.addEventListener('keydown',function(e){
   var bayNum=L.grps[idx][0];
   scrollToBay(pn,bayNum);
 });
+
+/* ═══════════════════════════════════════════════════
+   SUMMARY — Tabla dinámica interactiva
+   ═══════════════════════════════════════════════════ */
+var SUM_DIMS_AVAILABLE=[
+  {key:'pod', label:'POD'},
+  {key:'pol', label:'POL'},
+  {key:'sztp',label:'SZTP'},
+  {key:'size',label:'Tamaño'},
+  {key:'cargo',label:'Carga'},
+  {key:'fe',  label:'F/E'},
+  {key:'hd',  label:'Zona'}
+];
+var SUM_CFG={dims:['pod','sztp'],sortCol:null,sortDir:1};
+var SUM_DATA=[];
+
+function sumGetVal(c,key){
+  switch(key){
+    case 'pod':return c.pod||'-';
+    case 'pol':return c.pol||'-';
+    case 'sztp':return c.type||'-';
+    case 'size':return parseSz(c.type)+"'";
+    case 'cargo':
+      if(c.isDangerous)return'DG';
+      if(c.isReefer)return'RF';
+      if(isOog(c))return'OOG';
+      if(c.isRemocion)return'RS';
+      return'GEN';
+    case 'fe':return c.isEmpty?'MT':'Full';
+    case 'hd':return c.positions[0].tier>=50?'Deck':'Hold';
+    default:return'-';
+  }
+}
+
+function toggleSummary(){
+  var p=document.getElementById('sumPanel');
+  if(p.classList.contains('open')){closeSummary();return;}
+  if(!S.c1){showToast('Carga un BAPLIE primero');return;}
+  p.classList.add('open');
+  renderSummaryDims();
+  renderSummary();
+  setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);
+}
+function closeSummary(){
+  document.getElementById('sumPanel').classList.remove('open');
+  setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);
+}
+
+function renderSummaryDims(){
+  var el=document.getElementById('sumDims');
+  var h='';
+  for(var i=0;i<SUM_CFG.dims.length;i++){
+    var dk=SUM_CFG.dims[i];
+    var dl=SUM_DIMS_AVAILABLE.find(function(d){return d.key===dk});
+    h+='<span class="sum-dim" style="position:relative">';
+    h+='<button class="sum-dim-sel active" onclick="sumDimClick(this,'+i+')" data-idx="'+i+'">'+(dl?dl.label:dk)+'</button>';
+    if(SUM_CFG.dims.length>1)h+='<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;margin-left:1px;padding:0 2px" onclick="sumRemoveDim('+i+')" title="Quitar">&times;</button>';
+    h+='</span>';
+    if(i<SUM_CFG.dims.length-1)h+='<span style="color:var(--muted);font-size:10px;margin:0 2px">\u203A</span>';
+  }
+  el.innerHTML=h;
+  document.getElementById('sumAddDimBtn').style.display=SUM_CFG.dims.length>=4?'none':'';
+}
+
+var _sumDimDD=null;
+function sumDimClick(btn,idx){
+  if(_sumDimDD){_sumDimDD.remove();_sumDimDD=null;}
+  var dd=document.createElement('div');
+  dd.className='sum-dim-dd open';
+  var rect=btn.getBoundingClientRect();
+  dd.style.left=rect.left+'px';
+  dd.style.top=(rect.bottom+2)+'px';
+  var h='';
+  for(var i=0;i<SUM_DIMS_AVAILABLE.length;i++){
+    var d=SUM_DIMS_AVAILABLE[i];
+    var sel=SUM_CFG.dims[idx]===d.key;
+    h+='<div class="sum-dim-dd-item'+(sel?' style="color:var(--accent);font-weight:600"':'')+'" onclick="sumSetDim('+idx+','+ "'"+d.key+"'"+')">'+d.label+'</div>';
+  }
+  dd.innerHTML=h;
+  document.body.appendChild(dd);
+  _sumDimDD=dd;
+  setTimeout(function(){
+    var closeDD=function(e){if(!dd.contains(e.target)&&e.target!==btn){dd.remove();_sumDimDD=null;document.removeEventListener('click',closeDD);}};
+    document.addEventListener('click',closeDD);
+  },10);
+}
+function sumSetDim(idx,key){
+  if(_sumDimDD){_sumDimDD.remove();_sumDimDD=null;}
+  SUM_CFG.dims[idx]=key;
+  renderSummaryDims();
+  renderSummary();
+}
+function sumAddDim(){
+  if(SUM_CFG.dims.length>=4)return;
+  var used=new Set(SUM_CFG.dims);
+  var next=SUM_DIMS_AVAILABLE.find(function(d){return!used.has(d.key)});
+  if(!next)next=SUM_DIMS_AVAILABLE[0];
+  SUM_CFG.dims.push(next.key);
+  renderSummaryDims();
+  renderSummary();
+}
+function sumRemoveDim(idx){
+  if(SUM_CFG.dims.length<=1)return;
+  SUM_CFG.dims.splice(idx,1);
+  renderSummaryDims();
+  renderSummary();
+}
+
+function renderSummary(){
+  var cts=S.c1;if(!cts)return;
+  // Filter containers using current filters (passF_noTrt)
+  var filtered=cts.filter(passF_noTrt);
+  // Group by dimensions
+  var groups={};
+  var groupIds={};
+  for(var i=0;i<filtered.length;i++){
+    var c=filtered[i];
+    var key=SUM_CFG.dims.map(function(d){return sumGetVal(c,d)}).join('|');
+    if(!groups[key]){groups[key]={vals:{},count:0,weight:0,ids:[]};for(var d=0;d<SUM_CFG.dims.length;d++)groups[key].vals[SUM_CFG.dims[d]]=sumGetVal(c,SUM_CFG.dims[d]);}
+    groups[key].count++;
+    groups[key].weight+=(c.weight||0)/1000;
+    groups[key].ids.push(c.id);
+  }
+  // Convert to array
+  SUM_DATA=[];
+  for(var k in groups)SUM_DATA.push(groups[k]);
+  // Sort
+  if(SUM_CFG.sortCol!==null){
+    var sc=SUM_CFG.sortCol,sd=SUM_CFG.sortDir;
+    SUM_DATA.sort(function(a,b){
+      var va,vb;
+      if(sc==='count'){va=a.count;vb=b.count;}
+      else if(sc==='weight'){va=a.weight;vb=b.weight;}
+      else{va=a.vals[sc]||'';vb=b.vals[sc]||'';}
+      if(va<vb)return -1*sd;
+      if(va>vb)return 1*sd;
+      return 0;
+    });
+  }
+  // Render table
+  var thead=document.getElementById('sumThead');
+  var hhead='<tr>';
+  for(var d=0;d<SUM_CFG.dims.length;d++){
+    var dk=SUM_CFG.dims[d];
+    var dl=SUM_DIMS_AVAILABLE.find(function(dd){return dd.key===dk});
+    var sorted=SUM_CFG.sortCol===dk;
+    hhead+='<th class="'+(sorted?'sorted':'')+'" onclick="sumSort(\''+dk+'\')">'+(dl?dl.label:dk)+'<span class="sort-arrow">'+(sorted?(SUM_CFG.sortDir===1?'\u25B2':'\u25BC'):'\u25B2')+'</span></th>';
+  }
+  hhead+='<th class="'+(SUM_CFG.sortCol==='count'?'sorted':'')+'" onclick="sumSort(\'count\')">Cnt<span class="sort-arrow">'+(SUM_CFG.sortCol==='count'?(SUM_CFG.sortDir===1?'\u25B2':'\u25BC'):'\u25B2')+'</span></th>';
+  hhead+='<th class="'+(SUM_CFG.sortCol==='weight'?'sorted':'')+'" onclick="sumSort(\'weight\')">Peso(t)<span class="sort-arrow">'+(SUM_CFG.sortCol==='weight'?(SUM_CFG.sortDir===1?'\u25B2':'\u25BC'):'\u25B2')+'</span></th>';
+  hhead+='</tr>';
+  thead.innerHTML=hhead;
+
+  var tbody=document.getElementById('sumTbody');
+  var hbody='';
+  var totC=0,totW=0;
+  for(var i=0;i<SUM_DATA.length;i++){
+    var g=SUM_DATA[i];
+    totC+=g.count;totW+=g.weight;
+    hbody+='<tr>';
+    for(var d=0;d<SUM_CFG.dims.length;d++){
+      var dk=SUM_CFG.dims[d];
+      var v=g.vals[dk]||'-';
+      // Colorize POD cells
+      if(dk==='pod'&&POD_MAP[v]){
+        hbody+='<td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+POD_MAP[v]+';margin-right:4px;vertical-align:middle"></span>'+v+'</td>';
+      }else{
+        hbody+='<td>'+v+'</td>';
+      }
+    }
+    var idsJson=JSON.stringify(g.ids).replace(/"/g,'&quot;');
+    hbody+='<td class="sum-count" onclick="sumSelect('+i+')" title="Clic para seleccionar estos contenedores">'+g.count+'</td>';
+    hbody+='<td class="sum-wt">'+(g.weight>0?g.weight.toFixed(1).replace('.',','):'-')+'</td>';
+    hbody+='</tr>';
+  }
+  // Total row
+  hbody+='<tr class="sum-total">';
+  for(var d=0;d<SUM_CFG.dims.length;d++)hbody+='<td style="color:var(--accent)">TOTAL</td>';
+  hbody+='<td class="sum-count" style="color:var(--accent)">'+totC+'</td>';
+  hbody+='<td class="sum-wt" style="color:var(--accent)">'+totW.toFixed(1).replace('.',',')+'</td>';
+  hbody+='</tr>';
+  tbody.innerHTML=hbody;
+  document.getElementById('sumCount').textContent=SUM_DATA.length+' grupo'+(SUM_DATA.length!==1?'s':'')+' \u00B7 '+totC+' ctnr';
+}
+
+function sumSort(col){
+  if(SUM_CFG.sortCol===col)SUM_CFG.sortDir*=-1;
+  else{SUM_CFG.sortCol=col;SUM_CFG.sortDir=1;}
+  renderSummary();
+}
+
+function sumSelect(idx){
+  var g=SUM_DATA[idx];if(!g)return;
+  S.sel=new Set(g.ids);
+  render(1);render(2);
+  showToast('Seleccionados '+g.ids.length+' contenedor'+(g.ids.length!==1?'es':''));
+  // Scroll to first container
+  if(g.ids.length>0){
+    var id=g.ids[0];
+    var c=S.c1.find(function(cc){return cc.id===id});
+    if(c&&c.positions.length>0){
+      scrollToBay(1,c.positions[0].bay);
+    }
+  }
+}
+
+function sumSyncIfOpen(){
+  if(!document.getElementById('sumPanel').classList.contains('open'))return;
+  renderSummary();
+}
+
+function exportSummaryTSV(){
+  if(!SUM_DATA.length){showToast('Sin datos');return;}
+  var cols=SUM_CFG.dims.map(function(dk){var dl=SUM_DIMS_AVAILABLE.find(function(d){return d.key===dk});return dl?dl.label:dk});
+  cols.push('Cnt');cols.push('Peso_t');
+  var rows=[cols];
+  for(var i=0;i<SUM_DATA.length;i++){
+    var g=SUM_DATA[i];
+    var row=SUM_CFG.dims.map(function(dk){return g.vals[dk]||'-'});
+    row.push(g.count);row.push(g.weight>0?g.weight.toFixed(1):'0');
+    rows.push(row);
+  }
+  var tsv=rows.map(function(r){return r.join('\t')}).join('\n');
+  safeClipboard(tsv,function(){showToast('Resumen copiado al portapapeles');});
+}
+
+/* ── TOGGLE MENU POSITION (left sidebar vs top bar) ── */
+var MENU_POS='top'; // 'top' or 'left'
+function toggleMenuPos(){
+  var body=document.body;
+  var bar=document.getElementById('filterBar');
+  var main=document.getElementById('mainArea');
+  var btn=document.getElementById('menuToggleBtn');
+  if(MENU_POS==='top'){
+    MENU_POS='left';
+    body.classList.add('menu-left');
+    // Move filterBar inside mainArea before everything else
+    main.insertBefore(bar,main.firstChild);
+    btn.innerHTML='<i class="fa-solid fa-grip-lines" style="font-size:12px"></i>';
+    btn.title='Mover filtros arriba';
+  }else{
+    MENU_POS='top';
+    body.classList.remove('menu-left');
+    // Move filterBar back after header
+    var header=document.querySelector('header');
+    header.parentNode.insertBefore(bar,header.nextSibling);
+    btn.innerHTML='<i class="fa-solid fa-bars" style="font-size:12px"></i>';
+    btn.title='Mover filtros a la izquierda';
+  }
+  setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},100);
+}
 
 
 </script>
