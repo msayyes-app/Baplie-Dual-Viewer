@@ -130,20 +130,19 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 #diffModalClose{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:4px}#diffModalClose:hover{color:var(--fg)}
 .diff-export-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;transition:all .15s;display:inline-flex;align-items:center;gap:5px}.diff-export-btn:hover{border-color:var(--accent);color:var(--accent)}
 #diffModalBody{overflow:auto;padding:14px 18px;flex:1;font-family:'IBM Plex Mono',monospace;font-size:12px}
-.diff-row{display:grid;grid-template-columns:160px 1fr 1fr;gap:8px;padding:5px 8px;border-radius:5px;margin-bottom:3px;align-items:start}
-.diff-row:nth-child(even){background:rgba(128,128,128,.04)}
-.diff-row.diff-moved{border-left:3px solid var(--diff-chg);background:rgba(239,108,0,.05)}
-.diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.05)}
-.diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.05)}
-.diff-id{font-weight:700;font-size:11px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.diff-cell{font-size:10px;color:var(--muted);line-height:1.6}
-.diff-cell b{color:var(--fg);font-weight:600}
-.diff-cell .chg{color:var(--diff-chg);font-weight:600}
-.diff-header{display:grid;grid-template-columns:160px 1fr 1fr;gap:8px;padding:4px 8px;margin-bottom:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border)}
-.diff-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase}
-.diff-badge.moved{background:rgba(239,108,0,.2);color:var(--diff-chg)}
-.diff-badge.missing{background:rgba(198,40,40,.2);color:var(--diff-del)}
-.diff-badge.appeared{background:rgba(56,142,60,.2);color:var(--diff-add)}
+.diff-row{display:flex;align-items:baseline;gap:8px;padding:4px 10px;border-radius:4px;margin-bottom:2px;font-size:12px;line-height:1.5}
+.diff-row:nth-child(even){background:rgba(128,128,128,.03)}
+.diff-row.diff-moved{border-left:3px solid var(--diff-chg);background:rgba(239,108,0,.04)}
+.diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.04)}
+.diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.04)}
+.diff-id{font-weight:700;font-size:12px;color:var(--accent);white-space:nowrap;flex-shrink:0;min-width:110px}
+.diff-changes{font-size:11px;color:var(--fg);line-height:1.5;flex:1;min-width:0}
+.diff-changes .chg-label{color:var(--muted);font-weight:600;font-size:10px;margin-right:2px}
+.diff-changes .chg-arrow{color:var(--muted);margin:0 3px;font-size:10px}
+.diff-changes .chg-from{color:var(--muted);text-decoration:line-through;opacity:.6}
+.diff-changes .chg-to{color:var(--diff-chg);font-weight:600}
+.diff-changes .chg-field{margin-right:10px;white-space:nowrap}
+.diff-header{display:none}
 .diff-type-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;border:1.5px solid;transition:all .15s;opacity:.38}
 .diff-type-pill.pill-on{opacity:1}
 .diff-type-pill:hover{opacity:1}
@@ -1504,14 +1503,26 @@ function clearDiffTypeFilter(){DIFF_ACTIVE_TYPES=null;refreshDiffPills();refresh
 function refreshDiffPills(){document.querySelectorAll('.diff-type-pill').forEach(function(b){var t=b.dataset.diffType;var active=(DIFF_ACTIVE_TYPES===null||DIFF_ACTIVE_TYPES.has(t));b.classList.toggle('pill-on',active);});var clearBtn=document.getElementById('diffTypeClearBtn');if(clearBtn)clearBtn.style.display=(DIFF_ACTIVE_TYPES?'inline-flex':'none');}
 function refreshDiffList(){
   var listEl=document.getElementById('diffRowsList');if(!listEl)return;
-  var f1=document.getElementById('fn1').textContent,f2=document.getElementById('fn2').textContent;
   var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;_diffRows=[];
   function rowVisible(d,types){if(!DIFF_ACTIVE_TYPES)return true;for(var t of DIFF_ACTIVE_TYPES){if(t==='missing'&&types.indexOf('missing')>=0)return true;if(t==='appeared'&&types.indexOf('appeared')>=0)return true;if(t==='pos'&&d.posChanged)return true;if(t==='pod'&&d.podChanged)return true;if(t==='pol'&&d.polChanged)return true;if(t==='wt'&&d.wtChanged)return true;if(t==='sztp'&&d.sztpChanged)return true;}return false;}
-  function fldsHTML(c,hl){if(!c)return'<span style="opacity:.4">— no existe —</span>';var po=c.positions.map(fmtP).join(', '),pol=c.pol||'-',pod=c.pod||'-',st=c.isEmpty?'MT':'Full',wt=c.weight?(c.weight/1000).toFixed(1).replace('.',',')+'t':'-',tp=c.type||'-';if(!hl)return'<b>Pos:</b> '+po+'<br><b>POL:</b> '+pol+' &nbsp; <b>POD:</b> '+pod+'<br><b>Estado:</b> '+st+' &nbsp; <b>Peso:</b> '+wt+'<br><b>SZTP:</b> '+tp;return '<b>Pos:</b> <span class="'+(hl.pos?'chg':'')+'">'+po+'</span><br><b>POL:</b> <span class="'+(hl.pol?'chg':'')+'">'+pol+'</span> &nbsp; <b>POD:</b> <span class="'+(hl.pod?'chg':'')+'">'+pod+'</span><br><b>Estado:</b> <span class="'+(hl.st?'chg':'')+'">'+st+'</span> &nbsp; <b>Peso:</b> <span class="'+(hl.wt?'chg':'')+'">'+wt+'</span><br><b>SZTP:</b> <span class="'+(hl.sztp?'chg':'')+'">'+tp+'</span>';}
-  var h='<div class="diff-header" style="margin-top:10px"><span>Contenedor</span><span>Plan 1 — '+f1+'</span><span>Plan 2 — '+f2+'</span></div>';var count=0;
-  for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;count++;h+='<div class="diff-row diff-moved"><div><div class="diff-id">'+d.id+'</div><span class="diff-badge moved">modificado</span></div><div class="diff-cell">'+fldsHTML(d.a,{pos:d.posChanged,pod:d.podChanged,pol:d.polChanged,st:d.stateChanged,wt:d.wtChanged,sztp:d.sztpChanged})+'</div><div class="diff-cell">'+fldsHTML(d.b,{pos:d.posChanged,pod:d.podChanged,pol:d.polChanged,st:d.stateChanged,wt:d.wtChanged,sztp:d.sztpChanged})+'</div></div>';_diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
-  for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;count++;h+='<div class="diff-row diff-missing"><div><div class="diff-id">'+d.id+'</div><span class="diff-badge missing">solo P1</span></div><div class="diff-cell">'+fldsHTML(d.a,null)+'</div><div class="diff-cell"><span style="opacity:.4">— no existe —</span></div></div>';_diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:''});}
-  for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;count++;h+='<div class="diff-row diff-appeared"><div><div class="diff-id">'+d.id+'</div><span class="diff-badge appeared">solo P2</span></div><div class="diff-cell"><span style="opacity:.4">— no existe —</span></div><div class="diff-cell">'+fldsHTML(d.b,null)+'</div></div>';_diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
+  function chgFld(label,from,to){return '<span class="chg-field"><span class="chg-label">'+label+'</span><span class="chg-from">'+from+'</span><span class="chg-arrow">\u2192</span><span class="chg-to">'+to+'</span></span>';}
+  var h='';var count=0;
+  for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;count++;
+    var chgs='';
+    if(d.posChanged)chgs+=chgFld('POS',d.a.positions.map(fmtP).join(', '),d.b.positions.map(fmtP).join(', '));
+    if(d.podChanged)chgs+=chgFld('POD',d.a.pod||'-',d.b.pod||'-');
+    if(d.polChanged)chgs+=chgFld('POL',d.a.pol||'-',d.b.pol||'-');
+    if(d.stateChanged)chgs+=chgFld('EST',d.a.isEmpty?'MT':'Full',d.b.isEmpty?'MT':'Full');
+    if(d.wtChanged)chgs+=chgFld('PESO',(d.a.weight?(d.a.weight/1000).toFixed(1).replace('.',','):'-')+'t',(d.b.weight?(d.b.weight/1000).toFixed(1).replace('.',','):'-')+'t');
+    if(d.sztpChanged)chgs+=chgFld('SZTP',d.a.type||'-',d.b.type||'-');
+    h+='<div class="diff-row diff-moved"><div class="diff-id">'+d.id+'</div><div class="diff-changes">'+chgs+'</div></div>';
+    _diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
+  for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;count++;
+    h+='<div class="diff-row diff-missing"><div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtP).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
+    _diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:''});}
+  for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;count++;
+    h+='<div class="diff-row diff-appeared"><div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtP).join(', ')+'</span></span></div></div>';
+    _diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
   if(count===0)h+='<div style="color:var(--muted);font-size:12px;padding:16px 0;text-align:center"><i class="fa-solid fa-filter" style="margin-right:6px"></i>Ningún contenedor coincide con el filtro activo.</div>';
   listEl.innerHTML=h;
 }
