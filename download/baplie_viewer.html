@@ -1,0 +1,2755 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  BAPLIE Dual Viewer — MSaYYeS
+  ============================================================
+  Copyright © 2025 [Tu nombre]. Todos los derechos reservados.
+
+  Este software es propiedad intelectual de su autor y está
+  protegido por las leyes de propiedad intelectual españolas
+  (Real Decreto Legislativo 1/1996, Ley de Propiedad
+  Intelectual) y por el Convenio de Berna para la Protección
+  de las Obras Literarias y Artísticas.
+
+  Queda expresamente prohibido, sin autorización escrita del
+  autor:
+    · Copiar, reproducir o distribuir este software
+    · Modificarlo y presentarlo como obra propia
+    · Usarlo con fines comerciales
+    · Eliminar o alterar este aviso de copyright
+
+  El uso no autorizado constituye una infracción de derechos
+  de autor perseguible civil y penalmente.
+
+  Contacto: [tu-email@dominio.com]
+  Versión:  1.0.0
+  Fecha:    2025
+  ============================================================
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BAPLIE Dual Viewer</title>
+<style id="tw-utils">
+/* Tailwind utility replacements — no CDN needed */
+*,::before,::after{box-sizing:border-box}
+.flex{display:flex}.flex-col{flex-direction:column}.flex-1{flex:1 1 0%}.flex-wrap{flex-wrap:wrap}
+.items-center{align-items:center}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}
+.gap-1{gap:4px}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}
+.ml-auto{margin-left:auto}.mr-1{margin-right:4px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}
+.px-3{padding-left:12px;padding-right:12px}.px-4{padding-left:16px;padding-right:16px}.px-5{padding-left:20px;padding-right:20px}
+.py-1{padding-top:4px;padding-bottom:4px}.py-1\.5{padding-top:6px;padding-bottom:6px}.py-2{padding-top:8px;padding-bottom:8px}
+.h-screen{height:100vh}.min-w-0{min-width:0}.overflow-hidden{overflow:hidden}.select-none{user-select:none}
+.shrink-0{flex-shrink:0}.fixed{position:fixed}.absolute{position:absolute}.inset-0{inset:0}
+.pointer-events-none{pointer-events:none}.hidden{display:none!important}
+.text-xs{font-size:12px;line-height:16px}.text-sm{font-size:14px;line-height:20px}.text-base{font-size:16px;line-height:24px}.text-3xl{font-size:30px;line-height:36px}
+.font-bold{font-weight:700}.font-semibold{font-weight:600}
+.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}
+.uppercase{text-transform:uppercase}.text-center{text-align:center}
+.opacity-40{opacity:.4}.opacity-25{opacity:.25}
+
+/* ── LISTADO PANEL (inline, resizable) ── */
+#lstPanel{display:none;flex-direction:column;background:var(--panel);border-right:1px solid var(--border);min-width:260px;max-width:90vw;width:360px;flex-shrink:0;overflow:hidden;position:relative}
+#lstPanel.open{display:flex}
+#lstResize{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:10}
+#lstResize:hover,#lstResize.dragging{background:var(--accent);opacity:.4}
+#listadoHeader{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-shrink:0;background:var(--card)}
+#listadoTitle{font-weight:700;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#listadoBody{overflow:auto;flex:1}
+#listadoTable{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px}
+#listadoTable th{background:var(--card);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:1;cursor:pointer;user-select:none;white-space:nowrap;position:relative;overflow:visible}
+.col-resize{position:absolute;right:-2px;top:2px;bottom:2px;width:4px;cursor:col-resize;background:var(--border);border-radius:2px;z-index:2;opacity:.7}
+.col-resize:hover,.col-resize.dragging{background:var(--accent);opacity:1}
+#listadoTable th:hover{color:var(--accent)}
+#listadoTable th .sort-arrow{margin-left:4px;opacity:.4;font-size:9px}
+#listadoTable th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+#listadoTable td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--fg);vertical-align:middle}
+#listadoTable tr.lst-sel td{background:rgba(253,216,53,.18);outline:none}
+#listadoTable tr.lst-sel:hover td{background:rgba(253,216,53,.28)}
+#listadoTable tr.changed td{background:rgba(239,108,0,.06)}
+#listadoTable td[contenteditable="true"]{outline:none;cursor:text}
+#listadoTable td[contenteditable="true"]:focus{background:rgba(2,136,209,.08);outline:1px solid var(--accent);outline-offset:-1px}
+#listadoTable .pod-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+#listadoTable .tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;margin-right:2px}
+#listadoFooter{padding:8px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--card);font-size:11px;color:var(--muted)}
+.lst-btn{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg);transition:all .15s}
+.lst-btn:hover{border-color:var(--accent);color:var(--accent)}
+.lst-btn.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.lst-btn.primary:hover{background:#6d28d9}
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e3a5f'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-size='16' font-weight='900' fill='%23ffffff' font-family='Arial'%3EM%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{--bg:#0b0f19;--panel:#131926;--card:#1a2236;--border:#263354;--muted:#6b7fa3;--accent:#4fc3f7;--fg:#dce4f0;--cvbg:#0e1525;--cvhold:#090d17;--grid:#263354;--hatch:#3d5070;--diff-add:#2e7d32;--diff-chg:#e65100;--diff-del:#b71c1c}
+body{--bg:#eef0f4;--panel:#ffffff;--card:#f5f6f8;--border:#cdd2da;--muted:#6c757d;--accent:#0288d1;--fg:#1a1a2e;--cvbg:#dfe3e8;--cvhold:#c8cdd4;--grid:#a0a8b4;--hatch:#78829a;--diff-add:#388e3c;--diff-chg:#ef6c00;--diff-del:#c62828}
+body.dark{--bg:#0b0f19;--panel:#131926;--card:#1a2236;--border:#263354;--muted:#6b7fa3;--accent:#4fc3f7;--fg:#dce4f0;--cvbg:#0e1525;--cvhold:#090d17;--grid:#263354;--hatch:#3d5070;--diff-add:#2e7d32;--diff-chg:#e65100;--diff-del:#b71c1c}
+body{background:var(--bg);color:var(--fg);font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--panel)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.pw{position:relative;overflow:auto}.pw.drag-over::after{content:'';position:absolute;inset:6px;border:2px dashed var(--accent);border-radius:8px;pointer-events:none;z-index:10}
+.es{transition:opacity .3s}.es.hid{opacity:0;pointer-events:none}
+.fb{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .2s}.fb:hover{border-color:var(--accent);color:var(--fg)}.fb input{display:none}.fb.ok{border-color:var(--accent);color:var(--accent)}
+#tt{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--fg);box-shadow:0 8px 32px rgba(0,0,0,.25);max-width:360px;z-index:999}
+#tt .tid{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--accent)}
+#tt .tr{display:flex;justify-content:space-between;gap:16px;padding:2px 0;color:var(--muted);font-size:11px}#tt .tr span:last-child{color:var(--fg)}
+#tt .tbg{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap}#tt .tbs{padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600}
+.lsw{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:middle;margin-right:3px}
+.lem{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:middle;margin-right:3px;border:1px dashed var(--muted)}
+.tbtn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:500;transition:all .15s}.tbtn:hover{border-color:var(--accent);color:var(--accent)}.tbtn.on{background:rgba(0,0,0,.08);border-color:var(--accent);color:var(--accent)}
+.gbtn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:4px}.gbtn:hover{border-color:var(--accent);color:var(--fg)}.gbtn.on{background:rgba(2,136,209,.12);border-color:var(--accent);color:var(--accent)}.gbtn .cdot{width:10px;height:8px;border-radius:2px;display:inline-block}
+.mbtn{background:var(--card);border:1px solid var(--border);color:var(--fg);width:32px;height:32px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}.mbtn:hover{border-color:var(--accent);color:var(--accent)}
+.gbtn.act{background:rgba(200,80,0,.15);border-color:#c85000;color:#c85000}
+.gbtn.trt-on{background:rgba(100,100,100,.15);border-color:#888;color:#888}
+.gbtn.diff-on{background:rgba(239,108,0,.15);border-color:var(--diff-chg);color:var(--diff-chg)}
+.gbtn.wt-on{background:rgba(80,80,80,.12);border-color:#555;color:#333}
+body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#ccc}
+.srch-wrap{position:relative;display:inline-flex;align-items:center}
+#srchInput{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:3px 26px 3px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;width:200px;transition:border-color .15s;outline:none}
+#srchInput:focus{border-color:var(--accent)}
+#srchInput.found{border-color:#388e3c}
+#srchInput.notfound{border-color:#c62828;background:rgba(198,40,40,.06)}
+#srchClear{position:absolute;right:5px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:0;line-height:1;display:none}
+#srchClear:hover{color:var(--fg)}
+.logo-text{font-family:'DM Sans',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.5px;background:linear-gradient(135deg,var(--accent),#0288d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;user-select:none}
+.logo-text:hover{opacity:.8}
+#bayFilterPanel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;position:absolute;z-index:200;top:100%;left:0;margin-top:4px;min-width:280px;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+#bayFilterPanel .bfp-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+#bayFilterPanel .bay-group{display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid var(--border)}
+#bayFilterPanel .bay-group:last-child{border-bottom:none}
+.bay-triple-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s;white-space:nowrap}
+.bay-triple-btn:hover{border-color:var(--accent);color:var(--fg)}
+.bay-triple-btn.on{background:rgba(2,136,209,.15);border-color:var(--accent);color:var(--accent)}
+.bay-triple-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--fg);min-width:90px}
+#bayFilterWrap{position:relative}
+/* diffPanel — lateral derecho colapsable */
+#diffPanel{display:none;width:380px;min-width:300px;max-width:420px;flex-shrink:0;flex-direction:column;background:var(--panel);border-left:1px solid var(--border);overflow:hidden}
+#diffPanel.open{display:flex}
+#diffModalHeader{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;background:var(--card)}
+#diffModalTitle{font-weight:700;font-size:13px;flex:1;min-width:100px}
+#diffModalClose{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:4px}#diffModalClose:hover{color:var(--fg)}
+.diff-export-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;transition:all .15s;display:inline-flex;align-items:center;gap:5px}.diff-export-btn:hover{border-color:var(--accent);color:var(--accent)}
+#diffModalBody{overflow:auto;padding:14px 18px;flex:1;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.diff-row{display:grid;grid-template-columns:160px 1fr 1fr;gap:8px;padding:5px 8px;border-radius:5px;margin-bottom:3px;align-items:start}
+.diff-row:nth-child(even){background:rgba(128,128,128,.04)}
+.diff-row.diff-moved{border-left:3px solid var(--diff-chg);background:rgba(239,108,0,.05)}
+.diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.05)}
+.diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.05)}
+.diff-id{font-weight:700;font-size:11px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diff-cell{font-size:10px;color:var(--muted);line-height:1.6}
+.diff-cell b{color:var(--fg);font-weight:600}
+.diff-cell .chg{color:var(--diff-chg);font-weight:600}
+.diff-header{display:grid;grid-template-columns:160px 1fr 1fr;gap:8px;padding:4px 8px;margin-bottom:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border)}
+.diff-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase}
+.diff-badge.moved{background:rgba(239,108,0,.2);color:var(--diff-chg)}
+.diff-badge.missing{background:rgba(198,40,40,.2);color:var(--diff-del)}
+.diff-badge.appeared{background:rgba(56,142,60,.2);color:var(--diff-add)}
+.diff-type-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;border:1.5px solid;transition:all .15s;opacity:.38}
+.diff-type-pill.pill-on{opacity:1}
+.diff-type-pill:hover{opacity:1}
+#copyToast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);padding:7px 18px;border-radius:8px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+/* ── DG INFO MODAL ── */
+#dgModal{position:fixed;inset:0;z-index:1001;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+#dgModal.open{display:flex}
+#dgModalBox{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+#dgModalHeader{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+#dgModalIcon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(198,40,40,.15);color:#c62828;flex-shrink:0}
+#dgModalTitle{font-weight:700;font-size:15px;flex:1}
+#dgModalClass{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(198,40,40,.15);color:#c62828}
+#dgModalClose{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px}#dgModalClose:hover{color:var(--fg)}
+#dgModalBody{overflow:auto;padding:16px 18px;flex:1;font-size:13px;line-height:1.7}
+#dgModalBody .dg-section{margin-bottom:14px}
+#dgModalBody .dg-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px}
+#dgModalBody .dg-value{color:var(--fg);font-size:13px}
+#dgModalBody .dg-examples{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#dgModalBody .dg-tag{background:rgba(198,40,40,.1);color:#c62828;border:1px solid rgba(198,40,40,.25);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace}
+/* ── PESO RANGE ── */
+.wrange-wrap{display:inline-flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2px 6px;transition:border-color .15s}
+.wrange-wrap:focus-within{border-color:var(--accent)}
+.wrange-wrap.active{border-color:var(--accent);background:rgba(2,136,209,.07)}
+.wrange-inp{background:transparent;border:none;outline:none;color:var(--fg);font-size:11px;font-family:'IBM Plex Mono',monospace;width:44px;text-align:center}
+.wrange-inp::placeholder{color:var(--muted);opacity:.6}
+.wrange-sep{color:var(--muted);font-size:10px;font-weight:600;user-select:none}
+/* ── MOVE WIZARD — panel lateral izquierdo dentro del plano ── */
+#movePanel{display:none;width:320px;min-width:280px;max-width:340px;flex-shrink:0;flex-direction:column;background:var(--panel);border-right:1px solid var(--border);overflow:hidden;z-index:10}
+#movePanel.open{display:flex}
+#moveHeader{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--card)}
+#moveTitle{font-weight:700;font-size:13px;flex:1;color:var(--fg)}
+.move-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:4px}
+.move-close:hover{color:var(--fg)}
+#moveBody{overflow:auto;padding:12px;flex:1;font-size:12px}
+.mw-step{display:none}.mw-step.active{display:block}
+.mw-choice-row{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.mw-choice{padding:14px 12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;background:var(--card)}
+.mw-choice:hover{border-color:#7c3aed;background:rgba(124,58,237,.06)}
+.mw-choice i{font-size:18px;margin-bottom:6px;display:block;color:#7c3aed}
+.mw-choice h3{font-size:12px;font-weight:700;margin-bottom:3px}
+.mw-choice p{font-size:11px;color:var(--muted);line-height:1.4}
+/* Container list */
+#moveList{border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:8px;max-height:240px;overflow-y:auto}
+.mw-row{display:grid;grid-template-columns:1fr 28px;gap:4px;padding:6px 8px;align-items:start;border-bottom:1px solid var(--border);font-size:11px;font-family:'IBM Plex Mono',monospace}
+.mw-row:last-child{border-bottom:none}
+.mw-row.header{background:var(--card);font-weight:700;font-size:10px;color:var(--muted);text-transform:uppercase;position:sticky;top:0;z-index:1;grid-template-columns:1fr 28px}
+.mw-cinfo{display:flex;flex-direction:column;gap:2px}
+.mw-cid{font-weight:700;color:var(--accent);font-size:11px}
+.mw-cmeta{font-size:10px;color:var(--muted)}
+.mw-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:2px;border-radius:3px;align-self:center}.mw-del:hover{color:#c62828}
+/* Pos assignment step */
+.mw-pos-step-row{padding:7px 0;border-bottom:1px solid var(--border)}
+.mw-pos-step-row:last-child{border-bottom:none}
+.mw-pos-step-row.active-row{background:rgba(124,58,237,.05);border-left:3px solid #7c3aed;padding-left:6px;margin-left:-6px}
+.mw-psrow-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.mw-psrow-cid{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mw-psrow-from{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
+.mw-psrow-bottom{display:flex;align-items:center;gap:6px}
+.mw-pos-inp{background:var(--card);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:3px 7px;width:90px;text-align:center;outline:none}
+.mw-pos-inp:focus{border-color:#7c3aed}
+.mw-pos-inp.ok{border-color:#388e3c;color:#388e3c}
+.mw-pos-inp.err{border-color:#c62828;color:#c62828}
+.mw-pos-warn{font-size:10px;color:#e65100;flex:1}
+.mw-pos-err{font-size:10px;color:#c62828;flex:1}
+.mw-crosshair{background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--muted);font-size:11px;padding:3px 6px;transition:all .15s}.mw-crosshair:hover{border-color:#7c3aed;color:#7c3aed}
+/* pick banner */
+#pickBanner{display:none;position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:1001;box-shadow:0 4px 20px rgba(124,58,237,.4);pointer-events:none}
+/* list mode */
+#listPasteArea{width:100%;min-height:100px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px;resize:vertical;outline:none;margin-top:6px}
+#listPasteArea:focus{border-color:#7c3aed}
+.mw-preview{margin-top:8px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-height:200px;overflow-y:auto}
+.mw-preview-row{display:grid;grid-template-columns:1fr 70px 1fr;gap:6px;padding:4px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border)}
+.mw-preview-row:last-child{border-bottom:none}
+.mw-preview-row.warn{color:#e65100}.mw-preview-row.ok-row{color:var(--fg)}.mw-preview-row.header{background:var(--card);font-weight:700;color:var(--muted);text-transform:uppercase}
+/* footer */
+#moveFooter{padding:8px 12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:6px;flex-shrink:0;background:var(--card)}
+.mw-btn{padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.mw-btn.primary{background:#7c3aed;color:#fff}.mw-btn.primary:hover{background:#6d28d9}
+.mw-btn.primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.mw-btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--fg)}.mw-btn.ghost:hover{border-color:var(--accent)}
+/* ── SUMMARY MODAL ── */
+#summaryModal{position:fixed;inset:0;z-index:1002;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+#summaryModal.open{display:flex}
+#summaryModalBox{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:900px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+#summaryModalHeader{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sum-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:8px}
+.sum-table th{background:var(--card);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:2px solid var(--border);text-align:left;position:sticky;top:0;z-index:1}
+.sum-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--fg)}
+.sum-table tr:hover td{background:rgba(2,136,209,.06)}
+.sum-table .sum-total{font-weight:700;background:var(--card)}
+.sum-tab{display:inline-block;padding:6px 14px;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-bottom:none;background:var(--card);transition:all .15s}
+.sum-tab.active{color:var(--accent);border-color:var(--accent);background:var(--panel)}
+.sum-tab:hover{color:var(--fg)}
+
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+<header class="px-4 py-2 flex items-center gap-3 shrink-0 flex-wrap" style="background:var(--panel);border-bottom:1px solid var(--border)">
+  <div class="flex items-center gap-2">
+    <span class="logo-text" onclick="resetAllFilters()" title="Reset de todos los filtros">MSaYYeS</span>
+    <h1 class="text-base font-bold tracking-tight">BAPLIE Dual Viewer</h1>
+  </div>
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+  <button class="mbtn" id="themeBtn" onclick="toggleTheme()" title="Cambiar tema"><i class="fa-solid fa-moon"></i></button>
+  <button class="gbtn" id="moveBtn" onclick="openMoveWizard()" title="Mover contenedores y generar nuevo BAPLIE" style="border-color:#7c3aed;color:#7c3aed">
+    <i class="fa-solid fa-arrows-up-down-left-right" style="font-size:10px"></i> Mover
+  </button>
+  <div class="srch-wrap">
+    <input id="srchInput" type="text" placeholder="Buscar contenedor(es)…" oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
+    <button id="srchClear" onclick="clearSearch()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <button class="gbtn" id="srchFilterBtn" onclick="toggleSrchFilter()" title="Modo filtro: oculta el resto y muestra solo los contenedores buscados" style="display:none">
+    <i class="fa-solid fa-filter" style="font-size:9px"></i> Filtro
+  </button>
+  <div class="flex items-center gap-2 ml-auto">
+    <label class="fb" id="lb1"><i class="fa-solid fa-file-import text-xs"></i><span id="fn1">Archivo 1</span><input type="file" id="f1" accept=".edi,.txt,.baplie"></label><button class="mbtn" onclick="clearPanel(1)" title="Descargar plan 1" style="width:24px;height:24px;font-size:11px">×</button>
+    <label class="fb" id="lb2"><i class="fa-solid fa-file-import text-xs"></i><span id="fn2">Archivo 2</span><input type="file" id="f2" accept=".edi,.txt,.baplie"></label><button class="mbtn" onclick="clearPanel(2)" title="Descargar plan 2" style="width:24px;height:24px;font-size:11px">×</button>
+  </div>
+</header>
+<div class="px-4 py-1.5 flex items-center gap-2 shrink-0 flex-wrap" style="background:var(--panel);border-bottom:1px solid var(--border)">
+  <div style="display:inline-flex;align-items:center;gap:4px">
+    <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">Filtros</span>
+    <button class="gbtn on" id="sizeAllBtn" data-gf="size" data-val="all" onclick="setGF('size','all')">Todos</button>
+    <button class="gbtn" data-gf="size" data-val="20" onclick="setGF('size','20')">20'</button>
+    <button class="gbtn" data-gf="size" data-val="40" onclick="setGF('size','40')">40'</button>
+    <button class="gbtn" data-gf="size" data-val="45" onclick="setGF('size','45')">45'</button>
+  </div>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <!-- F/E: mutually exclusive, none=ambos -->
+  <div style="display:inline-flex;align-items:center;gap:4px">
+    <button class="gbtn on" id="feAllBtn" onclick="setFE('all')">F+E</button>
+    <button class="gbtn" id="feFullBtn" onclick="setFE('full')">Full</button>
+    <button class="gbtn" id="feEmptyBtn" onclick="setFE('empty')">MT</button>
+  </div>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <!-- Cargo type: ON=visible, OFF=oculto (exclusion blacklist) -->
+  <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+    <button class="gbtn on" id="showRfBtn" onclick="toggleShow('rf')" title="Reefer — clic para ocultar">RF</button>
+    <button class="gbtn on" id="showDgBtn" onclick="toggleShow('dg')" title="Peligrosos — clic para ocultar">DG</button>
+    <button class="gbtn on" id="showOogBtn" onclick="toggleShow('oog')" title="Sobredimensionados — clic para ocultar">OOG</button>
+    <button class="gbtn on" id="showRsBtn" onclick="toggleShow('rs')" title="Remociones — clic para ocultar">RS</button>
+    <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG/RS) — clic para ocultar">GEN</button>
+  </div>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <button class="gbtn" id="diffToggleBtn" onclick="toggleDiffFilter()" title="Resaltar en naranja los contenedores con diferencias entre los dos planes">
+    <i class="fa-solid fa-code-compare" style="font-size:10px"></i> Diferencias
+    <span id="diffToggleBadge" style="display:none;background:var(--diff-chg);color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:2px;font-weight:700"></span>
+  </button>
+  <button class="gbtn" id="diffLogBtn" onclick="openDiffModal()" title="Ver log de cambios entre los dos planes" style="display:none">
+    <i class="fa-solid fa-list-ul" style="font-size:10px"></i> Ver log
+  </button>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+    <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POD</span>
+    <button class="gbtn on" id="podAllBtn" onclick="podAll()">Todos</button>
+    <div id="podbtns" class="flex items-center gap-1 flex-wrap"></div>
+  </div>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+    <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POL</span>
+    <button class="gbtn" id="polEsvlcBtn" onclick="togglePolEsvlc()">POL=ESVLC</button>
+    <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores con POL distinto de ESVLC">TRT</button>
+    <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris todos los contenedores que no cumplan los filtros activos">No-sel</button>
+  </div>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <button class="gbtn" id="wtBtn" onclick="toggleWt()" title="Colorear por peso: blanco=vacío, negro=35t">
+    <i class="fa-solid fa-weight-hanging" style="font-size:10px"></i> Peso
+  </button>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <!-- PESO RANGO -->
+  <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider mr-1">Peso</span>
+  <div class="wrange-wrap" id="wrangeWrap">
+    <input class="wrange-inp" id="wrangeMin" type="number" min="0" max="99" placeholder="desde" title="Desde (t)" oninput="applyWrange()">
+    <span class="wrange-sep">—</span>
+    <input class="wrange-inp" id="wrangeMax" type="number" min="0" max="99" placeholder="hasta" title="Hasta (t)" oninput="applyWrange()">
+    <span class="wrange-sep" style="font-size:9px;margin-left:2px">t</span>
+    <button id="wrangeClear" onclick="clearWrange()" style="display:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 2px;margin-left:1px" title="Borrar filtro de peso"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <!-- COPIAR FILTRADOS -->
+  <button class="gbtn" id="copyFilteredBtn" onclick="copyFilteredContainers()" title="Copiar al portapapeles la lista de contenedores visibles en pantalla">
+    <i class="fa-solid fa-clipboard-list" style="font-size:10px"></i> Copiar filtrados
+  </button>
+  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+  <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider mr-1">BAY</span>
+  <div id="bayFilterWrap" style="position:relative">
+    <button class="gbtn on" id="bayAllBtn" onclick="toggleBayPanel()" title="Filtrar por bay">
+      <i class="fa-solid fa-layer-group" style="font-size:10px"></i>
+      <span id="bayBtnLabel">Todos</span>
+      <i class="fa-solid fa-chevron-down" style="font-size:9px;margin-left:2px" id="bayChevron"></i>
+    </button>
+    <div id="bayFilterPanel" style="display:none">
+      <div class="bfp-title">Seleccionar Bays</div>
+      <div class="flex gap-2 mb-2">
+        <button class="bay-triple-btn on" id="bfpAllBtn" onclick="bayFilterAll()">Todos</button>
+        <button class="bay-triple-btn" onclick="bayFilterNone()">Ninguno</button>
+      </div>
+      <div id="bayGroupList" style="max-height:220px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+<main class="flex flex-1 overflow-hidden" id="mainArea">
+  <!-- MOVE WIZARD PANEL — lateral izquierdo, dentro del flujo -->
+  <div id="movePanel">
+    <div id="moveHeader">
+      <i class="fa-solid fa-arrows-up-down-left-right" style="color:#7c3aed;font-size:12px"></i>
+      <span id="moveTitle">Mover contenedores</span>
+      <button class="move-close" onclick="closeMoveWizard()" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="moveBody">
+      <div class="mw-step active" id="mwStep0">
+        <p style="color:var(--muted);font-size:11px;margin-bottom:6px">¿Cómo seleccionar los contenedores?</p>
+        <div class="mw-choice-row">
+          <div class="mw-choice" onclick="startManual()">
+            <i class="fa-solid fa-hand-pointer"></i>
+            <h3>A mano</h3>
+            <p>Clica en el plano o busca por ID/posición. Asignas destino uno a uno.</p>
+          </div>
+          <div class="mw-choice" onclick="startList()">
+            <i class="fa-solid fa-table-list"></i>
+            <h3>Por lista</h3>
+            <p>Pega desde Excel: contenedor y posición destino.</p>
+          </div>
+        </div>
+      </div>
+      <div class="mw-step" id="mwStep1a">
+        <p style="color:var(--muted);font-size:11px;margin-bottom:6px"><i class="fa-solid fa-circle-info" style="color:#7c3aed;margin-right:4px"></i>Clica en el plano o busca. Los contenedores se acumulan aquí.</p>
+        <div id="moveList">
+          <div class="mw-row header"><span>Contenedor / datos</span><span></span></div>
+          <div id="moveListRows"><p style="text-align:center;color:var(--muted);font-size:11px;padding:10px">Sin contenedores</p></div>
+        </div>
+      </div>
+      <div class="mw-step" id="mwStep1b">
+        <p style="color:var(--muted);font-size:11px">Pega desde Excel (Tab entre columnas):<br><b>contenedor</b> · <b>posición destino</b></p>
+        <textarea id="listPasteArea" placeholder="MSMU1234567&#9;0060204&#10;TCKU9876543&#9;0180214"></textarea>
+        <div id="mwPreview" style="display:none"></div>
+      </div>
+      <div class="mw-step" id="mwStep2">
+        <p style="color:var(--muted);font-size:11px;margin-bottom:6px"><i class="fa-solid fa-circle-info" style="color:#7c3aed;margin-right:4px"></i>Escribe la posición destino (5-7 dígitos) o clica <i class="fa-solid fa-crosshairs"></i> y clica en el plano.</p>
+        <div id="mwPosRows"></div>
+      </div>
+    </div>
+    <div id="moveFooter">
+      <button class="mw-btn ghost" id="mwBackBtn" style="display:none" onclick="mwBack()"><i class="fa-solid fa-arrow-left" style="font-size:9px;margin-right:3px"></i>Atrás</button>
+      <button class="mw-btn primary" id="mwNextBtn" onclick="mwNext()">Siguiente</button>
+    </div>
+  </div>
+  <!-- LISTADO PANEL -->
+  <div id="lstPanel">
+    <div id="lstResize"></div>
+    <div id="listadoHeader">
+      <i class="fa-solid fa-table-list" style="color:var(--accent);font-size:11px"></i>
+      <span id="listadoTitle">Listado</span>
+      <input type="text" id="listadoSearch" placeholder="Buscar…" style="background:var(--cvbg);border:1px solid var(--border);border-radius:3px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 6px;width:100px;outline:none;flex:1;min-width:60px" oninput="filterListado(this.value)">
+      <button class="lst-btn" onclick="exportListadoTSV()" title="Copiar TSV"><i class="fa-solid fa-copy" style="font-size:9px"></i></button>
+      <button class="lst-btn" onclick="exportListadoBaplie()" title="Exportar BAPLIE"><i class="fa-solid fa-download" style="font-size:9px"></i></button>
+      <button class="lst-btn" onclick="closeLst()" title="Cerrar"><i class="fa-solid fa-xmark" style="font-size:10px"></i></button>
+    </div>
+    <div id="listadoBody"><table id="listadoTable"><thead id="listadoThead"></thead><tbody id="listadoTbody"></tbody></table></div>
+    <div id="listadoFooter"><span id="listadoCount" style="font-size:10px"></span></div>
+  </div>
+  <div class="flex-1 flex flex-col min-w-0" id="col1" style="border-right:1px solid var(--border)">
+    <div class="px-3 py-1.5 flex items-center gap-2 shrink-0" style="background:var(--card);border-bottom:1px solid var(--border)">
+      <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">Plan 1</span>
+      <span id="ship1" class="text-xs" style="color:var(--accent);font-family:'IBM Plex Mono',monospace;font-weight:600"></span>
+      <span id="s1" class="text-xs" style="color:var(--muted);font-family:'IBM Plex Mono',monospace"></span>
+      <div class="ml-auto flex items-center gap-1" id="tb1"></div>
+    </div>
+    <div class="flex-1 pw" id="w1"><canvas id="c1"></canvas>
+      <div class="es absolute inset-0 flex items-center justify-center" id="e1"><div class="text-center"><i class="fa-solid fa-file-import text-3xl mb-3" style="color:var(--muted);opacity:.25"></i><p style="color:var(--muted)" class="text-sm">Arrastra un archivo BAPLIE aquí</p></div></div>
+    </div>
+  </div>
+  <div class="flex-1 flex flex-col min-w-0" id="col2" style="display:none">
+    <div class="px-3 py-1.5 flex items-center gap-2 shrink-0" id="hdr2" style="background:var(--card);border-bottom:1px solid var(--border)">
+      <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">Plan 2</span>
+      <span id="ship2" class="text-xs" style="color:var(--accent);font-family:'IBM Plex Mono',monospace;font-weight:600"></span>
+      <span id="s2" class="text-xs" style="color:var(--muted);font-family:'IBM Plex Mono',monospace"></span>
+      <div class="ml-auto flex items-center gap-1"><span id="exportBaplieSlot"></span><div id="tb2" style="display:inline-flex;align-items:center;gap:4px"></div></div>
+    </div>
+    <div class="flex-1 pw" id="w2"><canvas id="c2"></canvas>
+      <div class="es absolute inset-0 flex items-center justify-center" id="e2"><div class="text-center"><i class="fa-solid fa-file-import text-3xl mb-3" style="color:var(--muted);opacity:.25"></i><p style="color:var(--muted)" class="text-sm">Arrastra un archivo BAPLIE aquí</p></div></div>
+    </div>
+  </div>
+
+
+<div id="diffPanel">
+    <div id="diffModalHeader">
+      <i class="fa-solid fa-code-compare" style="color:var(--accent)"></i>
+      <span id="diffModalTitle">Log de Diferencias</span>
+      <button class="diff-export-btn" id="diffApplyBtn" onclick="applyLogToCanvas()" title="Seleccionar en el plano los contenedores visibles en el log" style="border-color:var(--accent);color:var(--accent)"><i class="fa-solid fa-map-pin" style="font-size:11px"></i> Mostrar en plano</button>
+      <button class="diff-export-btn" onclick="exportDiffCSV()" title="Exportar a CSV"><i class="fa-solid fa-file-csv" style="font-size:11px"></i> CSV</button>
+      <button class="diff-export-btn" onclick="exportDiffTSV()" title="Copiar como tabla TSV"><i class="fa-solid fa-copy" style="font-size:11px"></i> Copiar tabla</button>
+      <button id="diffModalClose" onclick="closeDiffModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="diffModalBody"></div>
+</div>
+</main>
+<footer class="px-5 py-1.5 flex items-center gap-4 shrink-0 text-xs flex-wrap" style="background:var(--panel);border-top:1px solid var(--border);color:var(--muted)" id="legend">
+  <span style="margin-left:auto;opacity:.45;font-size:10px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">© 2025 MSaYYeS · BAPLIE Dual Viewer</span>
+</footer>
+<div id="tt" class="fixed pointer-events-none hidden"></div>
+<div id="copyToast"></div>
+<!-- MOVE WIZARD -->
+<div id="pickBanner"><i class="fa-solid fa-crosshairs" style="margin-right:6px"></i>Clica en el plano · ESC para cancelar</div>
+<!-- DG INFO MODAL -->
+<div id="dgModal">
+  <div id="dgModalBox">
+    <div id="dgModalHeader">
+      <div id="dgModalIcon"><i class="fa-solid fa-radiation"></i></div>
+      <div style="flex:1">
+        <div id="dgModalTitle">Mercancía Peligrosa</div>
+        <div id="dgModalSubtitle" style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px"></div>
+      </div>
+      <div id="dgModalClass"></div>
+      <button id="dgModalClose" onclick="closeDgModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="dgModalBody"></div>
+  </div>
+</div>
+<div id="pickBanner"><i class="fa-solid fa-crosshairs" style="margin-right:6px"></i>Clica en el plano · ESC para cancelar</div>
+<!-- DG INFO MODAL -->
+<div id="dgModal">
+  <div id="dgModalBox">
+    <div id="dgModalHeader">
+      <div id="dgModalIcon"><i class="fa-solid fa-radiation"></i></div>
+      <div style="flex:1">
+        <div id="dgModalTitle">Mercancía Peligrosa</div>
+        <div id="dgModalSubtitle" style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px"></div>
+      </div>
+      <div id="dgModalClass"></div>
+      <button id="dgModalClose" onclick="closeDgModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="dgModalBody"></div>
+  </div>
+</div>
+<!-- SUMMARY MODAL -->
+<div id="summaryModal">
+  <div id="summaryModalBox">
+    <div id="summaryModalHeader">
+      <i class="fa-solid fa-chart-bar" style="color:var(--accent);font-size:14px"></i>
+      <span id="summaryModalTitle" style="font-weight:700;font-size:15px;flex:1">Resumen Dinámico</span>
+      <button id="summaryModalClose" onclick="closeSummary()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="summaryModalBody" style="overflow:auto;padding:16px;flex:1"></div>
+  </div>
+</div>
+<script>
+/* ============================================================
+   MSaYYeS BAPLIE Dual Viewer
+   Copyright © 2025 MSaYYeS. All rights reserved.
+   Unauthorized copying or distribution is prohibited.
+   Protected under Spanish IP Law (RDL 1/1996) and
+   the Berne Convention.
+   ============================================================ */
+/* ── CLIPBOARD SEGURO (funciona en file://) ── */
+function safeClipboard(text, onDone){
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(onDone).catch(function(){_fallbackCopy(text,onDone);});
+  } else {_fallbackCopy(text,onDone);}
+}
+function _fallbackCopy(text,onDone){
+  var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;top:-999px;left:-999px;opacity:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+  if(onDone)onDone();
+}
+/* ── UTILIDADES ── */
+function cv(v){return getComputedStyle(document.body).getPropertyValue(v).trim()}
+function splitE(s){var r=[],c='';for(var i=0;i<s.length;i++){if(s[i]==='?'&&i+1<s.length&&s[i+1]==='+'){c+='+';i++}else if(s[i]==='+'){r.push(c);c=''}else c+=s[i]}r.push(c);return r}
+function parsePos(s){s=s.trim();if(!s||s.length<4)return null;var b,r,t;if(s.length>=7){b=parseInt(s.substring(0,3));r=parseInt(s.substring(3,5));t=parseInt(s.substring(5,8))}else if(s.length===6){b=parseInt(s.substring(0,3));r=parseInt(s.substring(3,5));t=parseInt(s.substring(5,7))}else if(s.length===5){b=parseInt(s.substring(0,2));r=parseInt(s.substring(2,4));t=parseInt(s.substring(4,6))}else return null;if(isNaN(b)||isNaN(r)||isNaN(t))return null;return{bay:b,row:r,tier:t}}
+
+/* ── PARSER BAPLIE / MOVINS ── */
+// Cada contenedor empieza con LOC+147 y termina justo antes del siguiente LOC+147 (o EQD).
+// Un RFF+DSI: indica que es una remoción (MOVINS): la posición objetivo es el DSI, y el LOC+147 es la original.
+function parseBaplie(raw){
+  var text=raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  text=text.replace(/\?'/g,'\x00EA\x00');
+  var segs=text.split("'").map(function(s){return s.trim()}).filter(Boolean);
+  var out=[];
+  // Agrupar segmentos en bloques de contenedor: cada bloque comienza con LOC+147
+  var blocks=[];var cur=null;
+  for(var i=0;i<segs.length;i++){
+    var seg=segs[i].replace(/\x00EA\x00/g,"'");
+    var el=splitE(seg);var id=(el[0]||'').trim();
+    if(id==='LOC'&&el[1]==='147'){
+      if(cur)blocks.push(cur);
+      cur=[seg];
+    } else if(cur){
+      cur.push(seg);
+    }
+  }
+  if(cur)blocks.push(cur);
+
+  for(var bi=0;bi<blocks.length;bi++){
+    var blk=blocks[bi];
+    var tP=[],tW=null,tPol='',tPod='',tPodDischarge='',tDgList=[],tRf=false,tTmp=null,tOog=false,tOogI='',tDim={};
+    var tDsiPos=null; // posición real (remoción MOVINS)
+    var tOrigPos=null; // posición original (LOC+147 en remoción)
+    var cid='',ctype='',isEmpty=false;
+    var hasEqd=false;
+
+    for(var si=0;si<blk.length;si++){
+      var seg=blk[si];var el=splitE(seg);var id=(el[0]||'').trim();
+      if(id==='LOC'){
+        var loc=el[1]||'';var locVal=(el[2]||'').trim().split(':')[0].trim();
+        if(loc==='147'){var pp=parsePos(locVal);if(pp){tP.push(pp);tOrigPos=pp;}}
+        else if(loc==='9'){tPol=locVal;}
+        else if(loc==='11'){tPod=locVal;}
+        else if(loc==='80'||loc==='83'){/* port of loading/discharge alt */}
+      }
+      else if(id==='MEA'){
+        for(var j=2;j<el.length;j++){var pts=(el[j]||'').trim().split(':');for(var p2=pts.length-1;p2>=0;p2--){var n=parseFloat(pts[p2]);if(!isNaN(n)&&n>0){tW=n;break;}}if(tW!==null)break;}
+      }
+      else if(id==='RFF'){
+        var rffQ=(el[1]||'').split(':');
+        if(rffQ[0]==='DSI'&&rffQ[1]){
+          // MOVINS remoción: rffQ[1] es la posición objetivo real
+          var dsiRaw=rffQ[1].trim();var dpp=parsePos(dsiRaw);
+          if(dpp)tDsiPos=dpp;
+        }
+      }
+      else if(id==='DGS'){
+        // Puede haber múltiples DGS por contenedor con diferentes clases
+        var dgClass=(el[2]||'').split(':')[0].trim();
+        var dgUN=(el[3]||'').trim().replace(/\D/g,'').substring(0,4);
+        var dgRaw=el.slice(1).join('+').replace(/"/g,'').trim();
+        if(dgClass)tDgList.push({cls:dgClass,un:dgUN,raw:dgRaw});
+      }
+      else if(id==='TMP'){
+        tRf=true;tTmp=null;
+        // TMP+2+<temp>:CEL  → el[1]=qualifier(2), el[2]=value:unit
+        // Look for the numeric value in el[2] first (correct field), then fallback
+        for(var m=2;m<el.length;m++){
+          var tv=(el[m]||'').trim().split(':')[0];
+          var tn=parseFloat(tv);if(!isNaN(tn)){tTmp=tn;break;}
+        }
+        // fallback: el[1] sometimes is the temp when qualifier absent
+        if(tTmp===null){var tv1=(el[1]||'').trim().split(':')[0];var tn1=parseFloat(tv1);if(!isNaN(tn1)&&(tv1.indexOf('.')>=0||tn1<0||Math.abs(tn1)>9)){tTmp=tn1;}}
+      }
+      else if(id==='DIM'||id==='HAN'){
+        var raw2=el.slice(1).join(' ').toUpperCase();
+        if(id==='HAN'&&raw2.indexOf('AK')>=0){tOog=true;tOogI='AK';}
+        if(id==='DIM'){
+          // DIM+<qualifier>+CMT:<length>:<width>:<height>
+          // qualifier: 5=over-length, 6=over-length-aft, 7=over-width-port, 8=over-width-stbd, 9=over-height
+          var dimQ=(el[1]||'').trim();
+          var dimParts=(el[2]||'').split(':');
+          // values are in cm, may be in pos 1,2,3 depending on qualifier
+          var dimVal=0;
+          for(var di=1;di<dimParts.length;di++){var dv=parseFloat(dimParts[di]);if(!isNaN(dv)&&dv>0){dimVal=dv;break;}}
+          if(dimVal>0){
+            tOog=true;if(!tOogI)tOogI='OOG';
+            // Map qualifier to direction
+            if(dimQ==='9')tDim.top=Math.max(tDim.top||0,dimVal);
+            else if(dimQ==='5'||dimQ==='6')tDim.fwd=Math.max(tDim.fwd||0,dimVal);
+            else if(dimQ==='7')tDim.port=Math.max(tDim.port||0,dimVal);
+            else if(dimQ==='8')tDim.stbd=Math.max(tDim.stbd||0,dimVal);
+            else{// generic: try to infer from position in parts
+              if(dimParts.length>=4&&parseFloat(dimParts[3])>0)tDim.top=Math.max(tDim.top||0,parseFloat(dimParts[3]));
+              if(dimParts.length>=3&&parseFloat(dimParts[2])>0)tDim.stbd=Math.max(tDim.stbd||0,parseFloat(dimParts[2]));
+              if(dimParts.length>=2&&parseFloat(dimParts[1])>0)tDim.fwd=Math.max(tDim.fwd||0,parseFloat(dimParts[1]));
+            }
+          }
+        }
+      }
+      else if(id==='EQD'){
+        hasEqd=true;
+        cid=(el[2]||'').trim();ctype=(el[3]||'').trim();isEmpty=false;
+        for(var k=4;k<el.length;k++){var v2=(el[k]||'').trim();if(v2==='4'){isEmpty=true;break;}if(v2==='5'){isEmpty=false;break;}}
+      }
+    }
+    if(!hasEqd||!cid)continue;
+
+    var isDg=tDgList.length>0;
+    // Primary DG class: first entry; all classes for display
+    var dgClass=isDg?tDgList[0].cls:'';
+    var dgUN=isDg?tDgList[0].un:'';
+    var dgInfo=tDgList.map(function(d){return(d.cls?'Cl.'+d.cls:'')+' '+(d.un?'UN'+d.un:'')}).join(' | ').trim();
+    var dgClasses=tDgList.map(function(d){return d.cls}).filter(Boolean);
+
+    // MOVINS remoción: si hay DSI, esa es la posición real; el LOC+147 es la original
+    var isRemocion=tDsiPos!==null;
+    var canvasPositions;
+    if(isRemocion){
+      canvasPositions=[tDsiPos]; // se pinta en la posición DSI
+    } else {
+      canvasPositions=tP.slice();
+    }
+
+    out.push({
+      id:cid,type:ctype,isEmpty:isEmpty,
+      positions:canvasPositions,     // posición(es) en plano
+      origPos:isRemocion?tOrigPos:null, // posición original de remoción
+      weight:tW,
+      isDangerous:isDg,isReefer:tRf,temperature:tTmp,
+      dgInfo:dgInfo,dgClass:dgClass,dgUN:dgUN,dgClasses:dgClasses,dgList:tDgList,
+      pol:tPol,pod:tPod,
+      isOog:tOog,oogInfo:tOogI,dim:tDim,
+      isRemocion:isRemocion,
+      _is40ft:false,_is45ft:false
+    });
+  }
+
+  // Mark 40ft (odd bay + even bay pair)
+  var ft40={};
+  for(var a=0;a<out.length;a++){var cc=out[a];if(cc.positions.length>=2){var bs=cc.positions.map(function(p){return p.bay}).sort(function(a,b){return a-b});if(bs.length===2&&Math.abs(bs[0]-bs[1])===1)ft40[cc.id]=true;}}
+  for(var b=0;b<out.length;b++){
+    out[b]._is40ft=!!ft40[out[b].id];
+    if(!out[b].isReefer){var up=out[b].type.toUpperCase();if(up.length>=3&&up[2]==='R')out[b].isReefer=true;}
+    out[b]._is45ft=is45ft(out[b].type.toUpperCase());
+  }
+  return out;
+}
+function is45ft(tc){if(!tc||tc.length<2)return false;if(tc[0]==='L'&&(tc[1]==='5'||tc[1]==='E'))return true;if(tc[0]==='5'&&tc[1]==='5')return true;return false;}
+function extractShipName(raw){
+  // Parse TDT segment to extract vessel name
+  // TDT+20+voyage+++carrier:172:20+++IMOcode:103::vesselname
+  var text=raw.replace(/^\uFEFF/,"").replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  text=text.replace(/\?'/g,'\x00EA\x00');
+  var segs=text.split("'").map(function(s){return s.trim()}).filter(Boolean);
+  for(var i=0;i<segs.length;i++){
+    var seg=segs[i].replace(/\x00EA\x00/g,"'");
+    var el=splitE(seg);var id=(el[0]||'').trim();
+    if(id==='TDT'){
+      // TDT segment: look for the last composite element containing ::vesselname
+      // The vessel name is in the last element after the last ::
+      for(var j=el.length-1;j>=5;j--){
+        var val=(el[j]||'').trim();
+        if(val.indexOf('::')>=0){
+          var parts=val.split('::');
+          var name=parts[parts.length-1].trim();
+          if(name)return name;
+        }
+      }
+    }
+  }
+  return null;
+}
+function isOog(c){return c.isOog===true}
+function isHC(c){return c.type&&c.type.length>=2&&c.type[1]==='5'}
+function buildPlan(cts){var pl={};for(var i=0;i<cts.length;i++){var c=cts[i];for(var j=0;j<c.positions.length;j++){var p=c.positions[j];if(c._is40ft&&p.bay%2===0)continue;if(!pl[p.bay])pl[p.bay]={};if(!pl[p.bay][p.row])pl[p.bay][p.row]={};pl[p.bay][p.row][p.tier]=c}}return pl}
+
+/* ── CONSTANTES Y ESTADO ── */
+var CW=28,CH=16,CGAP=8,LO=40,MT_OFF=40,MB=20;
+var Z={1:1,2:1},F={1:{view:'3b'},2:{view:'3b'}};
+var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false};
+// S.sel ahora es: null | Set<string> (multi-selección)
+var S={c1:null,c2:null,L1:null,L2:null,_L1:null,_L2:null,hl:null,sel:null,srch:null,fs:null,raw1:null,raw2:null,shipName1:null,shipName2:null};
+
+/* ── EXPORTAR BAPLIE MODIFICADO ── */
+function updateExportBtn(fname){
+  var slot=document.getElementById('exportBaplieSlot');
+  if(!slot)return;
+  slot.innerHTML=''; // clear old
+  if(!S.raw2)return;
+  var btn=document.createElement('button');
+  btn.id='exportBaplieBtn';btn.className='tbtn';
+  btn.style.cssText='border-color:#7c3aed;color:#7c3aed;margin-right:4px;white-space:nowrap';
+  btn.title='Descargar BAPLIE modificado';
+  btn.innerHTML='<i class="fa-solid fa-download" style="font-size:10px;margin-right:3px"></i>Exportar BAPLIE';
+  btn.onclick=function(){downloadBaplie(fname);};
+  slot.appendChild(btn);
+}
+function downloadBaplie(fname){
+  if(!S.raw2){showToast('Sin BAPLIE generado');return;}
+  // Use CRLF line endings as per EDI standard
+  var content=S.raw2.replace(/\r\n/g,'\n').replace(/\n/g,'\r\n');
+  var blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fname||'baplie_modificado.edi';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('✓ Descargado: '+a.download);
+}
+var POD_MAP={},POD_ORDER=[],BAY_TRIPLES=[];
+var DIFF_DATA={moved:[],missing:[],appeared:[]};
+var DIFF_IDS=new Set();
+var LOG_SEL_IDS=null; // null = sin filtro de log, Set = IDs visibles en el log actual
+var _diffRows=[];
+
+/* ── COLORES ── */
+function h2x(h,s,l){s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s;var x=c*(1-Math.abs((h/60)%2-1));var m=l-c/2;var r,g,b;if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}return'#'+((1<<24)+(Math.round((r+m)*255)<<16)+(Math.round((g+m)*255)<<8)+Math.round((b+m)*255)).toString(16).slice(1)}
+function pC(pod){if(!pod)return'#555555';if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
+function lt(hex,n){var r=Math.min(255,parseInt(hex.slice(1,3),16)+n);var g=Math.min(255,parseInt(hex.slice(3,5),16)+n);var b=Math.min(255,parseInt(hex.slice(5,7),16)+n);return'rgb('+r+','+g+','+b+')'}
+function tC(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>140?'#000000':'#ffffff'}
+function parseSz(c){if(!c)return 20;var u=c.toUpperCase();if(is45ft(u))return 45;return(u.length>=4&&(u[0]==='4'||u[0]==='L'))?40:20;}
+function fmtW(c){if(c.isEmpty)return'MT';if(c.weight!==null)return(c.weight/1000).toFixed(1).replace('.',',');return'-'}
+function fmtP(p){return String(p.bay).padStart(3,'0')+String(p.row).padStart(2,'0')+String(p.tier).padStart(2,'0')}
+function gC(pl,bay,row,tier){return(pl[bay]&&pl[bay][row])?pl[bay][row][tier]:null}
+function wtColor(c){if(c.isEmpty)return'#ffffff';var kg=c.weight||0;var ratio=Math.min(1,kg/35000);var v=Math.round(255*(1-ratio));var hex=v.toString(16).padStart(2,'0');return'#'+hex+hex+hex;}
+
+/* ── DIFF ── */
+function computeDiff(){
+  DIFF_IDS.clear();DIFF_DATA={moved:[],missing:[],appeared:[]};
+  if(!S.c1||!S.c2)return;
+  var map1={},map2={};
+  for(var i=0;i<S.c1.length;i++)map1[S.c1[i].id]=S.c1[i];
+  for(var i=0;i<S.c2.length;i++)map2[S.c2[i].id]=S.c2[i];
+  for(var id in map1){
+    if(!map2[id]){DIFF_IDS.add(id);DIFF_DATA.missing.push({id:id,a:map1[id]});continue}
+    var a=map1[id],b=map2[id];
+    var pa=a.positions.map(fmtP).sort().join(','),pb=b.positions.map(fmtP).sort().join(',');
+    var posC=pa!==pb,podC=a.pod!==b.pod,polC=a.pol!==b.pol,stC=a.isEmpty!==b.isEmpty;
+    var wtC=(Math.abs((a.weight||0)-(b.weight||0))>50),sztpC=(a.type!==b.type);
+    if(posC||podC||polC||stC||wtC||sztpC){DIFF_IDS.add(id);DIFF_DATA.moved.push({id:id,a:a,b:b,posChanged:posC,podChanged:podC,polChanged:polC,stateChanged:stC,wtChanged:wtC,sztpChanged:sztpC});}
+  }
+  for(var id in map2){if(!map1[id]){DIFF_IDS.add(id);DIFF_DATA.appeared.push({id:id,b:map2[id]});}}
+}
+
+/* ── FILTROS ── */
+// passF_noTrt: todos los filtros se aplican de forma acumulativa (AND lógico)
+function passF_noTrt(c){
+  // 1. Tamaño (multi-select Set: empty = todos)
+  if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
+  // 2. POL
+  if(GF.polEsvlc&&c.pol!=='ESVLC')return false;
+  // 2. F/E (Full/Empty): mutuamente exclusivos
+  if(GF.feMode==='full'&&c.isEmpty)return false;
+  if(GF.feMode==='empty'&&!c.isEmpty)return false;
+  // 3. Tipo de carga: GF.hidden = blacklist de tipos a ocultar
+  //    Cada tipo apagado oculta contenedores de ESE tipo.
+  //    GEN oculta los que no son RF/DG/OOG/RS (carga general).
+  if(GF.hidden.size>0){
+    var isSpec=c.isReefer||c.isDangerous||isOog(c)||c.isRemocion;
+    if(GF.hidden.has('rf')&&c.isReefer)return false;
+    if(GF.hidden.has('dg')&&c.isDangerous)return false;
+    if(GF.hidden.has('oog')&&isOog(c))return false;
+    if(GF.hidden.has('rs')&&c.isRemocion)return false;
+    if(GF.hidden.has('gen')&&!isSpec)return false;
+  }
+  // 4. POD
+  if(c.pod&&Object.keys(GF.pods).length>0&&!GF.pods[c.pod])return false;
+  // 5. Diff only
+  if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
+  // 6. Rango de peso (MT excluido si hay filtro de peso)
+  if(GF.wtMin!==null||GF.wtMax!==null){
+    if(c.isEmpty)return false;
+    var wt=(c.weight||0)/1000;
+    if(GF.wtMin!==null&&wt<GF.wtMin)return false;
+    if(GF.wtMax!==null&&wt>GF.wtMax)return false;
+  }
+  // 7. Búsqueda como filtro
+  if(GF.srchFilter&&S.sel&&S.sel.has&&!S.sel.has(c.id))return false;
+  return true;
+}
+// passF: con TRT dim-pass
+function passF(c){
+  if(passF_noTrt(c))return true;
+  // TRT mode: show all containers but dim those with pol != ESVLC (transit)
+  if(GF.trt)return true;
+  // Non-sel gray: show all containers, dim those not passing strict filter
+  if(GF.nonSelGray)return true;
+  return false;
+}
+// passF_noTrt_ignPod: kept for compatibility
+function passF_noTrt_ignPod(c){
+  if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
+  if(GF.feMode==='full'&&c.isEmpty)return false;
+  if(GF.feMode==='empty'&&!c.isEmpty)return false;
+  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c)||c.isRemocion;if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('rs')&&c.isRemocion)return false;if(GF.hidden.has('gen')&&!isSpec2)return false;}
+  if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
+  if(GF.wtMin!==null||GF.wtMax!==null){if(c.isEmpty)return false;var wt=(c.weight||0)/1000;if(GF.wtMin!==null&&wt<GF.wtMin)return false;if(GF.wtMax!==null&&wt>GF.wtMax)return false;}
+  if(GF.srchFilter&&S.sel&&S.sel.has&&!S.sel.has(c.id))return false;
+  return true;
+}
+function bayPassF(bay){if(!GF.bays)return true;return GF.bays.has(bay);}
+
+function makeMR(maxR,existingRows){
+  var maxE=(maxR%2===0)?maxR:maxR-1;var maxO=(maxR%2===1)?maxR:maxR-1;if(maxO>maxE)maxE=maxO+1;
+  var r=[];for(var i=maxE;i>=2;i-=2)r.push(i);
+  if(!existingRows||existingRows.has(0))r.push(0);
+  for(var i=1;i<=maxO;i+=2)r.push(i);return r;
+}
+function fillT(ts,base){if(!ts.length)return[];var mx=0;for(var i=0;i<ts.length;i++)if(ts[i]>mx)mx=ts[i];var b=base;if(b%2!==0)b++;var r=[];for(var t=b;t<=mx;t+=2)r.push(t);return r}
+function getAlignedTiers(plan,g){var tiersSet=new Set();function addTiers(b){if(!plan[b])return;for(var r in plan[b])for(var t in plan[b][r])if(passF(plan[b][r][t]))tiersSet.add(Number(t));}for(var gi=0;gi<g.length;gi++){addTiers(g[gi]);var pair=(g[gi]%2===0)?g[gi]-1:g[gi]+1;addTiers(pair);// Also add the other odd bay of the same trio
+for(var _ti2=0;_ti2<BAY_TRIPLES.length;_ti2++){var _tr2=BAY_TRIPLES[_ti2];if(_tr2.lo===g[gi]||_tr2.hi===g[gi]){addTiers(_tr2.lo);if(_tr2.hi)addTiers(_tr2.hi);break;}}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});cubT.sort(function(a,b){return b-a});bodT.sort(function(a,b){return a-b});var deckBase=82;for(var i=0;i<cubT.length;i++){if(cubT[i]<82){deckBase=72;break;}}return{cub:fillT(cubT,deckBase),bod:bodT};}
+function buildTriples(cts){if(!cts)return[];var oddSet=new Set(),evenSet=new Set();for(var i=0;i<cts.length;i++)for(var j=0;j<cts[i].positions.length;j++){var b=cts[i].positions[j].bay;if(b%2===1)oddSet.add(b);else evenSet.add(b);}var used=new Set();var triples=[];var evens=Array.from(evenSet).sort(function(a,b){return a-b});for(var i=0;i<evens.length;i++){var e=evens[i];triples.push({lo:e-1,mid:e,hi:e+1});used.add(e-1);used.add(e);used.add(e+1);}var odds=Array.from(oddSet).sort(function(a,b){return a-b});for(var i=0;i<odds.length;i++){if(!used.has(odds[i]))triples.push({lo:odds[i],mid:null,hi:null});}triples.sort(function(a,b){return a.lo-b.lo});return triples;}
+
+/* ── LAYOUT ── */
+function compLayout(plan,vw,pn){
+  var rawBays=Object.keys(plan).map(Number).sort(function(a,b){return a-b});if(!rawBays.length)return null;
+  var allBaysSet=new Set(rawBays);for(var i=0;i<rawBays.length;i++){var b=rawBays[i];allBaysSet.add(b%2===0?b-1:b+1);}
+  var allBays=Array.from(allBaysSet).sort(function(a,b){return a-b});var fBays=[];
+  for(var i=0;i<allBays.length;i++){var bay=allBays[i];if(!bayPassF(bay))continue;var has=false;if(plan[bay]){for(var r in plan[bay]){for(var t in plan[bay][r]){if(passF(plan[bay][r][t])){has=true;break;}}if(has)break;}}if(has)fBays.push(bay);}
+  if(!fBays.length)return null;var fBaySet=new Set(fBays);var maxR=0;
+  for(var i=0;i<fBays.length;i++){var bay=fBays[i];if(plan[bay]){for(var r in plan[bay]){var row=Number(r);if(row>maxR)maxR=row;}}}
+  var view=F[pn].view;
+  var _existRows=new Set();
+  for(var _i=0;_i<fBays.length;_i++){var _b2=fBays[_i];if(plan[_b2])for(var _r2 in plan[_b2])_existRows.add(Number(_r2));}
+  // Also trio siblings
+  for(var _i=0;_i<fBays.length;_i++){for(var _ti=0;_ti<BAY_TRIPLES.length;_ti++){var _tr=BAY_TRIPLES[_ti];if(_tr.lo===fBays[_i]||_tr.hi===fBays[_i]){if(plan[_tr.lo])for(var _r2 in plan[_tr.lo])_existRows.add(Number(_r2));if(_tr.hi&&plan[_tr.hi])for(var _r2 in plan[_tr.hi])_existRows.add(Number(_r2));break;}}}
+  var sR=makeMR(maxR,_existRows);
+
+  var effectiveView=view;
+  // ── 1b mode: compute tier count first, then derive cell size to fill viewport ──
+  var ch1b=CH, cw1b=CW*2; // default cell dimensions (overridden for 1b)
+  if(view==='1b'){
+    // Find tiers for all bays (we use first bay as reference for tier count)
+    var allTiersSet=new Set();
+    for(var i=0;i<fBays.length;i++){
+      var bay=fBays[i];
+      if(plan[bay]){for(var r in plan[bay])for(var t in plan[bay][r])if(passF(plan[bay][r][t]))allTiersSet.add(Number(t));}
+      var pairB=(bay%2===0)?bay-1:bay+1;
+      if(plan[pairB]){for(var r in plan[pairB])for(var t in plan[pairB][r])if(passF(plan[pairB][r][t]))allTiersSet.add(Number(t));}
+    }
+    var cubTall=[],bodTall=[];allTiersSet.forEach(function(t){if(t>=70)cubTall.push(t);else bodTall.push(t);});
+    var deckBaseAll=82;for(var i=0;i<cubTall.length;i++){if(cubTall[i]<82){deckBaseAll=72;break;}}
+    var cubFall=fillT(cubTall,deckBaseAll);
+    var nTiers=cubFall.length+bodTall.length;
+    var hasHatch=(cubFall.length>0&&bodTall.length>0)?1:0;
+    var nRows=sR.length;
+    // Available pixels for the canvas area
+    var availW=vw-LO-15;
+    var availH=(document.getElementById('w'+pn)?document.getElementById('w'+pn).clientHeight:600)||600;
+    availH=availH-20; // small margin
+    // Height occupied by bay label + hatch gap + row labels = MT_OFF + (hasHatch?20:0) + MB
+    var fixedH=MT_OFF+(hasHatch?20:0)+MB;
+    // Each tier gets ch1b pixels. Each row (column) gets cw1b pixels.
+    // We want: nTiers*ch1b + fixedH = availH  AND  nRows*cw1b + LO = availW (with scale=1)
+    if(nTiers>0)ch1b=Math.max(14,Math.floor((availH-fixedH)/nTiers));
+    if(nRows>0)cw1b=Math.max(20,Math.floor(availW/nRows));
+    // Make cells square-ish: use the smaller of the two to drive the other
+    var cellSq=Math.min(ch1b,cw1b);
+    ch1b=cellSq;cw1b=Math.max(cellSq,Math.floor(availW/nRows)); // keep width generous
+  }
+
+  // ── 5b mode: like 3b trio view but with tall slots filling viewport ──
+  var cellH5b=CH, slotW5b=CW*2;
+  if(view==='5b'){
+    effectiveView='3b'; // reuse 3b rendering — will calculate cellH5b/slotW5b after grps is computed
+  }
+
+  // Slot width: initial (overridden later for 5b)
+  var slotW=(view==='1b')?cw1b:CW*2;
+  var rO=[];var ox=0;
+  for(var i=0;i<sR.length;i++){if(sR[i]===0)ox+=CGAP/2;rO.push(ox);ox+=slotW;if(sR[i]===0)ox+=CGAP/2;}var gw=ox;
+  var grps=[];
+  if(effectiveView==='3b'){var triples=BAY_TRIPLES;for(var ti=0;ti<triples.length;ti++){var tr=triples[ti];var row=[];if(fBaySet.has(tr.lo))row.push(tr.lo);if(tr.mid!==null&&fBaySet.has(tr.mid))row.push(tr.mid);if(tr.hi!==null&&fBaySet.has(tr.hi))row.push(tr.hi);if(row.length>0)grps.push(row);}var covered=new Set();for(var ti=0;ti<triples.length;ti++){var tr=triples[ti];covered.add(tr.lo);if(tr.mid)covered.add(tr.mid);if(tr.hi)covered.add(tr.hi);}for(var i=0;i<fBays.length;i++){if(!covered.has(fBays[i]))grps.push([fBays[i]]);}grps.sort(function(a,b){return a[0]-b[0]});}
+  else{for(var i=0;i<fBays.length;i++)grps.push([fBays[i]]);}
+
+  // ── 5b mode: now that grps is available, compute tall cell dimensions ──
+  if(view==='5b'){
+    var availH5b=(document.getElementById('w'+pn)?document.getElementById('w'+pn).clientHeight:600)||600;
+    availH5b=availH5b-30;
+    // Count max tiers across all trios
+    var maxTiers5b=0;
+    for(var gi5=0;gi5<grps.length;gi5++){
+      var g5=grps[gi5]; var tiersSet5b=new Set();
+      for(var bi5=0;bi5<g5.length;bi5++){
+        var bay5=g5[bi5];
+        if(plan[bay5]){for(var r in plan[bay5])for(var t in plan[bay5][r])if(passF(plan[bay5][r][t]))tiersSet5b.add(Number(t));}
+        var pair5=(bay5%2===0)?bay5-1:bay5+1;
+        if(plan[pair5]){for(var r in plan[pair5])for(var t in plan[pair5][r])if(passF(plan[pair5][r][t]))tiersSet5b.add(Number(t));}
+      }
+      var cubT5b=[],bodT5b=[];tiersSet5b.forEach(function(t){if(t>=70)cubT5b.push(t);else bodT5b.push(t);});
+      var deckBase5b=82;for(var ii5=0;ii5<cubT5b.length;ii5++){if(cubT5b[ii5]<82){deckBase5b=72;break;}}
+      var cubF5b=fillT(cubT5b,deckBase5b);
+      var nT5b=cubF5b.length+bodT5b.length;
+      var hasH5b=(cubF5b.length>0&&bodT5b.length>0)?1:0;
+      if(nT5b>maxTiers5b)maxTiers5b=nT5b+hasH5b;
+    }
+    var fixedOverhead5b=MT_OFF+MB+20;
+    if(maxTiers5b>0)cellH5b=Math.max(20,Math.floor((availH5b-fixedOverhead5b)/maxTiers5b));
+    else cellH5b=CH;
+    // slotW: fill available width per trio
+    var availW5b=vw-LO-15;
+    var nRows5b=sR.length;
+    slotW5b=Math.max(CW,Math.floor(availW5b/(3*nRows5b+2)));
+    // Recompute slotW, rO, and gw with the new slotW5b
+    slotW=slotW5b;
+    rO=[];ox=0;
+    for(var i=0;i<sR.length;i++){if(sR[i]===0)ox+=CGAP/2;rO.push(ox);ox+=slotW;if(sR[i]===0)ox+=CGAP/2;}
+    gw=ox;
+  }
+
+  // Compute fgh using ch1b (or CH for other modes)
+  var cellH=(view==='1b')?ch1b:(view==='5b')?cellH5b:CH;
+  var maxFgh=0;
+  for(var gi=0;gi<grps.length;gi++){var g=grps[gi];var yy=MT_OFF;var tiersSet=new Set();for(var bi=0;bi<g.length;bi++){var bay=g[bi];if(plan[bay]){for(var r in plan[bay])for(var t in plan[bay][r])if(passF(plan[bay][r][t]))tiersSet.add(Number(t));}var pair=(bay%2===0)?bay-1:bay+1;if(plan[pair]){for(var r in plan[pair])for(var t in plan[pair][r])if(passF(plan[pair][r][t]))tiersSet.add(Number(t));}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}var cubF2=fillT(cubT,deckBase);var bodF2=bodT.slice().sort(function(a,b){return a-b});for(var j=0;j<cubF2.length;j++)yy+=cellH;if(cubF2.length>0&&bodF2.length>0)yy+=20;for(var j=0;j<bodF2.length;j++)yy+=cellH;yy+=MB;if(yy>maxFgh)maxFgh=yy;}
+  var fgh=maxFgh;var avail=vw-LO-15;var sc;
+  if(effectiveView==='3b'){var fitSc=(avail-18)/(3*gw);if(fitSc<0.15)fitSc=0.15;sc=fitSc*Z[pn];}
+  else if(view==='1b'){sc=Z[pn];} // cells already sized to fill viewport
+  else{var baseSc=Math.max(0.3,avail/gw);sc=baseSc*Z[pn];}
+  var gpr;
+  if(effectiveView==='3b'){var triplePixW=3*gw*sc+2*6+14;gpr=Math.max(1,Math.floor((avail+14)/triplePixW));if(gpr>grps.length)gpr=grps.length;}
+  else if(view==='1b'){gpr=1;}
+  else{gpr=Math.max(1,Math.floor((avail+8*sc)/((gw+10)*sc)));if(gpr>grps.length)gpr=grps.length;}
+  var vRows=[];for(var i=0;i<grps.length;i+=gpr)vRows.push(grps.slice(i,Math.min(i+gpr,grps.length)));
+  var gP=[];var maxW=0,maxH=0;
+  for(var vi=0;vi<vRows.length;vi++){var rowGrps=vRows[vi];var xCursor=LO;for(var gi=0;gi<rowGrps.length;gi++){var grp=rowGrps[gi];var idx=0;for(var k=0;k<vi;k++)idx+=vRows[k].length;idx+=gi;var py=5+vi*(fgh*sc+8);if(effectiveView==='3b'){var bayW=gw*sc;for(var bi=0;bi<grp.length;bi++){gP.push({x:xCursor+bi*(bayW+6),y:py,sc:sc,bay:grp[bi],grpIdx:idx,bayInGrp:bi,grpLen:grp.length});}xCursor+=grp.length*(bayW+6)+14;}else{gP[idx]={x:xCursor,y:py,sc:sc};xCursor+=gw*sc+10;}var rw=xCursor+5;if(rw>maxW)maxW=rw;}var rh=5+(vi+1)*(fgh*sc+8);if(rh>maxH)maxH=rh;}
+  return{cw:Math.ceil(maxW),ch:Math.ceil(maxH),grps:grps,gP:gP,sR:sR,rO:rO,gw:gw,fgh:fgh,plan:plan,view:view,effectiveView:effectiveView,slotW:slotW,cellH:cellH};
+}
+
+function updateStats(pn){var cts=pn===1?S.c1:S.c2;var shipEl=document.getElementById('ship'+pn);if(!cts){document.getElementById('s'+pn).textContent='';if(shipEl)shipEl.textContent='';return;}var total=0,full=0,mt=0;for(var i=0;i<cts.length;i++){if(passF_noTrt(cts[i])){total++;if(!cts[i].isEmpty)full++;mt+=(cts[i].weight||0);}}document.getElementById('s'+pn).textContent=total+' EQ / '+full+' FLL / '+(mt/1000).toFixed(1).replace('.',',')+'t';var sn=pn===1?S.shipName1:S.shipName2;if(shipEl)shipEl.textContent=sn?'🚢 '+sn:'';}
+
+/* ── RENDER ── */
+/* ── PREVIEW PLAN: mueve contenedores en el plan virtual para pintarlos en destino ── */
+function buildPreviewPlan(basePlan,cts){
+  if(!MW.active||!Object.keys(MW.preview).length)return basePlan;
+  // Clone the plan shallowly at bay/row/tier level
+  var pl={};
+  // Copy all cells except the ones being moved FROM
+  var movedIds=new Set(Object.keys(MW.preview));
+  for(var bay in basePlan){for(var row in basePlan[bay]){for(var tier in basePlan[bay][row]){
+    var c=basePlan[bay][row][tier];
+    if(movedIds.has(c.id))continue; // remove from old position
+    if(!pl[bay])pl[bay]={};if(!pl[bay][row])pl[bay][row]={};
+    pl[bay][row][tier]=c;
+  }}}
+  // Place containers at their new positions
+  for(var id in MW.preview){
+    var np=MW.preview[id];var c=findInPlan1(id);if(!c)continue;
+    // Create a temporary container copy at the new position with a visual marker
+    var fake=Object.assign({},c,{positions:[np],_mwPreview:true});
+    if(!pl[np.bay])pl[np.bay]={};if(!pl[np.bay][np.row])pl[np.bay][np.row]={};
+    pl[np.bay][np.row][np.tier]=fake;
+  }
+  return pl;
+}
+
+function render(pn){
+  var plan=pn===1?S.L1:S.L2;if(!plan)return;
+  var vwReal=document.getElementById('w'+pn).clientWidth;
+  // Use preview plan for rendering when wizard active; hit test always uses this same layout
+  var renderPlan=(pn===1&&MW.active&&Object.keys(MW.preview).length)?buildPreviewPlan(plan,S.c1):plan;
+  var L=compLayout(renderPlan,vwReal,pn);
+  // Store layout for hit testing — must match what's drawn on screen
+  if(pn===1)S._L1=L;else S._L2=L;
+  var cvEl=document.getElementById('c'+pn);var em=document.getElementById('e'+pn);
+  if(!L){cvEl.style.display='none';em.classList.remove('hid');em.innerHTML='<div class="text-center"><i class="fa-solid fa-filter text-3xl mb-3" style="color:var(--muted);opacity:.25"></i><p style="color:var(--muted)" class="text-sm">Sin contenedores</p></div>';document.getElementById('s'+pn).textContent='0 EQ';return;}
+  em.classList.add('hid');cvEl.style.display='block';
+  var dpr=window.devicePixelRatio||1;cvEl.width=L.cw*dpr;cvEl.height=L.ch*dpr;cvEl.style.width=L.cw+'px';cvEl.style.height=L.ch+'px';
+  var ctx=cvEl.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);drawPlan(ctx,L);updateStats(pn);
+  // Sync listado selection highlights if panel is open for this plan
+  if(document.getElementById('lstPanel').classList.contains('open')&&LST.pn===pn){
+    document.querySelectorAll('#listadoTbody tr[data-id]').forEach(function(tr){
+      tr.classList.toggle('lst-sel',!!(S.sel&&S.sel.has&&S.sel.has(tr.getAttribute('data-id'))));
+    });
+  }
+}
+
+
+function drawPlan(ctx,L){
+  var bg=cv('--cvbg');ctx.clearRect(0,0,L.cw,L.ch);ctx.fillStyle=bg;ctx.fillRect(0,0,L.cw,L.ch);
+  if((L.effectiveView||L.view)==='3b'){
+    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;ctx.save();ctx.translate(p.x,p.y);ctx.scale(p.sc,p.sc);drawSingleBay(ctx,p.bay,L);ctx.restore();if(p.bayInGrp===0&&p.grpLen>1){var bayW=L.gw*p.sc;var totalW=p.grpLen*(bayW+6)-6;ctx.save();ctx.strokeStyle=cv('--border');ctx.lineWidth=1;ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(p.x,p.y+L.fgh*p.sc+4);ctx.lineTo(p.x+totalW,p.y+L.fgh*p.sc+4);ctx.stroke();ctx.restore();}}
+  } else {
+    for(var i=0;i<L.grps.length;i++){var p=L.gP[i];if(!p)continue;ctx.save();ctx.translate(p.x,p.y);ctx.scale(p.sc,p.sc);drawGroup(ctx,L.grps[i],L);ctx.restore();}
+  }
+}
+
+function drawSingleBay(ctx,bay,L){
+  var gw=L.gw,sw=L.slotW,fg=cv('--fg'),gr=cv('--grid'),hd=cv('--cvhold');
+  var CH2=L.cellH||CH; // use layout cell height (varies in 1b mode)
+  // Collect tiers from the full trio (lo/mid/hi) so all three bays share same tier layout
+  var tiersSet=new Set();
+  function addT(b){if(!L.plan[b])return;for(var r in L.plan[b])for(var t in L.plan[b][r])if(passF(L.plan[b][r][t]))tiersSet.add(Number(t));}
+  // Find trio for this bay (works for lo, mid, and hi)
+  var trioLo=bay,trioHi=null;
+  for(var _ti=0;_ti<BAY_TRIPLES.length;_ti++){
+    var _tr=BAY_TRIPLES[_ti];
+    if(_tr.lo===bay||_tr.mid===bay||_tr.hi===bay){
+      trioLo=_tr.lo;trioHi=_tr.hi;
+      if(_tr.lo)addT(_tr.lo);
+      if(_tr.mid!==null)addT(_tr.mid);
+      if(_tr.hi)addT(_tr.hi);
+      break;
+    }
+  }
+  if(!trioHi)addT(trioLo);
+  var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});cubT.sort(function(a,b){return b-a});bodT.sort(function(a,b){return a-b});
+  var deckBase=82;for(var i=0;i<cubT.length;i++){if(cubT[i]<82){deckBase=72;break;}}
+  var cubF=fillT(cubT,deckBase),bodF=bodT;var tY={};var y=MT_OFF;
+  for(var j=cubF.length-1;j>=0;j--){tY[cubF[j]]=y;y+=CH2}var hY=(cubF.length>0&&bodF.length>0)?y:null;if(hY!==null)y+=20;for(var j=bodF.length-1;j>=0;j--){tY[bodF[j]]=y;y+=CH2}
+  var lf=y+MB;var allT=cubF.concat(bodF);
+  // Always draw hold background for body tiers (tiers < 70), even if no deck containers
+  if(bodF.length>0){
+    var holdTop=hY!==null?hY+10:MT_OFF;
+    ctx.fillStyle=hd;ctx.fillRect(0,holdTop,gw,lf-holdTop-MB);
+  }
+  ctx.strokeStyle=gr;ctx.lineWidth=0.5;for(var ri=0;ri<L.sR.length;ri++){var sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var ty2=tY[allT[ti]];ctx.strokeRect(sx+.5,ty2+.5,sw-1,CH2-1)}}
+  if(hY!==null){ctx.save();ctx.strokeStyle=cv('--hatch');ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(0,hY+1);ctx.lineTo(gw,hY+1);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.fillStyle=fg;ctx.font='600 8px "IBM Plex Mono"';ctx.textAlign='center';ctx.fillText('HATCH',gw/2,hY-3);}
+  ctx.textAlign='center';ctx.font='900 20px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(String(bay).padStart(3,'0'),gw/2,MT_OFF-15);
+  ctx.font='600 8px "IBM Plex Mono"';ctx.fillStyle=cv('--muted');ctx.fillText((bay%2===0)?"40'":"20'",gw/2,MT_OFF-4);
+  ctx.textAlign='right';ctx.font='600 9px "IBM Plex Mono"';for(var i=0;i<allT.length;i++){var t=allT[i];ctx.fillStyle=t>=70?cv('--accent'):fg;ctx.fillText(String(t).padStart(2,'0'),-4,tY[t]+CH2/2+3)}
+  ctx.textAlign='center';ctx.font='700 9px "IBM Plex Mono"';ctx.fillStyle=fg;for(var ri=0;ri<L.sR.length;ri++)ctx.fillText(String(L.sR[ri]).padStart(2,'0'),L.rO[ri]+sw/2,lf-MB+CH2/2);
+  for(var ri=0;ri<L.sR.length;ri++){var row=L.sR[ri],sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var tier=allT[ti],ty2=tY[tier];var c=gC(L.plan,bay,row,tier);if(c&&passF(c)){drawCell(ctx,sx,ty2,sw,CH2,c)}}}
+  // ── WEIGHT SUMMARY PER ROW ──
+  var rowWtDeck5={},rowWtHold5={};
+  for(var ri=0;ri<L.sR.length;ri++){
+    var row=L.sR[ri];rowWtDeck5[row]=0;rowWtHold5[row]=0;
+    for(var ti=0;ti<allT.length;ti++){
+      var tier=allT[ti];var c=gC(L.plan,bay,row,tier);
+      if(c&&passF(c)&&c.weight){
+        if(tier>=70)rowWtDeck5[row]+=(c.weight/1000);
+        else rowWtHold5[row]+=(c.weight/1000);
+      }
+    }
+  }
+  // Draw deck weight above deck section
+  if(cubF.length>0){
+    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    for(var ri=0;ri<L.sR.length;ri++){
+      var row=L.sR[ri];var wt=rowWtDeck5[row];
+      if(wt>0){
+        var sx=L.rO[ri];
+        ctx.fillStyle='#4fc3f7';
+        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-26);
+      }
+    }
+  }
+  // Draw hold weight below hold section
+  if(bodF.length>0){
+    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    for(var ri=0;ri<L.sR.length;ri++){
+      var row=L.sR[ri];var wt=rowWtHold5[row];
+      if(wt>0){
+        var sx=L.rO[ri];
+        ctx.fillStyle='#ff8a65';
+        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,lf+8);
+      }
+    }
+  }
+}
+
+function drawGroup(ctx,g,L){
+  var gw=L.gw,sw=L.slotW,fg=cv('--fg'),gr=cv('--grid'),hd=cv('--cvhold');
+  var CH2=L.cellH||CH;
+  var bt=getAlignedTiers(L.plan,g);var cubT=bt.cub,bodT=bt.bod;var tY={};var y=MT_OFF;
+  for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=y;y+=CH2}var hY=(cubT.length>0&&bodT.length>0)?y:null;if(hY!==null)y+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=y;y+=CH2}
+  var lf=y+MB;var allT=cubT.concat(bodT);
+  // Always draw hold background for body tiers
+  if(bodT.length>0){var holdTop2=hY!==null?hY+10:MT_OFF;ctx.fillStyle=hd;ctx.fillRect(0,holdTop2,gw,lf-holdTop2-MB);}
+  ctx.strokeStyle=gr;ctx.lineWidth=0.5;for(var ri=0;ri<L.sR.length;ri++){var sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var ty=tY[allT[ti]];ctx.strokeRect(sx+.5,ty+.5,sw-1,CH2-1)}}
+  if(hY!==null){ctx.save();ctx.strokeStyle=cv('--hatch');ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(0,hY+1);ctx.lineTo(gw,hY+1);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.fillStyle=fg;ctx.font='600 8px "IBM Plex Mono"';ctx.textAlign='center';ctx.fillText('HATCH',gw/2,hY-3);}
+  ctx.textAlign='center';ctx.font='900 16px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(g.map(function(b){return String(b).padStart(3,'0')}).join('/'),gw/2,MT_OFF-10);
+  ctx.textAlign='right';ctx.font='600 9px "IBM Plex Mono"';for(var i=0;i<allT.length;i++){var t=allT[i];ctx.fillStyle=t>=70?cv('--accent'):fg;ctx.fillText(String(t).padStart(2,'0'),-4,tY[t]+CH2/2+3)}
+  ctx.textAlign='center';ctx.font='700 9px "IBM Plex Mono"';ctx.fillStyle=fg;for(var ri=0;ri<L.sR.length;ri++)ctx.fillText(String(L.sR[ri]).padStart(2,'0'),L.rO[ri]+sw/2,lf-MB+CH2/2);
+  for(var ri=0;ri<L.sR.length;ri++){var row=L.sR[ri],sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var tier=allT[ti],ty=tY[tier];var bay=g[0];var c=gC(L.plan,bay,row,tier);if(c&&passF(c)){drawCell(ctx,sx,ty,sw,CH2,c)}}}
+  // ── WEIGHT SUMMARY PER ROW ──
+  var rowWtDeckG={},rowWtHoldG={};
+  for(var ri=0;ri<L.sR.length;ri++){
+    var row=L.sR[ri];rowWtDeckG[row]=0;rowWtHoldG[row]=0;
+    for(var ti=0;ti<allT.length;ti++){
+      var tier=allT[ti];var bay=g[0];var c=gC(L.plan,bay,row,tier);
+      if(c&&passF(c)&&c.weight){
+        if(tier>=70)rowWtDeckG[row]+=(c.weight/1000);
+        else rowWtHoldG[row]+=(c.weight/1000);
+      }
+    }
+  }
+  // Draw deck weight above deck section
+  if(cubT.length>0){
+    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    for(var ri=0;ri<L.sR.length;ri++){
+      var row=L.sR[ri];var wt=rowWtDeckG[row];
+      if(wt>0){
+        var sx=L.rO[ri];
+        ctx.fillStyle='#4fc3f7';
+        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-16);
+      }
+    }
+  }
+  // Draw hold weight below hold section
+  if(bodT.length>0){
+    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    for(var ri=0;ri<L.sR.length;ri++){
+      var row=L.sR[ri];var wt=rowWtHoldG[row];
+      if(wt>0){
+        var sx=L.rO[ri];
+        ctx.fillStyle='#ff8a65';
+        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,lf+8);
+      }
+    }
+  }
+}
+
+/* ── DRAW CELL ── */
+function drawCell(ctx,x,y,w,h,c){
+  ctx.save();
+  var passesStrict=passF_noTrt(c);
+  // TRT: dim containers that are not POL=ESVLC (tránsito)
+  var trtDimmed=GF.trt&&c.pol!=='ESVLC';
+  // Non-sel gray: dim containers that don't pass current strict filter
+  var nonSelDimmed=GF.nonSelGray&&!passesStrict;
+  var dimmed=(trtDimmed||nonSelDimmed)&&!passesStrict===false?trtDimmed||nonSelDimmed:false;
+  // A container that passes strict AND is trtDimmed still draws dimmed
+  // A container that doesn't pass strict (hidden normally) only draws if dimming modes active
+  if(!passesStrict&&!trtDimmed&&!nonSelDimmed){ctx.restore();return;}
+  dimmed=trtDimmed||nonSelDimmed;
+  if(dimmed){
+    ctx.globalAlpha=0.20;ctx.fillStyle='#888888';ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle='rgba(128,128,128,0.2)';ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
+    // show weight dimly
+    ctx.globalAlpha=0.35;ctx.fillStyle=document.body.classList.contains('dark')?'#ffffff':'#000000';
+    var fsD=Math.min(CH-4,w>=36?8:6);ctx.font='500 '+fsD+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(fmtW(c),x+w/2,y+h/2+.5);
+    ctx.restore();return;
+  }
+  var col=GF.wtMode?wtColor(c):pC(c.pod);
+  // Selección (Set o hover) — amarillo
+  var isSel=(S.sel&&S.sel.has&&S.sel.has(c.id));
+  var isHl=(c.id===S.hl&&!isSel);
+  // Preview de movimiento — morado
+  var isPreview=!!c._mwPreview;
+  // Diferencia naranja: SOLO si el botón "Diferencias" está activado
+  var isDiff=(S.c1&&S.c2)&&GF.diffOnly&&DIFF_IDS.has(c.id);
+  if(isPreview){ctx.shadowColor='#7c3aed';ctx.shadowBlur=14;}
+  else if(isSel||isHl){ctx.shadowColor='#fdd835';ctx.shadowBlur=20;}
+  else if(isDiff){ctx.shadowColor=cv('--diff-chg');ctx.shadowBlur=6;}
+  var strokeCol=isPreview?'#7c3aed':(isSel||isHl)?'#fdd835':isDiff?cv('--diff-chg'):lt(col,20);
+  var lw=isPreview?2.5:(isSel||isHl||isDiff)?2:.5;
+  ctx.fillStyle=col;ctx.fillRect(x,y,w,h);ctx.strokeStyle=strokeCol;ctx.lineWidth=lw;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
+  // Reefer
+  if(c.isReefer){ctx.fillStyle='#4dd0e1';ctx.fillRect(x,y,w,2)}
+  // DG: rombo rojo ◆ + clase
+  if(c.isDangerous){
+    ctx.fillStyle='#ff5252';var dcx=x+5,dcy=y+5,ds=3.5;
+    ctx.beginPath();ctx.moveTo(dcx,dcy-ds);ctx.lineTo(dcx+ds,dcy);ctx.lineTo(dcx,dcy+ds);ctx.lineTo(dcx-ds,dcy);ctx.closePath();ctx.fill();
+    // Show DG class next to diamond if space allows
+    if(c.dgClass){var dgLabel=c.dgClass;ctx.fillStyle='#ff5252';ctx.font='bold 6px "IBM Plex Mono"';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(dgLabel,x+10,y+5);}
+  }
+  // HC
+  if(isHC(c)){ctx.fillStyle=tC(col)==='#000000'?'rgba(255,255,255,0.85)':'rgba(0,0,0,0.55)';ctx.beginPath();ctx.moveTo(x+w,y);ctx.lineTo(x+w,y+5);ctx.lineTo(x+w-5,y);ctx.closePath();ctx.fill()}
+  // OOG: proportional triangles that overflow the slot in the direction of over-dimension
+  if(isOog(c)){
+    var dim=c.dim||{};
+    var maxOogCm=250; // reference: full adjacent slot width
+    ctx.fillStyle='#ffeb3b';ctx.strokeStyle='rgba(0,0,0,0.55)';ctx.lineWidth=0.5;
+    // TOP overflow - proportional to height of adjacent tier
+    if(dim.top>0){
+      var topRatio=Math.min(1,dim.top/maxOogCm);
+      var topTs=topRatio*CH2; // proportional to cell height (adjacent tier)
+      var tx=x+w/2;
+      ctx.beginPath();ctx.moveTo(tx,y-topTs);ctx.lineTo(tx+Math.min(w*0.3,topTs),y+1);ctx.lineTo(tx-Math.min(w*0.3,topTs),y+1);ctx.closePath();ctx.fill();ctx.stroke();
+    }
+    // LEFT overflow (port) - proportional to width of adjacent slot
+    if(dim.port>0){
+      var portRatio=Math.min(1,dim.port/maxOogCm);
+      var portTs=portRatio*w; // proportional to cell width (adjacent slot)
+      ctx.beginPath();ctx.moveTo(x-portTs,y+h/2);ctx.lineTo(x+1,y+h/2-Math.min(h*0.4,portTs*0.5));ctx.lineTo(x+1,y+h/2+Math.min(h*0.4,portTs*0.5));ctx.closePath();ctx.fill();ctx.stroke();
+    }
+    // RIGHT overflow (starboard) - proportional to width of adjacent slot
+    if(dim.stbd>0){
+      var stbdRatio=Math.min(1,dim.stbd/maxOogCm);
+      var stbdTs=stbdRatio*w; // proportional to cell width
+      ctx.beginPath();ctx.moveTo(x+w+stbdTs,y+h/2);ctx.lineTo(x+w-1,y+h/2-Math.min(h*0.4,stbdTs*0.5));ctx.lineTo(x+w-1,y+h/2+Math.min(h*0.4,stbdTs*0.5));ctx.closePath();ctx.fill();ctx.stroke();
+    }
+    // Forward overflow - show as horizontal extension (proportional to width)
+    if(dim.fwd>0 && !dim.port && !dim.stbd){
+      // Show as a combined left-right indicator at top
+      var fwdRatio=Math.min(1,dim.fwd/maxOogCm);
+      var fwdTs=fwdRatio*w*0.5;
+      var tx=x+w/2;
+      ctx.beginPath();ctx.moveTo(tx-fwdTs,y);ctx.lineTo(tx,y-Math.min(h*0.5,fwdTs));ctx.lineTo(tx+fwdTs,y);ctx.closePath();ctx.fill();ctx.stroke();
+    }
+    // Generic OOG with no detailed dims
+    if(!dim.top&&!dim.port&&!dim.stbd&&!dim.fwd){
+      var ts=Math.min(w*0.15,h*0.4,7);
+      var tx=x+w/2;ctx.beginPath();ctx.moveTo(tx,y+1);ctx.lineTo(tx+ts,y+ts*1.7);ctx.lineTo(tx-ts,y+ts*1.7);ctx.closePath();ctx.fill();ctx.stroke();
+    }
+    // Show dimension values in small text
+    if(w>=40){
+      ctx.fillStyle='#f57f17';ctx.font='bold 6px "IBM Plex Mono"';ctx.textBaseline='top';
+      var dimParts=[];
+      if(dim.top)dimParts.push('↑'+Math.round(dim.top)+'cm');
+      if(dim.port)dimParts.push('←'+Math.round(dim.port)+'cm');
+      if(dim.stbd)dimParts.push('→'+Math.round(dim.stbd)+'cm');
+      if(dim.fwd)dimParts.push('⟷'+Math.round(dim.fwd)+'cm');
+      if(dimParts.length){
+        ctx.textAlign='right';
+        ctx.fillText(dimParts.join(' '),x+w-2,y+2);
+      }
+    }
+  }
+  // 45ft
+  if(c._is45ft){ctx.fillStyle='#ce93d8';ctx.beginPath();ctx.arc(x+w-3,y+3,2.5,0,Math.PI*2);ctx.fill();}
+  // Texto peso + datos extra si la celda es suficientemente ancha
+  var textCol=GF.wtMode?((c.weight||0)>17500?'#ffffff':'#000000'):tC(col);
+  ctx.fillStyle=textCol;
+  if(w>=80){
+    // Modo amplio (1b): mostrar sztp + peso + POL
+    var fs2=Math.min(h*0.28,11);
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    var lines=[];
+    if(c.type)lines.push(c.type);
+    lines.push(fmtW(c));
+    if(c.pol)lines.push(c.pol);
+    var lineH=Math.min(fs2+2,h/Math.max(lines.length,1));
+    var startY=y+h/2-(lines.length-1)*lineH/2;
+    for(var li=0;li<lines.length;li++){
+      ctx.font=(li===0?'500 ':'600 ')+Math.max(6,fs2)+'px "IBM Plex Mono"';
+      ctx.fillStyle=li===0?textCol+'bb':textCol; // sztp slightly dimmed
+      ctx.fillText(lines[li],x+w/2,startY+li*lineH);
+    }
+  } else {
+    var fs=Math.min(CH-4,w>=50?10:w>=36?9:7);ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    var off=(c.isDangerous&&w<36)?4:0;
+    ctx.fillText(fmtW(c),x+w/2+off,y+h/2+.5);
+  }
+  // REMOCIÓN: círculo relleno con color opuesto al texto, texto encima
+  if(c.isRemocion){
+    var cx2=x+w/2+off,cy2=y+h/2+.5,rr=Math.min(w,h)/2-1;
+    // Color de relleno del círculo = opuesto al color del texto
+    var circleFill=textCol==='#ffffff'||textCol==='#FFFFFF'?'#000000':'#ffffff';
+    ctx.fillStyle=circleFill;ctx.beginPath();ctx.arc(cx2,cy2,rr,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=textCol;ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx2,cy2,rr,0,Math.PI*2);ctx.stroke();
+    // Redibujar el texto encima del círculo con el color original
+    ctx.fillStyle=textCol;ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(fmtW(c),cx2,cy2);
+  }
+  ctx.restore();
+}
+
+/* ── HIT TEST ── */
+function hitTest(mx,my,L){
+  if(!L)return null;
+  var CH2=L.cellH||CH;
+
+  if((L.effectiveView||L.view)==='3b'){
+    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break}}if(ri<0)continue;var row=L.sR[ri],bay=p.bay;var pairBay=(bay%2===0)?bay-1:bay+1;var tiersSet=new Set();if(L.plan[bay])for(var r in L.plan[bay])for(var t in L.plan[bay][r])if(passF_noTrt(L.plan[bay][r][t]))tiersSet.add(Number(t));if(L.plan[pairBay])for(var r in L.plan[pairBay])for(var t in L.plan[pairBay][r])if(passF_noTrt(L.plan[pairBay][r][t]))tiersSet.add(Number(t));for(var _ti3=0;_ti3<BAY_TRIPLES.length;_ti3++){var _tr3=BAY_TRIPLES[_ti3];if(_tr3.lo===bay||_tr3.mid===bay||_tr3.hi===bay){if(L.plan[_tr3.lo])for(var _r in L.plan[_tr3.lo])for(var _t in L.plan[_tr3.lo][_r])tiersSet.add(Number(_t));if(_tr3.mid!==null&&L.plan[_tr3.mid])for(var _r in L.plan[_tr3.mid])for(var _t in L.plan[_tr3.mid][_r])tiersSet.add(Number(_t));if(_tr3.hi&&L.plan[_tr3.hi])for(var _r in L.plan[_tr3.hi])for(var _t in L.plan[_tr3.hi][_r])tiersSet.add(Number(_t));break;}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b});var tY={};var yy=MT_OFF;for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=yy;yy+=(L.cellH||CH)}if(cubT.length>0&&bodT.length>0)yy+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=yy;yy+=(L.cellH||CH)}var allT=cubT.concat(bodT);for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return gC(L.plan,bay,row,tier)||null;}}}return null;
+  }
+  for(var i=0;i<L.grps.length;i++){var p=L.gP[i];if(!p)continue;var g=L.grps[i];var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break}}if(ri<0)continue;var row=L.sR[ri],bay=g[0];var bt=getAlignedTiers(L.plan,g);var allT=bt.cub.concat(bt.bod);var tY={};var yy=MT_OFF;for(var j=bt.cub.length-1;j>=0;j--){tY[bt.cub[j]]=yy;yy+=(L.cellH||CH)}if(bt.cub.length>0&&bt.bod.length>0)yy+=20;for(var j=bt.bod.length-1;j>=0;j--){tY[bt.bod[j]]=yy;yy+=(L.cellH||CH)}for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return gC(L.plan,bay,row,tier)||null;}}}return null;
+}
+
+// hitTestPos: like hitTest but returns {bay,row,tier} even for empty cells
+function hitTestPos(mx,my,L){
+  if(!L)return null;
+
+  if((L.effectiveView||L.view)==='3b'){
+    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break;}}if(ri<0)continue;var row=L.sR[ri],bay=p.bay;var pairBay=(bay%2===0)?bay-1:bay+1;var tiersSet=new Set();if(L.plan[bay])for(var r in L.plan[bay])for(var t in L.plan[bay][r])tiersSet.add(Number(t));if(L.plan[pairBay])for(var r in L.plan[pairBay])for(var t in L.plan[pairBay][r])tiersSet.add(Number(t));for(var _ti4=0;_ti4<BAY_TRIPLES.length;_ti4++){var _tr4=BAY_TRIPLES[_ti4];if(_tr4.lo===bay||_tr4.mid===bay||_tr4.hi===bay){if(L.plan[_tr4.lo])for(var _r4 in L.plan[_tr4.lo])for(var _t4 in L.plan[_tr4.lo][_r4])tiersSet.add(Number(_t4));if(_tr4.mid!==null&&L.plan[_tr4.mid])for(var _r4 in L.plan[_tr4.mid])for(var _t4 in L.plan[_tr4.mid][_r4])tiersSet.add(Number(_t4));if(_tr4.hi&&L.plan[_tr4.hi])for(var _r4 in L.plan[_tr4.hi])for(var _t4 in L.plan[_tr4.hi][_r4])tiersSet.add(Number(_t4));break;}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b;});var tY={};var yy=MT_OFF;for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=yy;yy+=(L.cellH||CH);}if(cubT.length>0&&bodT.length>0)yy+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=yy;yy+=(L.cellH||CH);}var allT=cubT.concat(bodT);for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return{bay:bay,row:row,tier:tier};}}}return null;
+  }
+  for(var i=0;i<L.grps.length;i++){var p=L.gP[i];if(!p)continue;var g=L.grps[i];var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break;}}if(ri<0)continue;var row=L.sR[ri],bay=g[0];var bt=getAlignedTiers(L.plan,g);var allT=bt.cub.concat(bt.bod);var tY={};var yy=MT_OFF;for(var j=bt.cub.length-1;j>=0;j--){tY[bt.cub[j]]=yy;yy+=(L.cellH||CH);}if(bt.cub.length>0&&bt.bod.length>0)yy+=20;for(var j=bt.bod.length-1;j>=0;j--){tY[bt.bod[j]]=yy;yy+=(L.cellH||CH);}for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return{bay:bay,row:row,tier:tier};}}}return null;
+}
+
+function scrollToBay(pn,bayNum){
+  var L=pn===1?S._L1:S._L2;if(!L)return;
+  if((L.effectiveView||L.view)==='3b'){for(var i=0;i<L.gP.length;i++){if(L.gP[i]&&L.gP[i].bay===bayNum){var p=L.gP[i];var container=document.getElementById('w'+pn);container.scrollTo({left:p.x-container.clientWidth/2+L.gw*p.sc/2,top:p.y-container.clientHeight/2+L.fgh*p.sc/2,behavior:'smooth'});return;}}return;}
+  for(var i=0;i<L.grps.length;i++){if(L.grps[i][0]===bayNum){var p=L.gP[i];if(!p)continue;var container=document.getElementById('w'+pn);container.scrollTo({left:p.x+(L.gw*p.sc)/2-container.clientWidth/2,top:p.y+(L.fgh*p.sc)/2-container.clientHeight/2,behavior:'smooth'});break;}}
+}
+
+// scrollToContainer: center BOTH canvases on a container, and scroll listado row into view
+function scrollToContainer(id){
+  // Find the container in each plan and scroll to it
+  for(var pn=1;pn<=2;pn++){
+    var cts=pn===1?S.c1:S.c2;if(!cts)continue;
+    var L=pn===1?S._L1:S._L2;if(!L)continue;
+    for(var i=0;i<cts.length;i++){
+      if(cts[i].id===id&&cts[i].positions.length>0){
+        var bay=cts[i].positions[0].bay;
+        if(bay%2===0)bay--;
+        // For 3b/2b: use scrollToBay
+        // For 1b: also scroll to the tier vertically
+        scrollToBayAndTier(pn,bay,cts[i].positions[0].tier);
+        break;
+      }
+    }
+  }
+  // Scroll the listado row into view
+  var lstPanel=document.getElementById('lstPanel');
+  if(lstPanel&&lstPanel.classList.contains('open')){
+    var row=document.querySelector('#listadoTbody tr[data-id="'+id+'"]');
+    if(row)row.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+}
+
+// scrollToBayAndTier: like scrollToBay but also centers vertically on a specific tier
+function scrollToBayAndTier(pn,bayNum,tier){
+  var L=pn===1?S._L1:S._L2;if(!L)return;
+  var container=document.getElementById('w'+pn);
+  var p=null;var tY=null;
+
+  if((L.effectiveView||L.view)==='3b'){
+    for(var i=0;i<L.gP.length;i++){if(L.gP[i]&&L.gP[i].bay===bayNum){p=L.gP[i];break;}}
+    if(!p)return;
+    tY=getTierY(L,bayNum,tier,p.sc);
+    var cx=p.x-container.clientWidth/2+L.gw*p.sc/2;
+    var cy=tY!=null?tY-container.clientHeight/2:(p.y-container.clientHeight/2+L.fgh*p.sc/2);
+    container.scrollTo({left:cx,top:cy,behavior:'smooth'});
+  } else {
+    for(var i=0;i<L.grps.length;i++){if(L.grps[i][0]===bayNum){p=L.gP[i];break;}}
+    if(!p)return;
+    tY=getTierY(L,bayNum,tier,p.sc);
+    var cx=p.x+(L.gw*p.sc)/2-container.clientWidth/2;
+    var cy=tY!=null?tY-container.clientHeight/2:(p.y+(L.fgh*p.sc)/2-container.clientHeight/2);
+    container.scrollTo({left:cx,top:cy,behavior:'smooth'});
+  }
+}
+
+// Compute the Y canvas coordinate of a specific tier in a bay group
+function getTierY(L,bayNum,tier,sc){
+  if(!tier)return null;
+  var pairBay=(bayNum%2===0)?bayNum-1:bayNum+1;
+  var tiersSet=new Set();
+  function addT(b){if(!L.plan[b])return;for(var r in L.plan[b])for(var t in L.plan[b][r])tiersSet.add(Number(t));}
+  addT(bayNum);addT(pairBay);
+  for(var _ti5=0;_ti5<BAY_TRIPLES.length;_ti5++){var _tr5=BAY_TRIPLES[_ti5];if(_tr5.lo===bayNum||_tr5.mid===bayNum||_tr5.hi===bayNum){addT(_tr5.lo);if(_tr5.mid!==null)addT(_tr5.mid);if(_tr5.hi)addT(_tr5.hi);break;}}
+  var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});
+  var deckBase=82;for(var i=0;i<cubT.length;i++){if(cubT[i]<82){deckBase=72;break;}}
+  cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b;});
+  var y=MT_OFF;var tY={};
+  var CH2=L.cellH||CH;
+  for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=y;y+=CH2;}
+  if(cubT.length>0&&bodT.length>0)y+=20;
+  for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=y;y+=CH2;}
+  // Find the gP entry for this bay to get its canvas Y
+  var gp=null;
+  if((L.effectiveView||L.view)==='3b'){for(var i=0;i<L.gP.length;i++){if(L.gP[i]&&L.gP[i].bay===bayNum){gp=L.gP[i];break;}}}
+  else{for(var i=0;i<L.grps.length;i++){if(L.grps[i][0]===bayNum){gp=L.gP[i];break;}}}
+  if(!gp||!tY[tier])return null;
+  return gp.y+tY[tier]*gp.sc;
+}
+
+/* ── CONTROLES DE FILTRO ── */
+function setGF(key,val){
+  if(key==='size'){
+    if(val==='all'){GF.size.clear();}
+    else{if(GF.size.has(val))GF.size.delete(val);else GF.size.add(val);}
+    document.querySelectorAll('[data-gf="size"]').forEach(function(b){
+      b.classList.toggle('on',b.dataset.val==='all'?GF.size.size===0:GF.size.has(b.dataset.val));
+    });
+  }
+  else{clearSelIfNeeded();render(1);render(2);}
+}
+
+// F/E exclusive filter
+function setFE(mode){
+  GF.feMode=mode;
+  document.getElementById('feAllBtn').classList.toggle('on',mode==='all');
+  document.getElementById('feFullBtn').classList.toggle('on',mode==='full');
+  document.getElementById('feEmptyBtn').classList.toggle('on',mode==='empty');
+  clearSelIfNeeded();lstSyncIfOpen();render(1);render(2);
+}
+
+// Cargo type blacklist: ON=visible, toggling OFF hides that type
+function toggleShow(type){
+  if(GF.hidden.has(type))GF.hidden.delete(type);else GF.hidden.add(type);
+  var btn=document.getElementById('show'+type.charAt(0).toUpperCase()+type.slice(1)+'Btn');
+  if(btn)btn.classList.toggle('on',!GF.hidden.has(type));
+  clearSelIfNeeded();lstSyncIfOpen();render(1);render(2);
+}
+function rebuildPods(){GF.pods={};for(var i=0;i<POD_ORDER.length;i++)GF.pods[POD_ORDER[i]]=true;var box=document.getElementById('podbtns');var h='';for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;h+='<button class="gbtn on" data-pod="'+k+'" onclick="togglePod(\''+k+'\')"><span class="cdot" style="background:'+POD_MAP[k]+'"></span>'+k+'</button>'}box.innerHTML=h;updateLeg();document.getElementById('podAllBtn').classList.add('on');}
+function togglePod(pod){GF.pods[pod]=!GF.pods[pod];var btn=document.querySelector('[data-pod="'+pod+'"]');if(btn)btn.classList.toggle('on',GF.pods[pod]);var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}document.getElementById('podAllBtn').classList.toggle('on',!anyOff);render(1);render(2);lstSyncIfOpen();}
+function podAll(){var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}var turnAllOn=anyOff;for(var k in GF.pods)GF.pods[k]=turnAllOn;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.toggle('on',turnAllOn)});document.getElementById('podAllBtn').classList.toggle('on',turnAllOn);render(1);render(2);lstSyncIfOpen();updateLeg();}
+function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;document.getElementById('polEsvlcBtn').classList.toggle('on',GF.polEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();}
+function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.toggle('on',GF.trt);document.getElementById('trtBtn').classList.toggle('trt-on',GF.trt);updateLeg();render(1);render(2);lstSyncIfOpen();}
+function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();}
+function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);}
+
+/* ── BÚSQUEDA: selecciona, con opción de modo filtro ── */
+var _srchTimer=null;
+function onSearch(val){clearTimeout(_srchTimer);_srchTimer=setTimeout(function(){doSearch(val);},180);}
+function doSearch(val){
+  val=val.trim();var inp=document.getElementById('srchInput');var clr=document.getElementById('srchClear');
+  var fBtn=document.getElementById('srchFilterBtn');
+  inp.classList.remove('found','notfound');
+  if(!val){S.srch=null;S.sel=null;clr.style.display='none';fBtn.style.display='none';GF.srchFilter=false;fBtn.classList.remove('on');render(1);render(2);return;}
+  clr.style.display='';S.srch=val;
+  var tokens=val.split(/[\s,\t\n\r]+/).filter(Boolean).map(function(t){return t.trim().toUpperCase()});
+  var matchedIds=new Set();var all=[].concat(S.c1||[],S.c2||[]);
+  // Detect if token looks like a position (5-7 digits) — normalizar a 7 dígitos con ceros a la izquierda
+  function normalizePos(t){
+    if(!/^\d{5,7}$/.test(t))return null;
+    var padded=t.padStart(7,'0'); // ej. "60204" → "0060204", "180214" → "0180214"
+    return parsePos(padded)!==null?padded:null;
+  }
+  function tokenIsPos(t){return normalizePos(t)!==null;}
+  for(var i=0;i<all.length;i++){
+    var c2=all[i];var cid=c2.id.toUpperCase();
+    for(var j=0;j<tokens.length;j++){
+      var tok=tokens[j];
+      if(tokenIsPos(tok)){
+        // Match by position string — usar la versión normalizada a 7 dígitos
+        var pp=parsePos(normalizePos(tok));
+        if(pp){for(var pi=0;pi<c2.positions.length;pi++){var p2=c2.positions[pi];if(p2.bay===pp.bay&&p2.row===pp.row&&p2.tier===pp.tier){matchedIds.add(c2.id);break;}}}
+      } else {
+        if(cid===tok||cid.indexOf(tok)>=0){matchedIds.add(c2.id);break;}
+      }
+    }
+  }
+  var found=matchedIds.size>0;inp.classList.toggle('found',found);inp.classList.toggle('notfound',!found);
+  S.sel=found?matchedIds:null;
+  // Mostrar el botón de filtro cuando hay múltiples tokens (lista pegada) o al menos 2 resultados
+  var showFilter=found&&(tokens.length>1||matchedIds.size>=2);
+  fBtn.style.display=showFilter?'':'none';
+  if(!showFilter&&GF.srchFilter){GF.srchFilter=false;fBtn.classList.remove('on');}
+  if(found){for(var pn=1;pn<=2;pn++){var cts=pn===1?S.c1:S.c2;if(!cts)continue;for(var i=0;i<cts.length;i++){if(matchedIds.has(cts[i].id)&&cts[i].positions.length>0){var tb=cts[i].positions[0].bay;if(tb%2===0)tb--;scrollToBay(pn,tb);break;}}}}
+  render(1);render(2);
+}
+function clearSearch(){
+  var inp=document.getElementById('srchInput');inp.value='';inp.classList.remove('found','notfound');
+  document.getElementById('srchClear').style.display='none';
+  document.getElementById('srchFilterBtn').style.display='none';
+  S.srch=null;S.sel=null;GF.srchFilter=false;
+  document.getElementById('srchFilterBtn').classList.remove('on');
+  render(1);render(2);
+}
+function toggleSrchFilter(){
+  if(!S.sel||!S.sel.size)return;
+  GF.srchFilter=!GF.srchFilter;
+  document.getElementById('srchFilterBtn').classList.toggle('on',GF.srchFilter);
+  render(1);render(2);
+}
+// Capturar pegado desde Excel para procesar inmediatamente
+document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
+
+function resetAllFilters(){
+  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;
+  document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
+  document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
+  ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});document.getElementById('polEsvlcBtn').classList.remove('on');
+  document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
+  document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
+  clearWrange();clearSearch();
+  GF.srchFilter=false;
+  for(var k in GF.pods)GF.pods[k]=true;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.add('on')});
+  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;render(1);render(2);updateLeg();
+}
+
+/* ── DIFF TOGGLE + LOG ── */
+function toggleDiffFilter(){if(!S.c1||!S.c2)return;GF.diffOnly=!GF.diffOnly;var btn=document.getElementById('diffToggleBtn');btn.classList.toggle('on',GF.diffOnly);btn.classList.toggle('diff-on',GF.diffOnly);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();}
+function updateDiffToggleBtn(){var diffCount=DIFF_IDS.size;var badge=document.getElementById('diffToggleBadge');var logBtn=document.getElementById('diffLogBtn');var hasBoth=S.c1&&S.c2;if(hasBoth&&diffCount>0){badge.textContent=diffCount;badge.style.display='';logBtn.style.display='';}else{badge.style.display='none';logBtn.style.display='none';if(!hasBoth){GF.diffOnly=false;document.getElementById('diffToggleBtn').classList.remove('on','diff-on');}}}
+
+/* ── BAY FILTER PANEL ── */
+var bayPanelOpen=false;
+function toggleBayPanel(){bayPanelOpen=!bayPanelOpen;document.getElementById('bayFilterPanel').style.display=bayPanelOpen?'block':'none';document.getElementById('bayChevron').style.transform=bayPanelOpen?'rotate(180deg)':'';}
+document.addEventListener('click',function(e){if(bayPanelOpen&&!document.getElementById('bayFilterWrap').contains(e.target)){bayPanelOpen=false;document.getElementById('bayFilterPanel').style.display='none';document.getElementById('bayChevron').style.transform='';}});
+function rebuildBayFilter(){var allCts=[].concat(S.c1||[],S.c2||[]);BAY_TRIPLES=buildTriples(allCts);GF.bays=null;var list=document.getElementById('bayGroupList');if(!BAY_TRIPLES.length){list.innerHTML='<div style="color:var(--muted);font-size:11px">Sin datos</div>';return;}var h='';for(var i=0;i<BAY_TRIPLES.length;i++){var tr=BAY_TRIPLES[i];var label=String(tr.lo).padStart(3,'0');if(tr.mid!==null)label+=' / '+String(tr.mid).padStart(3,'0')+' / '+String(tr.hi).padStart(3,'0');h+='<div class="bay-group"><span class="bay-triple-label">'+label+'</span><button class="bay-triple-btn on" data-bay-lo="'+tr.lo+'" onclick="toggleBayTriple('+i+',this)">Visible</button></div>';}list.innerHTML=h;document.getElementById('bayAllBtn').classList.add('on');updateBayBtnLabel();}
+function toggleBayTriple(idx,btn){btn.classList.toggle('on',!btn.classList.contains('on'));syncBayFilter();document.getElementById('bayAllBtn').classList.remove('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();}
+function syncBayFilter(){var btns=document.querySelectorAll('.bay-triple-btn[data-bay-lo]');var anyOff=false;var activeBays=new Set();for(var i=0;i<btns.length;i++){var lo_=parseInt(btns[i].getAttribute('data-bay-lo'));var tr=null;for(var j=0;j<BAY_TRIPLES.length;j++){if(BAY_TRIPLES[j].lo===lo_){tr=BAY_TRIPLES[j];break;}}if(!tr)continue;if(btns[i].classList.contains('on')){activeBays.add(tr.lo);if(tr.mid!==null){activeBays.add(tr.mid);activeBays.add(tr.hi);}}else{anyOff=true;}}GF.bays=anyOff?activeBays:null;}
+function bayFilterAll(){document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){b.classList.add('on')});GF.bays=null;document.getElementById('bayAllBtn').classList.add('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();}
+function bayFilterNone(){document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){b.classList.remove('on')});GF.bays=new Set();document.getElementById('bayAllBtn').classList.remove('on');updateBayBtnLabel();render(1);render(2);lstSyncIfOpen();}
+function updateBayBtnLabel(){var el=document.getElementById('bayBtnLabel');if(!GF.bays){el.textContent='Todos';document.getElementById('bayAllBtn').classList.add('on');}else{var n=0;document.querySelectorAll('.bay-triple-btn[data-bay-lo]').forEach(function(b){if(b.classList.contains('on'))n++;});el.textContent=n+' bay'+(n!==1?'s':'');document.getElementById('bayAllBtn').classList.toggle('on',n===BAY_TRIPLES.length);}}
+
+/* ── DIFF MODAL ── */
+var DIFF_ACTIVE_TYPES=null;
+function toggleDiffType(type,btn){if(!DIFF_ACTIVE_TYPES){DIFF_ACTIVE_TYPES=new Set([type]);}else{if(DIFF_ACTIVE_TYPES.has(type)){DIFF_ACTIVE_TYPES.delete(type);if(DIFF_ACTIVE_TYPES.size===0)DIFF_ACTIVE_TYPES=null;}else{DIFF_ACTIVE_TYPES.add(type);}}refreshDiffPills();refreshDiffList();}
+function clearDiffTypeFilter(){DIFF_ACTIVE_TYPES=null;refreshDiffPills();refreshDiffList();}
+function refreshDiffPills(){document.querySelectorAll('.diff-type-pill').forEach(function(b){var t=b.dataset.diffType;var active=(DIFF_ACTIVE_TYPES===null||DIFF_ACTIVE_TYPES.has(t));b.classList.toggle('pill-on',active);});var clearBtn=document.getElementById('diffTypeClearBtn');if(clearBtn)clearBtn.style.display=(DIFF_ACTIVE_TYPES?'inline-flex':'none');}
+function refreshDiffList(){
+  var listEl=document.getElementById('diffRowsList');if(!listEl)return;
+  var f1=document.getElementById('fn1').textContent,f2=document.getElementById('fn2').textContent;
+  var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;_diffRows=[];
+  function rowVisible(d,types){if(!DIFF_ACTIVE_TYPES)return true;for(var t of DIFF_ACTIVE_TYPES){if(t==='missing'&&types.indexOf('missing')>=0)return true;if(t==='appeared'&&types.indexOf('appeared')>=0)return true;if(t==='pos'&&d.posChanged)return true;if(t==='pod'&&d.podChanged)return true;if(t==='pol'&&d.polChanged)return true;if(t==='wt'&&d.wtChanged)return true;if(t==='sztp'&&d.sztpChanged)return true;}return false;}
+  function fldsHTML(c,hl){if(!c)return'<span style="opacity:.4">— no existe —</span>';var po=c.positions.map(fmtP).join(', '),pol=c.pol||'-',pod=c.pod||'-',st=c.isEmpty?'MT':'Full',wt=c.weight?(c.weight/1000).toFixed(1).replace('.',',')+'t':'-',tp=c.type||'-';if(!hl)return'<b>Pos:</b> '+po+'<br><b>POL:</b> '+pol+' &nbsp; <b>POD:</b> '+pod+'<br><b>Estado:</b> '+st+' &nbsp; <b>Peso:</b> '+wt+'<br><b>SZTP:</b> '+tp;return '<b>Pos:</b> <span class="'+(hl.pos?'chg':'')+'">'+po+'</span><br><b>POL:</b> <span class="'+(hl.pol?'chg':'')+'">'+pol+'</span> &nbsp; <b>POD:</b> <span class="'+(hl.pod?'chg':'')+'">'+pod+'</span><br><b>Estado:</b> <span class="'+(hl.st?'chg':'')+'">'+st+'</span> &nbsp; <b>Peso:</b> <span class="'+(hl.wt?'chg':'')+'">'+wt+'</span><br><b>SZTP:</b> <span class="'+(hl.sztp?'chg':'')+'">'+tp+'</span>';}
+  var h='<div class="diff-header" style="margin-top:10px"><span>Contenedor</span><span>Plan 1 — '+f1+'</span><span>Plan 2 — '+f2+'</span></div>';var count=0;
+  for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;count++;h+='<div class="diff-row diff-moved"><div><div class="diff-id">'+d.id+'</div><span class="diff-badge moved">modificado</span></div><div class="diff-cell">'+fldsHTML(d.a,{pos:d.posChanged,pod:d.podChanged,pol:d.polChanged,st:d.stateChanged,wt:d.wtChanged,sztp:d.sztpChanged})+'</div><div class="diff-cell">'+fldsHTML(d.b,{pos:d.posChanged,pod:d.podChanged,pol:d.polChanged,st:d.stateChanged,wt:d.wtChanged,sztp:d.sztpChanged})+'</div></div>';_diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
+  for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;count++;h+='<div class="diff-row diff-missing"><div><div class="diff-id">'+d.id+'</div><span class="diff-badge missing">solo P1</span></div><div class="diff-cell">'+fldsHTML(d.a,null)+'</div><div class="diff-cell"><span style="opacity:.4">— no existe —</span></div></div>';_diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:''});}
+  for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;count++;h+='<div class="diff-row diff-appeared"><div><div class="diff-id">'+d.id+'</div><span class="diff-badge appeared">solo P2</span></div><div class="diff-cell"><span style="opacity:.4">— no existe —</span></div><div class="diff-cell">'+fldsHTML(d.b,null)+'</div></div>';_diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
+  if(count===0)h+='<div style="color:var(--muted);font-size:12px;padding:16px 0;text-align:center"><i class="fa-solid fa-filter" style="margin-right:6px"></i>Ningún contenedor coincide con el filtro activo.</div>';
+  listEl.innerHTML=h;
+}
+function openDiffModal(){
+  if(!S.c1||!S.c2){document.getElementById('diffModalBody').innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px 0">Se necesitan los dos archivos BAPLIE para comparar.</div>';document.getElementById('diffPanel').classList.add('open');return;}
+  computeDiff();var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;var total=moved.length+missing.length+appeared.length;
+  document.getElementById('diffModalTitle').textContent='Diferencias — '+total+' cambio'+(total!==1?'s':'');
+  var cPos=0,cPod=0,cPol=0,cWt=0,cSztp=0,cMis=missing.length,cApp=appeared.length;
+  for(var i=0;i<moved.length;i++){var d=moved[i];if(d.posChanged)cPos++;if(d.podChanged)cPod++;if(d.polChanged)cPol++;if(d.wtChanged)cWt++;if(d.sztpChanged)cSztp++;}
+  function pill(type,label,count,color,bg){if(!count)return'';return'<button class="diff-type-pill pill-on" data-diff-type="'+type+'" onclick="toggleDiffType(\''+type+'\',this)" style="background:'+bg+';border-color:'+color+';color:'+color+'"><b style="font-size:13px;line-height:1">'+count+'</b> '+label+'</button>';}
+  var h='<div id="diffSummaryBar" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">';
+  h+='<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:4px">Filtrar:</span>';
+  h+=pill('pos','Posición',cPos,'#ef6c00','rgba(239,108,0,.1)');h+=pill('pod','POD',cPod,'#0288d1','rgba(2,136,209,.1)');h+=pill('pol','POL',cPol,'#8e24aa','rgba(142,36,170,.1)');h+=pill('wt','Peso',cWt,'#558b2f','rgba(85,139,47,.1)');h+=pill('sztp','SZTP',cSztp,'#78909c','rgba(120,144,156,.1)');h+=pill('missing','Solo P1',cMis,'#c62828','rgba(198,40,40,.1)');h+=pill('appeared','Solo P2',cApp,'#388e3c','rgba(56,142,60,.1)');
+  if(total>0)h+='<button id="diffTypeClearBtn" class="diff-export-btn" onclick="clearDiffTypeFilter()" style="display:none;margin-left:auto"><i class="fa-solid fa-xmark" style="font-size:10px"></i> Quitar filtro</button>';
+  h+='</div>';
+  if(total===0){h+='<div style="color:var(--muted);font-size:12px;padding:20px 0;text-align:center"><i class="fa-solid fa-check-circle" style="color:#388e3c;margin-right:6px"></i>Sin diferencias entre los dos planes.</div>';document.getElementById('diffModalBody').innerHTML=h;document.getElementById('diffPanel').classList.add('open');return;}
+  h+='<div id="diffRowsList"></div>';document.getElementById('diffModalBody').innerHTML=h;DIFF_ACTIVE_TYPES=null;refreshDiffPills();refreshDiffList();document.getElementById('diffPanel').classList.add('open');
+}
+function closeDiffModal(){
+  document.getElementById('diffPanel').classList.remove('open');
+  DIFF_ACTIVE_TYPES=null;
+  // Clear log selection from canvas when closing
+  if(LOG_SEL_IDS!==null){LOG_SEL_IDS=null;render(1);render(2);}
+}
+// diffPanel: no outside-click-to-close (it's a panel)
+
+function applyLogToCanvas(){
+  // Select on canvas all IDs currently visible in the log list
+  if(_diffRows.length===0){showToast('Sin contenedores en el log');return;}
+  LOG_SEL_IDS=new Set(_diffRows.map(function(d){return d.id;}));
+  S.sel=new Set(LOG_SEL_IDS); // also set as multi-selection so they highlight yellow
+  closeDiffModal();
+  showToast('Seleccionados '+LOG_SEL_IDS.size+' contenedor'+(LOG_SEL_IDS.size!==1?'es':'')+' en el plano');
+}
+
+function buildExportData(){var cols=['Tipo','Contenedor','Cambios','P1_Posicion','P1_POL','P1_POD','P1_Estado','P1_Peso_t','P1_SZTP','P2_Posicion','P2_POL','P2_POD','P2_Estado','P2_Peso_t','P2_SZTP'];var rows=[cols];for(var i=0;i<_diffRows.length;i++){var d=_diffRows[i];rows.push([d.tipo,d.id,d.cambios||'',d.p1_pos,d.p1_pol,d.p1_pod,d.p1_estado,d.p1_peso||'',d.p1_tipo||'',d.p2_pos,d.p2_pol,d.p2_pod,d.p2_estado,d.p2_peso||'',d.p2_tipo||'']);}return rows;}
+function exportDiffCSV(){var rows=buildExportData();var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"'}).join(';')}).join('\r\n');var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='diferencias_baplie.csv';a.click();URL.revokeObjectURL(url);}
+function exportDiffTSV(){var rows=buildExportData();var tsv=rows.map(function(r){return r.join('\t')}).join('\n');safeClipboard(tsv,function(){var btn=document.querySelectorAll('.diff-export-btn')[1];if(!btn)return;var orig=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check" style="font-size:11px;color:#388e3c"></i> Copiado';setTimeout(function(){btn.innerHTML=orig;},2000);});}
+
+/* ── TOOLBAR ── */
+function updateTB(pn){
+  var tb=document.getElementById('tb'+pn);var v=F[pn].view;
+  tb.innerHTML=
+    '<button class="tbtn" onclick="openListado('+pn+')" title="Listado de contenedores editable"><i class="fa-solid fa-table-list" style="font-size:9px;margin-right:3px"></i>Listado</button>'+
+    '<button class="tbtn" onclick="openSummary('+pn+')" title="Tablas de resumen dinámico"><i class="fa-solid fa-chart-bar" style="font-size:9px;margin-right:3px"></i>Resumen</button>'+
+    '<button class="tbtn'+(v==='3b'?' on':'')+'" onclick="swV('+pn+',\'3b\')">Vista 2</button>'+
+    '<button class="tbtn'+(v==='2b'?' on':'')+'" onclick="swV('+pn+',\'2b\')">Vista 3</button>'+
+    '<button class="tbtn'+(v==='1b'?' on':'')+'" onclick="swV('+pn+',\'1b\')">Vista 4</button>'+
+    '<button class="tbtn'+(v==='5b'?' on':'')+'" onclick="swV('+pn+',\'5b\')">Vista 5</button>'+
+    '<button class="tbtn" onclick="zB('+pn+',-1)"><i class="fa-solid fa-minus" style="font-size:10px"></i></button>'+
+    '<button class="tbtn" onclick="zB('+pn+',1)"><i class="fa-solid fa-plus" style="font-size:10px"></i></button>'+
+    '<button class="tbtn" onclick="togFS('+pn+')" title="Pantalla completa"><i class="fa-solid fa-expand" style="font-size:10px"></i></button>';
+}
+function swV(pn,m){F[pn].view=m;Z[pn]=1;updateTB(pn);render(pn);}
+function zB(pn,d){Z[pn]=Math.max(0.3,Math.min(5,Z[pn]+d*0.3));render(pn);}
+function togFS(pn){var col1=document.getElementById('col1'),col2=document.getElementById('col2');if(S.fs===null){S.fs=pn;if(pn===1){col1.style.width='100%';col1.style.borderRight='none';col2.style.display='none';}else{col2.style.width='100%';col2.style.borderRight='none';col1.style.display='none';}}else{S.fs=null;col1.style.width='';col1.style.borderRight='1px solid var(--border)';col1.style.display='';col2.style.width='';col2.style.borderRight='';col2.style.display='';}setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);}
+
+/* ── LEGEND / THEME ── */
+function lstSyncIfOpen(){
+  if(!document.getElementById('lstPanel').classList.contains('open'))return;
+  renderListado();
+}
+
+function updateLeg(){
+  var lg=document.getElementById('legend');var h='';
+  if(GF.wtMode){h+='<span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;width:60px;height:8px;border-radius:2px;border:1px solid var(--border);background:linear-gradient(to right,#ffffff,#000000);vertical-align:middle"></span>Peso: 0t → 35t</span>';}
+  else{for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;if(!GF.pods[k])h+='<span style="opacity:.3"><span class="lem"></span>'+k+'</span>';else h+='<span><span class="lsw" style="background:'+POD_MAP[k]+'"></span>'+k+'</span>';}h+='<span><span class="lem"></span>MT</span>';h+='<span><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #ffeb3b;vertical-align:middle;margin-right:3px"></span>OOG</span>';h+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ce93d8;vertical-align:middle;margin-right:3px"></span>45\'</span>';h+='<span><span style="display:inline-block;width:12px;height:10px;border-radius:2px;border:1.5px solid #e65100;vertical-align:middle;margin-right:3px"></span>RS</span>';}
+  if(GF.trt)h+='<span style="margin-left:6px;opacity:.6"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:#888;opacity:.3;vertical-align:middle;margin-right:3px"></span>POD no sel. atenuado</span>';
+  h+='<span class="ml-auto opacity-40">Clic: seleccionar &middot; Ctrl+Clic: multi &middot; Ctrl+C: copiar</span>';
+  lg.innerHTML=h;
+}
+function toggleTheme(){document.body.classList.toggle('dark');var isDark=document.body.classList.contains('dark');document.getElementById('themeBtn').innerHTML=isDark?'<i class="fa-solid fa-sun"></i>':'<i class="fa-solid fa-moon"></i>';if(S.L1){render(1);render(2);}}
+
+/* ── TOOLTIP ── */
+var ttE=document.getElementById('tt');
+function showTT(c,mx,my){
+  if(!c){ttE.classList.add('hidden');return;}
+  var sz=parseSz(c.type);var hc=isHC(c);var h='<div class="tid">'+c.id;
+  // Si hay varios seleccionados, mostrar contador
+  if(S.sel&&S.sel.size&&S.sel.size>1)h+=' <span style="font-size:10px;color:var(--muted);font-weight:400">(+ '+(S.sel.size-1)+' sel.)</span>';
+  h+='</div>';
+  h+='<div class="tr"><span>Tipo</span><span>'+(c.type||'-')+' ('+sz+"'"+(hc?' HC':'')+(c._is45ft?' 45ft':'')+')</span></div>';
+  h+='<div class="tr"><span>Posición</span><span>'+c.positions.map(fmtP).join(', ')+'</span></div>';
+  h+='<div class="tr"><span>Peso</span><span>'+(c.isEmpty?'MT':c.weight?(c.weight/1000).toFixed(1).replace('.',',')+' Tons':'-')+'</span></div>';
+  h+='<div class="tr"><span>Estado</span><span>'+(c.isEmpty?'Vacío':'Full')+'</span></div>';
+  if(c.pol)h+='<div class="tr"><span>POL</span><span>'+c.pol+'</span></div>';
+  if(c.pod)h+='<div class="tr"><span>POD</span><span>'+c.pod+'</span></div>';
+  if(c.isReefer)h+='<div class="tr"><span>Temp.</span><span>'+(c.temperature!==null?c.temperature+'°C':'-')+'</span></div>';
+  if(c.isDangerous){
+    var classes=c.dgClasses&&c.dgClasses.length?c.dgClasses:[c.dgClass];
+    classes=classes.filter(Boolean);
+    var dgLine='Clase '+classes.join(' + ')+(c.dgUN?' &nbsp; UN '+c.dgUN:'');
+    h+='<div class="tr"><span>DG</span><span>'+(dgLine||c.dgInfo||'Sí')+'</span></div>';
+    if(c.dgInfo)h+='<div class="tr"><span style="opacity:.7">Info</span><span style="font-size:10px">'+c.dgInfo+'</span></div>';
+    h+='<div class="tr"><span style="font-size:10px;opacity:.6">doble clic → info clase</span><span></span></div>';
+  }
+  if(isOog(c)){
+    var dimStr='';var dim=c.dim||{};
+    if(dim.top)dimStr+=' ↑'+Math.round(dim.top)+'cm';
+    if(dim.port)dimStr+=' ←'+Math.round(dim.port)+'cm';
+    if(dim.stbd)dimStr+=' →'+Math.round(dim.stbd)+'cm';
+    if(dim.fwd)dimStr+=' ⟷'+Math.round(dim.fwd)+'cm';
+    h+='<div class="tr"><span>OOG</span><span>'+(c.oogInfo||'Sí')+(dimStr?' ·'+dimStr:'')+'</span></div>';
+  }
+  if(c.isRemocion){
+    h+='<div class="tr"><span>Tipo</span><span style="color:#e65100;font-weight:600">⟳ REMOCIÓN</span></div>';
+    if(c.origPos)h+='<div class="tr"><span>Pos. original</span><span>'+fmtP(c.origPos)+'</span></div>';
+  }
+  if(DIFF_IDS.has(c.id)&&S.c1&&S.c2)h+='<div class="tr"><span>Cambio</span><span style="color:var(--diff-chg)">Difiere entre planes</span></div>';
+  var bd='';if(c.isEmpty)bd+='<span class="tbs" style="background:#263354;color:#6b7fa3">MT</span>';if(c.isDangerous)bd+='<span class="tbs" style="background:#c62828;color:#fff">DG</span>';if(c.isReefer)bd+='<span class="tbs" style="background:#00838f;color:#fff">RF</span>';if(hc)bd+='<span class="tbs" style="background:#e65100;color:#fff">HC</span>';if(isOog(c))bd+='<span class="tbs" style="background:#f9a825;color:#000">OOG</span>';if(c._is45ft)bd+='<span class="tbs" style="background:#8e24aa;color:#fff">45\'</span>';if(c.isRemocion)bd+='<span class="tbs" style="background:#e65100;color:#fff">RS</span>';if(bd)h+='<div class="tbg">'+bd+'</div>';
+  ttE.innerHTML=h;ttE.classList.remove('hidden');
+  var vw=window.innerWidth,vh=window.innerHeight,tx=mx+16,ty=my-10,tw=ttE.offsetWidth,th=ttE.offsetHeight;
+  if(tx+tw>vw-10)tx=mx-tw-10;if(ty+th>vh-10)ty=vh-th-10;if(ty<10)ty=10;ttE.style.left=tx+'px';ttE.style.top=ty+'px';
+}
+
+/* ── TOAST PARA COPIAR ── */
+var _toastTimer=null;
+function showToast(msg){var t=document.getElementById('copyToast');t.textContent=msg;t.style.opacity='1';clearTimeout(_toastTimer);_toastTimer=setTimeout(function(){t.style.opacity='0';},1500);}
+
+/* ── MOUSE EVENTS + CTRL+CLIC MULTI + CTRL+C COPIAR ── */
+function onMM(e,pn){
+  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  var L=pn===1?S._L1:S._L2;if(!L)return;var c=hitTest(mx,my,L);
+  // El hover también busca en el otro plan para mostrar tooltip completo
+  var tc=c;
+  if(c){var oC=pn===1?S.c2:S.c1;if(oC)for(var i=0;i<oC.length;i++){if(oC[i].id===c.id){tc=oC[i];break;}}}
+  if(c&&c.id!==S.hl){S.hl=c.id;render(1);render(2);}else if(!c&&S.hl){S.hl=null;render(1);render(2);}
+  showTT(tc,e.clientX,e.clientY);
+}
+function onCl(e,pn){
+  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  var L=pn===1?S._L1:S._L2;if(!L)return;var c=hitTest(mx,my,L);
+  var clickedPos=hitTestPos(mx,my,L);
+  // Intercept for move wizard
+  if(MW.active&&mwInterceptClick(c,clickedPos,pn))return;
+  if(!c){S.sel=null;render(1);render(2);return;}
+  if(e.ctrlKey||e.metaKey){
+    // Multi-selección con Ctrl
+    if(!S.sel)S.sel=new Set();
+    if(S.sel.has(c.id))S.sel.delete(c.id);else S.sel.add(c.id);
+    if(S.sel.size===0)S.sel=null;
+  }else{
+    // Clic simple: seleccionar uno solo
+    if(S.sel&&S.sel.has&&S.sel.has(c.id)){S.sel=null;}else{S.sel=new Set([c.id]);}
+  }
+  render(1);render(2);
+  // Centrar AMBAS vistas en el contenedor seleccionado (o el primero si hay multi-sel)
+  if(S.sel&&S.sel.size>=1){
+    var firstId=S.sel.size===1?Array.from(S.sel)[0]:Array.from(S.sel)[0];
+    scrollToContainer(firstId);
+  }
+}
+function onML(){if(S.hl){S.hl=null;render(1);render(2);}ttE.classList.add('hidden');}
+
+document.getElementById('c1').addEventListener('mousemove',function(e){onMM(e,1);});
+document.getElementById('c2').addEventListener('mousemove',function(e){onMM(e,2);});
+document.getElementById('c1').addEventListener('click',function(e){onCl(e,1);});
+document.getElementById('c2').addEventListener('click',function(e){onCl(e,2);});
+document.getElementById('c1').addEventListener('mouseleave',onML);
+document.getElementById('c2').addEventListener('mouseleave',onML);
+
+/* ── DOBLE CLIC: info DG ── */
+function onDbl(e,pn){
+  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();
+  var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  var L=pn===1?S._L1:S._L2;if(!L)return;
+  var c=hitTest(mx,my,L);
+  if(c&&c.isDangerous)openDgModal(c);
+}
+document.getElementById('c1').addEventListener('dblclick',function(e){onDbl(e,1);});
+document.getElementById('c2').addEventListener('dblclick',function(e){onDbl(e,2);});
+
+/* ── CTRL+C: copiar contenedores seleccionados ── */
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='c'){
+    // Solo copiar si hay selección y no estamos en el buscador
+    var active=document.activeElement;
+    if(active&&(active.id==='srchInput'||active.tagName==='INPUT'||active.tagName==='TEXTAREA'))return;
+    if(S.sel&&S.sel.size&&S.sel.size>0){
+      var ids=Array.from(S.sel).sort();
+      var text=ids.join('\n');
+      safeClipboard(text,function(){
+        showToast('Copiado'+(ids.length>1?'s':'')+': '+ids.length+' contenedor'+(ids.length>1?'es':''));
+      });
+      e.preventDefault();e.stopPropagation();
+    }
+  }
+});
+
+/* ── DG IMDG CLASS DATABASE ── */
+// stow: array of stowage/segregation rules for shipboard (IMDG Code Chapter 7)
+// Claves de stow: category (A-E), under_deck, on_deck, shade (protected from sun),
+// away_from_rf (slots away from reefers), away_from_heat, away_from_living,
+// ventilation, separation (from other classes), notes[]
+var DG_CLASSES={
+  '1':  {name:'Explosivos',color:'#e65100',
+    desc:'Sustancias y artículos con capacidad de explotar en masa, proyectar fragmentos o generar calor/luz intensos.',
+    examples:['Dinamita','Munición militar','Fuegos artificiales','Detonadores','Bengalas'],
+    stow:{category:'01',on_deck:true,under_deck:false,shade:true,away_from_heat:true,
+      away_from_living:true,ventilation:'natural o forzada',
+      notes:['Prohibida la estiba bajo cubierta en la mayoría de los casos',
+             'Distancia mínima de fuentes de calor e ignición',
+             'Prohibido junto a pasajeros o tripulación en espacios habitados',
+             'Requiere autorización especial del capitán y autoridades']}},
+  '1.1':{name:'Explosivos Div. 1.1 – explosión en masa',color:'#e65100',
+    desc:'Explosivos con peligro de explosión en masa instantánea de toda la carga.',
+    examples:['TNT','Nitroglicerina','RDX'],
+    stow:{category:'01',on_deck:true,under_deck:false,shade:true,away_from_heat:true,
+      away_from_living:true,
+      notes:['Solo cubierta. Estiba más restrictiva del Código IMDG',
+             'Separación de ≥ 12 m de fuentes de calor',
+             'No compatible con cargas inflamables, oxidantes ni tóxicas']}},
+  '1.2':{name:'Explosivos Div. 1.2 – proyección',color:'#e65100',
+    desc:'Explosivos con peligro de fragmentos sin explosión en masa.',
+    examples:['Proyectiles militares','Cohetes'],
+    stow:{category:'01',on_deck:true,under_deck:false,shade:true,away_from_heat:true,
+      notes:['Solo cubierta','Separación de zonas habitadas']}},
+  '1.3':{name:'Explosivos Div. 1.3 – incendio',color:'#e65100',
+    desc:'Explosivos con peligro de incendio intenso y pequeña onda de presión.',
+    examples:['Pólvora negra','Bengalas pirotécnicas'],
+    stow:{category:'02',on_deck:true,under_deck:'permitido (condicionado)',shade:true,
+      away_from_heat:true,
+      notes:['Cubierta preferida; bodega solo con aprobación específica',
+             'Proteger del calor solar directo']}},
+  '1.4':{name:'Explosivos Div. 1.4 – riesgo reducido',color:'#ff8f00',
+    desc:'Riesgo mínimo; efectos limitados al bulto.',
+    examples:['Munición deportiva','Cartuchos de señal de baja potencia'],
+    stow:{category:'04',on_deck:true,under_deck:true,shade:false,
+      notes:['Permitido en bodega bien ventilada',
+             'Separado de fuentes de calor y llama']}},
+  '1.5':{name:'Explosivos Div. 1.5 – insensibles, peligro en masa',color:'#ff8f00',
+    desc:'Insensibles en condiciones normales pero pueden detonar en masa.',
+    examples:['ANFO','Agentes de tronadura'],
+    stow:{category:'01',on_deck:true,under_deck:false,shade:true,
+      notes:['Tratado como 1.1 a efectos de estiba',
+             'Separación de oxidantes y fuentes de calor']}},
+  '1.6':{name:'Explosivos Div. 1.6 – extremadamente insensibles',color:'#ff8f00',
+    desc:'Solo artículos militares extremadamente insensibles.',
+    examples:['Cargas militares especiales EI'],
+    stow:{category:'04',on_deck:true,under_deck:true,shade:false,
+      notes:['Consultar ficha de datos de seguridad específica']}},
+  '2':  {name:'Gases',color:'#1565c0',
+    desc:'Gases a 20 °C / 101,3 kPa o con P vapor > 300 kPa a 50 °C.',
+    examples:['GNL','Propano','Oxígeno','Cloro','Acetileno','Aerosoles'],
+    stow:{category:'varies',on_deck:true,under_deck:'depende de subdivisión',
+      shade:true,away_from_heat:true,
+      notes:['Ver subdivisión 2.1 / 2.2 / 2.3 para reglas específicas']}},
+  '2.1':{name:'Gases inflamables',color:'#1565c0',
+    desc:'Gases inflamables: rango de inflamabilidad ≥ 12 % o LIE ≤ 13 %.',
+    examples:['GLP (butano/propano)','Hidrógeno','Acetileno'],
+    stow:{category:'D',on_deck:true,under_deck:false,shade:true,away_from_heat:true,
+      ventilation:'forzada si en bodega',
+      notes:['Solo cubierta en buques de carga general',
+             'Proteger del calor solar directo',
+             'Separar de fuentes de ignición ≥ 3 m',
+             'Separación de oxidantes (Cl. 5.1) y líquidos inflamables (Cl. 3)']}},
+  '2.2':{name:'Gases no inflamables / no tóxicos',color:'#1565c0',
+    desc:'Incluye gases criogénicos y comprimidos inertes.',
+    examples:['N₂','CO₂','Argón','Helio','Aire comprimido'],
+    stow:{category:'A',on_deck:true,under_deck:true,shade:true,away_from_heat:true,
+      notes:['Permitido en bodega con ventilación adecuada',
+             'Proteger de temperaturas extremas',
+             'Botellas de gas comprimido: asegurar contra caída']}},
+  '2.3':{name:'Gases tóxicos',color:'#6a1b9a',
+    desc:'CL₅₀ ≤ 5 000 mL/m³; altamente peligrosos al inhalar.',
+    examples:['Cloro','Amoníaco','Fosgeno','HCN'],
+    stow:{category:'D',on_deck:true,under_deck:false,shade:true,away_from_heat:true,
+      away_from_living:true,
+      notes:['Solo cubierta','Alejado de zonas habitadas y accesos',
+             'Equipos EPIs a bordo antes de la carga',
+             'Separación de Cl. 3, 4 y oxidantes']}},
+  '3':  {name:'Líquidos inflamables',color:'#f57f17',
+    desc:'Punto de inflamación ≤ 60 °C.',
+    examples:['Gasolina','Acetona','Etanol','Pinturas','Disolventes'],
+    stow:{category:'E',on_deck:true,under_deck:true,shade:true,away_from_heat:true,
+      ventilation:'natural o forzada',
+      notes:['Cubierta o bodega con buena ventilación',
+             'Proteger del calor solar (PI < 23 °C: solo cubierta)',
+             'Separar de oxidantes (5.1), peróxidos (5.2) y fuentes de ignición',
+             'Clase A (PI ≤ 23 °C flash cerrado): categoría E, solo cubierta']}},
+  '4':  {name:'Sólidos inflamables',color:'#ef6c00',
+    desc:'Tres subdivisiones según mecanismo de ignición.',
+    examples:['Fósforo rojo','Azufre','Carburo de calcio','Magnesio'],
+    stow:{notes:['Ver subdivisión 4.1 / 4.2 / 4.3 para reglas específicas']}},
+  '4.1':{name:'Sólidos inflamables / autorreactivos',color:'#ef6c00',
+    desc:'Fácilmente combustibles o con riesgo de ignición por fricción.',
+    examples:['Fósforo rojo','Azufre','Cerillas de seguridad'],
+    stow:{category:'E',on_deck:true,under_deck:true,shade:true,away_from_heat:true,
+      ventilation:'natural',
+      notes:['Bodega permitida con ventilación natural',
+             'Mantener alejado de fuentes de calor y humedad',
+             'Separación de oxidantes y ácidos']}},
+  '4.2':{name:'Sustancias piroforicas / autocalentables',color:'#bf360c',
+    desc:'Ignición espontánea en contacto con el aire.',
+    examples:['Fósforo blanco','Carbón activo','Al en polvo húmedo'],
+    stow:{category:'D',on_deck:true,under_deck:false,shade:true,
+      notes:['Solo cubierta para sustancias piroforicas',
+             'Temperatura de bodega no debe superar la de autoignición',
+             'Separación de oxidantes y materiales combustibles']}},
+  '4.3':{name:'Sustancias que emiten gases inflamables con agua',color:'#37474f',
+    desc:'Reaccionan con el agua produciendo gases inflamables.',
+    examples:['Na metálico','K','CaC₂','Mg granulado'],
+    stow:{category:'D',on_deck:true,under_deck:false,shade:false,
+      notes:['Solo cubierta o bodega completamente seca',
+             'Absolutamente alejado de agua (lluvia, rociadores, mar)',
+             'Sin sistemas de extinción por agua en la zona',
+             'Separación de Cl. 3, 5.1 y 8 (ácidos)']}},
+  '5.1':{name:'Sustancias oxidantes',color:'#558b2f',
+    desc:'Ceden oxígeno y pueden causar o intensificar combustión.',
+    examples:['NH₄NO₃','Cl₂ líquido','H₂O₂ concentrado','Percloratos'],
+    stow:{category:'D',on_deck:true,under_deck:true,shade:true,away_from_heat:true,
+      ventilation:'natural o forzada',
+      notes:['Separar de materiales combustibles (Cl. 3, 4)',
+             'Separar de ácidos (Cl. 8)',
+             'Proteger del calor solar',
+             'No mezclar con amoniaco ni compuestos orgánicos']}},
+  '5.2':{name:'Peróxidos orgánicos',color:'#827717',
+    desc:'Termolábiles; descomposición exotérmica autoacelerada posible.',
+    examples:['Peróxido de benzoilo','BPO','Peróxido de lauroilo'],
+    stow:{category:'D',on_deck:true,under_deck:false,shade:true,away_from_heat:true,
+      away_from_rf:false,
+      notes:['Solo cubierta; algunos requieren control de temperatura',
+             'Proteger del calor solar directo',
+             'Algunos tipos requieren refrigeración (indicado en ficha)',
+             'Separar de materiales combustibles, ácidos y bases']}},
+  '6.1':{name:'Sustancias tóxicas',color:'#6a1b9a',
+    desc:'Causan la muerte o lesión grave por ingestión, inhalación o contacto dérmico.',
+    examples:['Plaguicidas OP','KCN','Mercurio','Metanol','Estricnina'],
+    stow:{category:'B',on_deck:true,under_deck:true,shade:false,
+      ventilation:'natural',away_from_living:true,
+      notes:['Permitido en bodega con ventilación natural',
+             'Alejado de provisiones y alimentos',
+             'Alejado de zonas habitadas en la medida posible',
+             'Separación de alimentos (Cl. 9 + foodstuffs)']}},
+  '6.2':{name:'Sustancias infecciosas',color:'#880e4f',
+    desc:'Contienen patógenos viables que causan enfermedades.',
+    examples:['Muestras diagnósticas P A','Cultivos patógenos','Residuos hospitalarios'],
+    stow:{category:'A',on_deck:true,under_deck:true,shade:false,
+      notes:['Embalaje doble y certificación especial obligatorios',
+             'Alejado de alimentos y agua potable',
+             'Manipulación con EPI adecuado']}},
+  '7':  {name:'Material radiactivo',color:'#827717',
+    desc:'Actividad específica > 70 kBq/kg; regulado por normativa IAEA/IMDG.',
+    examples:['Uranio enriquecido','I-131','Co-60','Residuos nucleares'],
+    stow:{category:'varies',on_deck:true,under_deck:true,shade:false,
+      away_from_living:true,
+      notes:['Distancias de separación calculadas según índice de transporte (IT)',
+             'IT > 50: solo en bodega designada o cubierta alejada',
+             'Alejado de zonas habitadas y correo fotográfico',
+             'Clase VII: documentación específica y notificación previa al capitán']}},
+  '8':  {name:'Sustancias corrosivas',color:'#4527a0',
+    desc:'Causan daño grave a tejidos vivos o a otras mercancías por contacto.',
+    examples:['H₂SO₄','HCl','NaOH','NaClO','H₃PO₄','Baterías de ácido'],
+    stow:{category:'C',on_deck:true,under_deck:true,shade:false,away_from_heat:false,
+      ventilation:'natural',
+      notes:['Permitido en bodega con ventilación',
+             'Separar de metales reactivos (Cl. 4.3)',
+             'Separar de sustancias tóxicas inhalables (Cl. 2.3, 6.1 PGI)',
+             'Separar de alimentos y material orgánico combustible']}},
+  '9':  {name:'Sustancias peligrosas misceláneas (Cl. 9)',color:'#546e7a',
+    desc:'Peligros no cubiertos por las demás clases.',
+    examples:['Baterías de Li','Hielo seco (CO₂ sólido)','VE','PCBs','Amianto'],
+    stow:{category:'A',on_deck:true,under_deck:true,shade:false,
+      notes:['Baterías de litio: proteger de daño mecánico; no apilar si dañadas',
+             'Hielo seco (UN1845): ventilación forzada, riesgo de asfixia por CO₂',
+             'Vehículos eléctricos: batería al 30 % máx., sistema extinción preparado',
+             'PCBs/amianto: embalaje especial y documentación ADR/IMDG']}},
+};
+function getDgClassInfo(rawClass){
+  if(!rawClass)return null;
+  var k=rawClass.toString().trim();
+  if(DG_CLASSES[k])return DG_CLASSES[k];
+  // Try first digit only
+  var k1=k.split('.')[0];
+  if(DG_CLASSES[k1])return DG_CLASSES[k1];
+  return null;
+}
+
+/* ── STOWAGE ICONS / HELPERS ── */
+var STOW_CAT_DESC={'A':'Cubierta o bodega (sin restricción de posición)','B':'Cubierta o bodega ventilada','C':'Cubierta o bodega con buena ventilación','D':'Sobre cubierta preferentemente; bodega solo si indicado','E':'Sobre cubierta; líquidos PI < 23 °C'};
+function stowPill(ok,label){var col=ok?'#388e3c':'#c62828';var bg=ok?'rgba(56,142,60,.1)':'rgba(198,40,40,.1)';var icon=ok?'✓':'✗';return'<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:4px;border:1px solid '+col+';background:'+bg+';font-size:11px;font-family:IBM Plex Mono,monospace;color:'+col+'">'+icon+' '+label+'</span>';}
+function stowTag(icon,label,color){return'<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.05);font-size:11px;border:1px solid var(--border);color:'+(color||'var(--fg)')+'">'+icon+' '+label+'</span>';}
+
+function buildStowSection(info){
+  if(!info||!info.stow)return'';
+  var s=info.stow;var h='';
+  h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
+  h+='<div class="dg-label" style="margin-bottom:8px">Estiba en buque (IMDG Cap. 7)</div>';
+  // Category
+  if(s.category&&STOW_CAT_DESC[s.category]){
+    h+='<div style="margin-bottom:7px"><span style="font-size:10px;color:var(--muted)">Categoría: </span>';
+    h+='<span style="font-family:IBM Plex Mono,monospace;font-weight:700;font-size:11px">'+s.category+'</span>';
+    h+='<span style="font-size:11px;color:var(--muted);margin-left:6px">— '+STOW_CAT_DESC[s.category]+'</span></div>';
+  }
+  // On deck / under deck pills
+  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">';
+  if(s.on_deck!==undefined)h+=stowPill(s.on_deck==='true'||s.on_deck===true,'Sobre cubierta');
+  if(s.under_deck!==undefined){var ud=s.under_deck;h+=stowPill(ud===true||ud==='true','Bodega')+(typeof ud==='string'&&ud!=='true'&&ud!=='false'?'<span style="font-size:10px;color:var(--muted);align-self:center">'+ud+'</span>':'');}
+  if(s.shade)h+=stowTag('☀','Proteger del calor solar','#e65100');
+  if(s.away_from_heat)h+=stowTag('🔥','Alejado de fuentes de calor');
+  if(s.away_from_living)h+=stowTag('🧑','Alejado de zonas habitadas','#6a1b9a');
+  if(s.away_from_rf){var n=typeof s.away_from_rf==='number'?s.away_from_rf:4;h+=stowTag('❄','≥ '+n+' slots de RF','#00838f');}
+  if(s.ventilation)h+=stowTag('💨','Ventilación: '+s.ventilation);
+  if(s.separation)h+=stowTag('↔','Segreg.: '+s.separation);
+  h+='</div>';
+  // Notes
+  if(s.notes&&s.notes.length){
+    h+='<ul style="margin:0;padding-left:16px;font-size:12px;color:var(--fg);line-height:1.8">';
+    for(var ni=0;ni<s.notes.length;ni++)h+='<li>'+s.notes[ni]+'</li>';
+    h+='</ul>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function openDgModal(c){
+  if(!c||!c.isDangerous)return;
+  var classes=c.dgClasses&&c.dgClasses.length?c.dgClasses:[c.dgClass];
+  classes=classes.filter(Boolean);
+  var classLabel=classes.join(' + ')||'?';
+  document.getElementById('dgModalClass').textContent='Clase '+classLabel;
+  var firstInfo=getDgClassInfo(classes[0]);
+  document.getElementById('dgModalTitle').textContent=firstInfo?firstInfo.name:'Mercancía Peligrosa';
+  document.getElementById('dgModalSubtitle').textContent=c.id+(c.dgUN?' · UN '+c.dgUN:'')+(c.dgInfo?' · '+c.dgInfo:'');
+  if(firstInfo){document.getElementById('dgModalIcon').style.background='rgba('+hexToRgb(firstInfo.color)+',0.15)';document.getElementById('dgModalIcon').style.color=firstInfo.color;}
+  var body='';
+  for(var ci=0;ci<classes.length;ci++){
+    var cls=classes[ci];var info=getDgClassInfo(cls);
+    var dgEntry=c.dgList?c.dgList[ci]:null;
+    body+='<div class="dg-section" style="'+(ci>0?'margin-top:16px;padding-top:14px;border-top:1px solid var(--border)':'')+'">';
+    body+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    body+='<span style="font-family:\'IBM Plex Mono\',monospace;font-weight:700;font-size:13px;padding:2px 8px;border-radius:4px;background:rgba(198,40,40,.12);color:#c62828">Clase '+cls+'</span>';
+    if(dgEntry&&dgEntry.un)body+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted)">UN '+dgEntry.un+'</span>';
+    body+='</div>';
+    if(info){
+      body+='<div class="dg-label">'+info.name+'</div>';
+      body+='<div class="dg-value" style="margin-bottom:6px">'+info.desc+'</div>';
+      body+='<div class="dg-examples">'+info.examples.map(function(e){return'<span class="dg-tag">'+e+'</span>'}).join('')+'</div>';
+      body+=buildStowSection(info);
+    } else {
+      body+='<div class="dg-value" style="color:var(--muted)">Sin información detallada para la clase "'+cls+'".</div>';
+    }
+    body+='</div>';
+  }
+  body+='<div class="dg-section" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+  body+='<div class="dg-label">Datos del contenedor</div>';
+  body+='<div class="dg-value" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px">';
+  body+='Contenedor: <b>'+c.id+'</b><br>';
+  body+='Posición: '+(c.positions.map(fmtP).join(', ')||'-');
+  if(c.origPos)body+=' <span style="color:var(--muted)">(orig: '+fmtP(c.origPos)+')</span>';
+  body+='<br>POL: '+(c.pol||'-')+' · POD: '+(c.pod||'-')+'<br>';
+  body+='Peso: '+(c.isEmpty?'MT (vacío)':c.weight?(c.weight/1000).toFixed(1)+' t':'-');
+  if(c.isRemocion)body+=' <span style="color:#e65100;font-weight:600">⟳ REMOCIÓN</span>';
+  body+='</div></div>';
+  document.getElementById('dgModalBody').innerHTML=body;
+  document.getElementById('dgModal').classList.add('open');
+}
+function closeDgModal(){document.getElementById('dgModal').classList.remove('open');}
+document.getElementById('dgModal').addEventListener('click',function(e){if(e.target===this)closeDgModal();});
+function hexToRgb(hex){hex=hex.replace('#','');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return r+','+g+','+b;}
+
+/* ── PESO RANGE ── */
+function applyWrange(){
+  var minV=document.getElementById('wrangeMin').value.trim();
+  var maxV=document.getElementById('wrangeMax').value.trim();
+  GF.wtMin=(minV!=='')?parseFloat(minV):null;
+  GF.wtMax=(maxV!=='')?parseFloat(maxV):null;
+  var active=GF.wtMin!==null||GF.wtMax!==null;
+  document.getElementById('wrangeWrap').classList.toggle('active',active);
+  document.getElementById('wrangeClear').style.display=active?'':'none';
+  clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();
+}
+function clearWrange(){
+  document.getElementById('wrangeMin').value='';document.getElementById('wrangeMax').value='';
+  GF.wtMin=null;GF.wtMax=null;
+  document.getElementById('wrangeWrap').classList.remove('active');
+  document.getElementById('wrangeClear').style.display='none';
+  render(1);render(2);lstSyncIfOpen();
+}
+
+/* ── COPIAR FILTRADOS ── */
+function copyFilteredContainers(){
+  var seen=new Set();var lines=[];
+  var plans=[S.c1,S.c2];
+  for(var pi=0;pi<plans.length;pi++){
+    var cts=plans[pi];if(!cts)continue;
+    for(var i=0;i<cts.length;i++){
+      var c=cts[i];
+      if(!passF_noTrt(c))continue;
+      if(seen.has(c.id))continue;
+      seen.add(c.id);
+      var pos=c.positions.map(fmtP).join(' ');
+      var wt=c.isEmpty?'MT':c.weight?(c.weight/1000).toFixed(1)+'t':'-';
+      var dg=c.isDangerous?(c.dgClass?'DG'+c.dgClass:'DG'):'';
+      var rf=c.isReefer?'RF':'';
+      var oog=c.isOog?'OOG':'';
+      var flags=[dg,rf,oog].filter(Boolean).join(' ');
+      lines.push([c.id,c.type||'',pos,c.pol||'',c.pod||'',wt,flags].join('\t'));
+    }
+  }
+  if(!lines.length){showToast('Sin contenedores filtrados');return;}
+  var header='Contenedor\tTipo\tPosicion\tPOL\tPOD\tPeso\tFlags';
+  var text=header+'\n'+lines.join('\n');
+  safeClipboard(text,function(){
+    showToast('Copiados '+lines.length+' contenedores (TSV)');
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOVE WIZARD
+   ══════════════════════════════════════════════════════════════ */
+var MW={
+  mode:null,        // 'manual' | 'list'
+  step:0,
+  items:[],         // [{c, destPos:null}]  c = container object from S.c1
+  pickingPos:null,  // index of item waiting for a click-on-canvas destination
+  active:false,
+  preview:{}        // containerId -> destPos — for live canvas paint
+};
+
+function openMoveWizard(){
+  if(!S.c1){showToast('Carga primero el Plan 1');return;}
+  MW={mode:null,step:0,items:[],pickingPos:null,active:true};
+  showStep(0);
+  document.getElementById('movePanel').classList.add('open');
+  document.getElementById('mwNextBtn').textContent='Siguiente';
+  document.getElementById('mwNextBtn').disabled=false;
+  document.getElementById('mwBackBtn').style.display='none';
+  document.getElementById('pickBanner').style.display='none';
+  // shrink col1 slightly to give panel space — panel is fixed width
+  setTimeout(function(){render(1);render(2);},50);
+}
+function closeMoveWizard(){
+  document.getElementById('movePanel').classList.remove('open');
+  document.getElementById('pickBanner').style.display='none';
+  MW.active=false;MW.pickingPos=null;_mwFocusedIdx=null;MW.preview={};
+  setTimeout(function(){render(1);render(2);},50);
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&MW.active){if(MW.pickingPos!==null){MW.pickingPos=null;clearCrosshairHighlight();document.getElementById('pickBanner').style.display='none';}else{closeMoveWizard();}}});
+
+function showStep(n){
+  document.querySelectorAll('.mw-step').forEach(function(el){el.classList.remove('active');});
+  var stepId=n===0?'mwStep0':n===1?(MW.mode==='manual'?'mwStep1a':'mwStep1b'):'mwStep2';
+  document.getElementById(stepId).classList.add('active');
+  MW.step=n;
+}
+function startManual(){
+  MW.mode='manual';
+  // Pre-populate from current selection
+  if(S.sel&&S.sel.size){
+    S.sel.forEach(function(id){var c=findInPlan1(id);if(c&&!MW.items.find(function(x){return x.c.id===id;}))MW.items.push({c:c,destPos:null});});
+  }
+  showStep(1);
+  renderMoveList();
+  document.getElementById('mwBackBtn').style.display='';
+  document.getElementById('mwNextBtn').textContent='Asignar posiciones';
+  document.getElementById('pickBanner').style.display='';
+}
+function startList(){
+  MW.mode='list';
+  showStep(1);
+  document.getElementById('mwBackBtn').style.display='';
+  document.getElementById('mwNextBtn').textContent='Previsualizar';
+  document.getElementById('listPasteArea').value='';
+  document.getElementById('mwPreview').style.display='none';
+  document.getElementById('listPasteArea').addEventListener('input',onListPaste);
+}
+function mwBack(){
+  if(MW.step===1){MW.mode=null;showStep(0);document.getElementById('mwBackBtn').style.display='none';document.getElementById('mwNextBtn').textContent='Siguiente';document.getElementById('pickBanner').style.display='none';}
+  else if(MW.step===2){MW.pickingPos=null;document.getElementById('pickBanner').style.display='';showStep(1);renderMoveList();document.getElementById('mwNextBtn').textContent='Asignar posiciones';}
+}
+
+function mwNext(){
+  if(MW.step===0)return; // choices handled by startManual/startList
+  if(MW.step===1&&MW.mode==='manual'){
+    if(!MW.items.length){showToast('Añade al menos un contenedor');return;}
+    document.getElementById('pickBanner').style.display='none';
+    showStep(2);renderPosStep();
+    document.getElementById('mwNextBtn').textContent='Generar BAPLIE';
+    document.getElementById('mwBackBtn').style.display='';
+  } else if(MW.step===1&&MW.mode==='list'){
+    parseListPaste();
+    if(!MW.items.length){showToast('Sin movimientos válidos');return;}
+    generateAndLoad();
+  } else if(MW.step===2){
+    // check all assigned
+    var missing=MW.items.filter(function(it){return!it.destPos;});
+    if(missing.length){showToast(missing.length+' contenedor(es) sin posición destino');return;}
+    generateAndLoad();
+  }
+}
+
+// ── FIND IN PLAN 1 ──
+function findInPlan1(id){if(!S.c1)return null;for(var i=0;i<S.c1.length;i++){if(S.c1[i].id===id)return S.c1[i];}return null;}
+
+// ── ADD/REMOVE ITEMS (manual mode) ──
+function mwAddContainer(c){
+  if(!c||!c.id)return;
+  if(MW.items.find(function(x){return x.c.id===c.id;})){showToast(c.id+' ya está en la lista');return;}
+  // Check if pos is occupied — if so, add the occupant too with a warning
+  MW.items.push({c:c,destPos:null});
+  renderMoveList();
+  showToast(c.id+' añadido');
+}
+function mwRemoveItem(idx){MW.items.splice(idx,1);renderMoveList();}
+
+function renderMoveList(){
+  var el=document.getElementById('moveListRows');
+  if(!MW.items.length){el.innerHTML='<p style="text-align:center;color:var(--muted);font-size:11px;padding:10px">Sin contenedores</p>';return;}
+  var h='';
+  for(var i=0;i<MW.items.length;i++){
+    var it=MW.items[i];var c=it.c;
+    var wt=c.isEmpty?'MT':c.weight?(c.weight/1000).toFixed(1)+'t':'-';
+    var pos=c.positions.map(fmtP).join(' ');
+    var flags=[];
+    if(c.isDangerous)flags.push('<span style="color:#c62828;font-weight:700">DG</span>');
+    if(c.isReefer)flags.push('<span style="color:#00838f;font-weight:700">RF</span>');
+    if(c.isOog)flags.push('<span style="color:#f57f17;font-weight:700">OOG</span>');
+    h+='<div class="mw-row"><div class="mw-cinfo">';
+    h+='<span class="mw-cid">'+c.id+'</span>';
+    h+='<span class="mw-cmeta">'+c.type+' &nbsp;·&nbsp; '+wt+' &nbsp;·&nbsp; '+(c.pod||'—')+(flags.length?' &nbsp;'+flags.join(' '):'')+' </span>';
+    h+='<span class="mw-cmeta" style="color:var(--fg)">'+pos+'</span>';
+    h+='</div>';
+    h+='<button class="mw-del" onclick="mwRemoveItem('+i+')" title="Quitar"><i class="fa-solid fa-xmark"></i></button></div>';
+  }
+  el.innerHTML=h;
+}
+
+// ── POS ASSIGNMENT STEP (manual) ──
+var _mwFocusedIdx=null;
+function renderPosStep(){
+  var el=document.getElementById('mwPosRows');var h='';
+  for(var i=0;i<MW.items.length;i++){
+    var it=MW.items[i];var c=it.c;
+    var fromPos=c.positions.map(fmtP).join(' ');
+    var wt=c.isEmpty?'MT':c.weight?(c.weight/1000).toFixed(1)+'t':'-';
+    var destVal=it.destPos?fmtP(it.destPos):'';
+    var inpClass='mw-pos-inp'+(destVal?' ok':'')+(it.err?' err':'')+(it.conflict?' err':'');
+    h+='<div class="mw-pos-step-row" id="mwpr_'+i+'">';
+    // Top line: ID + sz/tp + peso + POD
+    h+='<div class="mw-psrow-top">';
+    h+='<span class="mw-psrow-cid" title="'+c.id+'">'+c.id+'</span>';
+    h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted)">'+c.type+'</span>';
+    h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted)">'+wt+'</span>';
+    if(c.pod)h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--accent)">'+c.pod+'</span>';
+    h+='</div>';
+    // Middle line: pos actual → input destino
+    h+='<div class="mw-psrow-bottom">';
+    h+='<span class="mw-psrow-from">'+fromPos+' <i class="fa-solid fa-arrow-right" style="font-size:8px;margin:0 3px"></i></span>';
+    h+='<input class="'+inpClass+'" id="mwinp_'+i+'" value="'+destVal+'" placeholder="destino" maxlength="7"';
+    h+=' oninput="mwPosInput('+i+',this)" onfocus="mwFocusRow('+i+')">';
+    h+='<button class="mw-crosshair" onclick="mwPickFromCanvas('+i+')" title="Clicar en plano"><i class="fa-solid fa-crosshairs"></i></button>';
+    h+='</div>';
+    // Warnings/errors on a third line
+    if(it.err)h+='<div class="mw-pos-err">'+it.err+'</div>';
+    if(it.conflict)h+='<div class="mw-pos-warn">⚠ Ocupada por '+it.conflict+'</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+  if(MW.items.length>0&&_mwFocusedIdx===null){
+    var first=document.getElementById('mwinp_0');if(first)first.focus();
+  }
+}
+
+function mwFocusRow(idx){
+  _mwFocusedIdx=idx;
+  document.querySelectorAll('.mw-pos-step-row').forEach(function(r){r.classList.remove('active-row');});
+  var row=document.getElementById('mwpr_'+idx);if(row)row.classList.add('active-row');
+}
+
+function mwPosInput(idx, inputEl){
+  // inputEl is the actual DOM element — we read its current value directly
+  // We do NOT re-render the whole step (that resets the input mid-typing)
+  var raw=inputEl.value.replace(/\D/g,'');
+  var it=MW.items[idx];
+  it.err=null;it.conflict=null;it.destPos=null;
+
+  // Only validate when we have enough digits (5-7)
+  if(raw.length>=5&&raw.length<=7){
+    var padded=raw.padStart(7,'0');
+    var p=parsePos(padded);
+    if(!p){
+      it.err='Posición inválida';
+      inputEl.className='mw-pos-inp err';
+    } else {
+      it.destPos=p;
+      MW.preview[it.c.id]=p; // live preview on canvas
+      inputEl.className='mw-pos-inp ok';
+      render(1); // repaint immediately
+      // Check occupancy
+      var occ=gC(S.L1,p.bay,p.row,p.tier);
+      if(occ&&occ.id!==it.c.id){
+        it.conflict=occ.id;
+        inputEl.className='mw-pos-inp err';
+        if(!MW.items.find(function(x){return x.c.id===occ.id;})){
+          MW.items.push({c:occ,destPos:null});
+          renderPosStep();
+          return;
+        }
+      }
+    }
+  } else if(raw.length===0){
+    it.destPos=null;
+    delete MW.preview[it.c.id];
+    inputEl.className='mw-pos-inp';
+    render(1);
+  } else {
+    inputEl.className='mw-pos-inp';
+  }
+
+  // Update only the warning/error line for this row (no full re-render)
+  var row=document.getElementById('mwpr_'+idx);
+  if(row){
+    // Remove old warn/err lines
+    row.querySelectorAll('.mw-pos-err,.mw-pos-warn').forEach(function(el){el.remove();});
+    if(it.err){var d=document.createElement('div');d.className='mw-pos-err';d.textContent=it.err;row.appendChild(d);}
+    if(it.conflict){var d=document.createElement('div');d.className='mw-pos-warn';d.textContent='⚠ Ocupada por '+it.conflict;row.appendChild(d);}
+  }
+}
+
+function mwPickFromCanvas(idx){
+  MW.pickingPos=idx;_mwFocusedIdx=idx;
+  // Highlight the active crosshair button
+  document.querySelectorAll('.mw-crosshair').forEach(function(b,i){
+    b.style.borderColor=i===idx?'#7c3aed':'';
+    b.style.color=i===idx?'#7c3aed':'';
+    b.style.background=i===idx?'rgba(124,58,237,.15)':'';
+  });
+  document.getElementById('pickBanner').style.display='';
+  document.getElementById('pickBanner').innerHTML='<i class="fa-solid fa-crosshairs" style="margin-right:6px"></i>Clica en el plano para asignar destino a <b>'+MW.items[idx].c.id+'</b> · ESC para cancelar';
+}
+
+function clearCrosshairHighlight(){document.querySelectorAll('.mw-crosshair').forEach(function(b){b.style.borderColor='';b.style.color='';b.style.background='';});}
+
+function mwReceiveCanvasPos(pos,occupantC){
+  if(MW.pickingPos===null&&_mwFocusedIdx===null)return;
+  var idx=MW.pickingPos!==null?MW.pickingPos:_mwFocusedIdx;
+  MW.pickingPos=null;clearCrosshairHighlight();
+  document.getElementById('pickBanner').style.display='none';
+  if(!pos)return;
+  var it=MW.items[idx];
+  it.destPos=pos;it.err=null;
+  MW.preview[it.c.id]=pos; // live preview
+  // Write position string to the input field so user can see it
+  var inpEl=document.getElementById('mwinp_'+idx);
+  if(inpEl){inpEl.value=fmtP(pos);inpEl.className='mw-pos-inp ok';}
+  if(occupantC&&occupantC.id!==it.c.id){
+    it.conflict=occupantC.id;
+    if(!MW.items.find(function(x){return x.c.id===occupantC.id;})){
+      MW.items.push({c:occupantC,destPos:null});
+      showToast('⚠ '+occupantC.id+' desplazado — asígnale nueva posición');
+    }
+  } else {it.conflict=null;}
+  renderPosStep();
+  render(1); // paint immediately
+}
+
+// ── LIST MODE ──
+var _listParsed=[];
+function onListPaste(){
+  var raw=document.getElementById('listPasteArea').value;
+  parseListPreview(raw);
+}
+function parseListPreview(raw){
+  var lines=raw.split(/\r?\n/).filter(function(l){return l.trim();});
+  _listParsed=[];var h='';
+  h+='<div class="mw-preview"><div class="mw-preview-row header"><span>Contenedor</span><span>Pos. destino</span><span>Estado</span></div>';
+  for(var i=0;i<lines.length;i++){
+    var cols=lines[i].split(/\t/);
+    var cid=(cols[0]||'').trim().toUpperCase();
+    var posRaw=(cols[1]||'').trim().replace(/\D/g,'').padStart(7,'0');
+    var pp=posRaw.length>=5?parsePos(posRaw):null;
+    var c=findInPlan1(cid);
+    var status='',cls='ok-row';
+    if(!cid){continue;}
+    if(!c){status='⚠ No encontrado en Plan 1';cls='warn';}
+    else if(!pp){status='⚠ Posición inválida';cls='warn';}
+    else{status='✓ OK';_listParsed.push({c:c,destPos:pp});}
+    h+='<div class="mw-preview-row '+cls+'"><span>'+cid+'</span><span>'+(pp?fmtP(pp):posRaw)+'</span><span>'+status+'</span></div>';
+  }
+  h+='</div>';
+  document.getElementById('mwPreview').innerHTML=h;document.getElementById('mwPreview').style.display='';
+}
+function parseListPaste(){
+  var raw=document.getElementById('listPasteArea').value;
+  parseListPreview(raw);
+  MW.items=_listParsed.slice();
+}
+
+// ── GENERATE BAPLIE ──
+function generateAndLoad(){
+  if(!S.raw1){showToast('No hay texto raw del BAPLIE origen');return;}
+
+  // Build moveMap: containerId -> newPos string (7 chars)
+  var moveMap={};
+  for(var i=0;i<MW.items.length;i++){
+    var it=MW.items[i];
+    if(it.destPos)moveMap[it.c.id]=fmtP(it.destPos);
+  }
+  if(!Object.keys(moveMap).length){showToast('Sin movimientos');return;}
+
+  // ── Trabajar bloque a bloque igual que parseBaplie ──
+  // Cada bloque empieza con LOC+147 y termina justo antes del siguiente LOC+147
+  var raw=S.raw2||S.raw1; // accumulate: apply moves on top of last generated state
+  var text=raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  text=text.replace(/\?'/g,'\x00EA\x00');
+  var allSegs=text.split("'");
+
+  // Split into: preamble (before first LOC+147) + blocks
+  var preambleSegs=[];
+  var blocks=[];   // each block: array of raw segment strings (without the trailing ')
+  var curBlock=null;
+
+  for(var si=0;si<allSegs.length;si++){
+    var seg=allSegs[si];
+    var segTrim=seg.replace(/\x00EA\x00/g,"'").trim();
+    var el=splitE(segTrim);
+    var segId=(el[0]||'').trim();
+
+    if(segId==='LOC'&&(el[1]||'').trim()==='147'){
+      if(curBlock)blocks.push(curBlock);
+      curBlock=[seg];
+    } else if(curBlock){
+      curBlock.push(seg);
+    } else {
+      preambleSegs.push(seg);
+    }
+  }
+  if(curBlock)blocks.push(curBlock);
+
+  // For each block, find its EQD container ID, then apply moveMap
+  var outBlockSegs=[];  // array of arrays of raw segment strings
+  for(var bi=0;bi<blocks.length;bi++){
+    var blk=blocks[bi];
+
+    // Find container ID (EQD) and whether remocion (DSI)
+    var cid=null;var hasDsi=false;
+    for(var si=0;si<blk.length;si++){
+      var seg=blk[si].replace(/\x00EA\x00/g,"'").trim();
+      var el=splitE(seg);var segId=(el[0]||'').trim();
+      if(segId==='EQD'){cid=(el[2]||'').trim();break;}
+      if(segId==='RFF'){var rq=(el[1]||'').split(':');if(rq[0]==='DSI'&&rq[1])hasDsi=true;}
+    }
+
+    if(!cid||!moveMap[cid]){
+      outBlockSegs.push(blk.slice());
+      continue;
+    }
+
+    var np=moveMap[cid];
+    var outSegs=[];
+    for(var si=0;si<blk.length;si++){
+      var rawSeg=blk[si];
+      var seg=rawSeg.replace(/\x00EA\x00/g,"'").trim();
+      var el=splitE(seg);var segId=(el[0]||'').trim();
+
+      if(!hasDsi&&segId==='LOC'&&(el[1]||'').trim()==='147'){
+        var out=rawSeg.replace(/\x00EA\x00/g,"'");
+        out=out.replace(/(LOC\+147\+)\d+(:[^+'\n]*)?/,function(m,prefix){return prefix+np;});
+        outSegs.push(out.replace(/\?'/g,'\x00EA\x00'));
+      } else if(hasDsi&&segId==='RFF'){
+        var rq=(el[1]||'').split(':');
+        if(rq[0]==='DSI'&&rq[1]){
+          var out=rawSeg.replace(/\x00EA\x00/g,"'");
+          out=out.replace(/(RFF\+DSI:)\d+/,'$1'+np);
+          outSegs.push(out.replace(/\?'/g,'\x00EA\x00'));
+        } else {outSegs.push(rawSeg);}
+      } else {
+        outSegs.push(rawSeg);
+      }
+    }
+    outBlockSegs.push(outSegs);
+  }
+
+  // Reconstruct: all segment strings joined by "'", exactly reversing split("'")
+  // preambleSegs + all block segs = one flat array, joined by "'"
+  var flatAll=preambleSegs.slice();
+  for(var bi2=0;bi2<outBlockSegs.length;bi2++){
+    for(var si2=0;si2<outBlockSegs[bi2].length;si2++){
+      flatAll.push(outBlockSegs[bi2][si2]);
+    }
+  }
+  var newRaw=flatAll.join("'").replace(/\x00EA\x00/g,"?'");
+
+  S.raw2=newRaw;
+  var newContainers=parseBaplie(newRaw);
+  loadPanel(2,newContainers);
+  var fname=(document.getElementById('fn1').textContent||'plan').replace(/\.[^.]+$/,'')+'_modificado.edi';
+  document.getElementById('fn2').textContent='Plan modificado ('+Object.keys(moveMap).length+' mov.)';
+  document.getElementById('lb2').classList.add('ok');
+  updateExportBtn(fname);
+  closeMoveWizard();
+  showToast('✓ '+Object.keys(moveMap).length+' contenedor(es) movidos → Plan 2');
+  // Offer immediate export
+  setTimeout(function(){
+    if(confirm('¿Exportar el BAPLIE modificado ahora?')){
+      downloadBaplieRaw(newRaw,fname);
+    }
+  },300);
+}
+
+// ── INTERCEPT CANVAS CLICKS FOR WIZARD ──
+// We hook into onCl to intercept when wizard is active
+function mwInterceptClick(c,pos,pn){
+  if(!MW.active)return false;
+  if(pn!==1)return false; // only intercept Plan 1
+  // Step 1a: adding containers to the list
+  if(MW.step===1&&MW.mode==='manual'){
+    if(!c){showToast('Clica sobre un contenedor');return true;}
+    mwAddContainer(c);return true;
+  }
+  // Step 2: assigning destination positions
+  if(MW.step===2){
+    if(MW.pickingPos!==null){
+      if(!pos){showToast('Clica en una celda válida del plano');return true;}
+      mwReceiveCanvasPos(pos,c);return true;
+    }
+    // With focused row: any empty cell click assigns to that row
+    if(_mwFocusedIdx!==null&&pos){
+      mwReceiveCanvasPos(pos,c);return true;
+    }
+    // No focused row but crosshair clicked a cell: assign to first unfilled row
+    if(pos){
+      var firstUnfilled=-1;
+      for(var i=0;i<MW.items.length;i++){if(!MW.items[i].destPos){firstUnfilled=i;break;}}
+      if(firstUnfilled>=0){mwFocusRow(firstUnfilled);mwReceiveCanvasPos(pos,c);return true;}
+    }
+  }
+  return false;
+}
+
+
+
+/* ── CLEAR PANEL ── */
+function clearPanel(pn){
+  loadPanel(pn,[]);
+  var lb=document.getElementById('lb'+pn);if(lb)lb.classList.remove('ok');
+  var fn=document.getElementById('fn'+pn);if(fn)fn.textContent='Archivo '+pn;
+  var fi=document.getElementById('f'+pn);if(fi)fi.value='';
+  if(pn===1){S.raw1=null;}
+  else{S.raw2=null;var slot=document.getElementById('exportBaplieSlot');if(slot)slot.innerHTML='';}
+  computeDiff();updateDiffToggleBtn();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LISTADO — tabla editable de contenedores
+══════════════════════════════════════════════════════════════ */
+var LST={pn:1,rows:[],sortCol:'pos',sortDir:1,filter:'',changed:new Set()};
+var LST_COLS=[
+  {key:'pos',   label:'Posición',  edit:true,  w:80},
+  {key:'id',    label:'Contenedor',edit:false, w:120},
+  {key:'type',  label:'Sz/Tp',     edit:true,  w:70},
+  {key:'wt',    label:'Peso kg',   edit:true,  w:75},
+  {key:'pol',   label:'POL',       edit:true,  w:65},
+  {key:'pod',   label:'POD',       edit:true,  w:65},
+  {key:'empty', label:'Estado',    edit:true,  w:55},
+  {key:'dg',    label:'DG',        edit:false, w:65},
+  {key:'rf',    label:'RF/Tmp',    edit:false, w:65},
+  {key:'oog',   label:'OOG',       edit:false, w:50},
+  {key:'rs',    label:'RS',        edit:false, w:40},
+];
+function ctToRow(c){return{id:c.id,type:c.type||'',pos:c.positions&&c.positions.length?fmtP(c.positions[0]):'—',wt:c.weight!==null&&c.weight!==undefined?String(c.weight):'',pol:c.pol||'',pod:c.pod||'',empty:c.isEmpty?'MT':'Full',dg:c.isDangerous?(c.dgClasses&&c.dgClasses.length?c.dgClasses.join('+'):'DG'):'',rf:c.isReefer?(c.temperature!==null&&c.temperature!==undefined?String(c.temperature)+'°C':'RF'):'',oog:c.isOog?(c.oogInfo||'OOG'):'',rs:c.isRemocion?'RS':'',_orig:c};}
+function openListado(pn){
+  var cts=pn===1?S.c1:S.c2;if(!cts||!cts.length){showToast('Sin datos en Plan '+pn);return;}
+  LST.pn=pn;LST.filter='';LST.changed=new Set();LST.rows=cts.map(ctToRow);
+  document.getElementById('listadoSearch').value='';
+  buildListadoHead();renderListado();
+  document.getElementById('lstPanel').classList.add('open');
+  // Re-render canvas so selection highlights update
+  render(1);render(2);
+}
+function closeLst(){
+  document.getElementById('lstPanel').classList.remove('open');
+  render(1);render(2);
+}
+
+/* ── RESIZE HANDLE: drag lstPanel width ── */
+(function(){
+  var resizing=false,startX=0,startW=0;
+  document.addEventListener('DOMContentLoaded',function(){
+    var handle=document.getElementById('lstResize');
+    if(!handle)return;
+    handle.addEventListener('mousedown',function(e){
+      resizing=true;startX=e.clientX;
+      var panel=document.getElementById('lstPanel');
+      startW=panel.offsetWidth;
+      handle.classList.add('dragging');
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove',function(e){
+      if(!resizing)return;
+      var dx=e.clientX-startX;
+      var newW=Math.max(220,Math.min(window.innerWidth*0.85,startW+dx));
+      document.getElementById('lstPanel').style.width=newW+'px';
+    });
+    document.addEventListener('mouseup',function(){
+      if(resizing){resizing=false;document.getElementById('lstResize').classList.remove('dragging');render(1);render(2);}
+    });
+  });
+})();
+function buildListadoHead(){
+  var h='<tr>';
+  for(var i=0;i<LST_COLS.length;i++){
+    var col=LST_COLS[i];var sorted=LST.sortCol===col.key;
+    h+='<th style="min-width:'+col.w+'px;width:'+col.w+'px" data-col-idx="'+i+'" onclick="sortListado(\''+col.key+'\')" class="'+(sorted?'sorted':'')+'">';
+    h+=col.label+'<span class="sort-arrow">'+(sorted?(LST.sortDir>0?'▲':'▼'):'⇅')+'</span>';
+    h+='<span class="col-resize" onmousedown="lstColResizeStart(event,'+i+')" onclick="event.stopPropagation()"></span>';
+    h+='</th>';
+  }
+  h+='</tr>';
+  document.getElementById('listadoThead').innerHTML=h;
+}
+
+/* ── Column resize for listado ── */
+var _lstColResize={active:false,idx:0,startX:0,startW:0};
+function lstColResizeStart(e,idx){
+  e.preventDefault();e.stopPropagation();
+  _lstColResize.active=true;_lstColResize.idx=idx;_lstColResize.startX=e.clientX;_lstColResize.startW=LST_COLS[idx].w;
+  var handles=document.querySelectorAll('#listadoThead .col-resize');
+  if(handles[idx])handles[idx].classList.add('dragging');
+}
+document.addEventListener('mousemove',function(e){
+  if(!_lstColResize.active)return;
+  var dx=e.clientX-_lstColResize.startX;
+  var newW=Math.max(40,_lstColResize.startW+dx);
+  LST_COLS[_lstColResize.idx].w=newW;
+  var ths=document.querySelectorAll('#listadoThead th');
+  if(ths[_lstColResize.idx]){ths[_lstColResize.idx].style.minWidth=newW+'px';ths[_lstColResize.idx].style.width=newW+'px';}
+});
+document.addEventListener('mouseup',function(){
+  if(_lstColResize.active){
+    _lstColResize.active=false;
+    document.querySelectorAll('#listadoThead .col-resize').forEach(function(h){h.classList.remove('dragging');});
+  }
+});
+function renderListado(){
+  var flt=LST.filter.toUpperCase();
+  // Apply GF filters (same as canvas): only show containers passing passF_noTrt
+  var cts=LST.pn===1?S.c1:S.c2;
+  // Rebuild rows respecting current GF filters
+  var visRows=[];
+  for(var i=0;i<LST.rows.length;i++){
+    var r=LST.rows[i];var c=r._orig;
+    if(!passF_noTrt(c))continue; // respect active filters
+    if(flt&&!Object.values(r).some(function(v){return String(v).toUpperCase().indexOf(flt)>=0;}))continue;
+    visRows.push(r);
+  }
+  var sc=LST.sortCol,sd=LST.sortDir;
+  visRows.sort(function(a,b){var av=a[sc]||'',bv=b[sc]||'';if(!isNaN(av)&&!isNaN(bv)&&av!==''&&bv!=='')return sd*(Number(av)-Number(bv));return sd*String(av).localeCompare(String(bv));});
+  var sel=S.sel;
+  var h='';
+  for(var i=0;i<visRows.length;i++){
+    var r=visRows[i];var changed=LST.changed.has(r.id);
+    var isSel=sel&&sel.has&&sel.has(r.id);
+    h+='<tr class="'+(isSel?'lst-sel ':'')+( changed?'changed':'')+'" onclick="lstRowClick(\''+r.id+'\',event)" data-id="'+r.id+'">';
+    for(var j=0;j<LST_COLS.length;j++){
+      var col=LST_COLS[j];var val=r[col.key]||'';var sty='';
+      if(col.key==='pod'&&r.pod)sty='style="color:'+pC(r.pod)+';font-weight:700"';
+      if(col.key==='dg'&&val)sty='style="color:#c62828;font-weight:700"';
+      if(col.key==='rf'&&val)sty='style="color:#00838f;font-weight:700"';
+      if(col.key==='empty')sty=val==='MT'?'style="color:var(--muted)"':'style="font-weight:600"';
+      h+='<td '+(col.edit?'contenteditable="true" onblur="lstEdit(\''+r.id+'\',\''+col.key+'\',this.textContent.trim())"':'')+' '+sty+'>'+val.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</td>';
+    }
+    h+='</tr>';
+  }
+  document.getElementById('listadoTbody').innerHTML=h;
+  var cnt=visRows.length+' de '+LST.rows.length;
+  if(LST.changed.size)cnt+=' · <b>'+LST.changed.size+' mod.</b>';
+  document.getElementById('listadoCount').innerHTML=cnt;
+  document.getElementById('listadoTitle').textContent='Plan '+LST.pn+' · '+visRows.length;
+}
+
+// Click on list row: select/deselect container, sync to canvas
+function lstRowClick(id,e){
+  if(e.target.hasAttribute('contenteditable')&&e.target.getAttribute('contenteditable')==='true')return;
+  if(!S.sel)S.sel=new Set();
+  if(e.ctrlKey||e.metaKey||e.shiftKey){
+    if(S.sel.has(id))S.sel.delete(id);else S.sel.add(id);
+    if(S.sel.size===0)S.sel=null;
+  } else {
+    S.sel=S.sel.size===1&&S.sel.has(id)?null:new Set([id]);
+  }
+  // Center both canvases and listado on selected container
+  if(S.sel&&S.sel.size>=1){
+    var firstId=Array.from(S.sel)[0];
+    scrollToContainer(firstId);
+  }
+  render(1);render(2);
+  // Update row highlights
+  document.querySelectorAll('#listadoTbody tr').forEach(function(tr){
+    var tid=tr.getAttribute('data-id');
+    tr.classList.toggle('lst-sel',!!(S.sel&&S.sel.has&&S.sel.has(tid)));
+  });
+}
+function sortListado(col){if(LST.sortCol===col)LST.sortDir*=-1;else{LST.sortCol=col;LST.sortDir=1;}buildListadoHead();renderListado();}
+function filterListado(val){LST.filter=val;renderListado();}
+function lstEdit(id,col,val){
+  var row=null;for(var i=0;i<LST.rows.length;i++){if(LST.rows[i].id===id){row=LST.rows[i];break;}}
+  if(!row||val===row[col])return;
+  row[col]=val;LST.changed.add(id);
+  document.getElementById('listadoCount').innerHTML=LST.rows.length+' contenedores · <b>'+LST.changed.size+' modificados</b>';
+}
+function exportListadoTSV(){
+  var hdr=LST_COLS.map(function(c){return c.label;}).join('\t');
+  var lines=LST.rows.map(function(r){return LST_COLS.map(function(c){return r[c.key]||'';}).join('\t');});
+  safeClipboard(hdr+'\n'+lines.join('\n'),function(){showToast('Copiados '+LST.rows.length+' contenedores (TSV)');});
+}
+function exportListadoBaplie(){
+  var raw=LST.pn===1?S.raw1:S.raw2;
+  if(!raw){showToast('No hay BAPLIE fuente');return;}
+  if(!LST.changed.size){downloadBaplieRaw(raw,'plan'+LST.pn+'_listado.edi');showToast('Exportado sin cambios');return;}
+  var editMap={};for(var i=0;i<LST.rows.length;i++){var r=LST.rows[i];if(LST.changed.has(r.id))editMap[r.id]=r;}
+  var text=raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\?'/g,'\x00EA\x00');
+  var segs=text.split("'");var pre=[],blks=[],cur=null;
+  for(var si=0;si<segs.length;si++){var s=segs[si];var tr=s.replace(/\x00EA\x00/g,"'").trim();var el=splitE(tr);var sid=(el[0]||'').trim();if(sid==='LOC'&&(el[1]||'').trim()==='147'){if(cur)blks.push(cur);cur=[s];}else if(cur)cur.push(s);else pre.push(s);}
+  if(cur)blks.push(cur);
+  var out=pre.slice();
+  for(var bi=0;bi<blks.length;bi++){
+    var blk=blks[bi];var cid=null;
+    for(var si=0;si<blk.length;si++){var s=blk[si].replace(/\x00EA\x00/g,"'").trim();var el=splitE(s);if((el[0]||'').trim()==='EQD'){cid=(el[2]||'').trim();break;}}
+    if(!cid||!editMap[cid]){for(var si=0;si<blk.length;si++)out.push(blk[si]);continue;}
+    var ed=editMap[cid];
+    for(var si=0;si<blk.length;si++){
+      var rs=blk[si];var ss=rs.replace(/\x00EA\x00/g,"'").trim();var el=splitE(ss);var sid=(el[0]||'').trim();
+      if(sid==='LOC'){
+        var lq=(el[1]||'').trim();
+        if(lq==='147'&&ed.pos&&ed.pos!=='—'){rs=rs.replace(/\x00EA\x00/g,"'").replace(/(LOC\+147\+)\d+(:[^+'\n]*)?/,function(m,p){return p+ed.pos.replace(/\D/g,'').padStart(7,'0');}).replace(/\?'/g,'\x00EA\x00');}
+        else if(lq==='9'&&ed.pol){rs=rs.replace(/\x00EA\x00/g,"'").replace(/(LOC\+9\+)[A-Z0-9]*/,'$1'+ed.pol.toUpperCase()).replace(/\?'/g,'\x00EA\x00');}
+        else if(lq==='11'&&ed.pod){rs=rs.replace(/\x00EA\x00/g,"'").replace(/(LOC\+11\+)[A-Z0-9]*/,'$1'+ed.pod.toUpperCase()).replace(/\?'/g,'\x00EA\x00');}
+      } else if(sid==='MEA'&&ed.wt){var nw=ed.wt.replace(/[^\d]/g,'');if(nw)rs=rs.replace(/\x00EA\x00/g,"'").replace(/KGM:\d+/,'KGM:'+nw).replace(/:\d{4,}/,':'+nw).replace(/\?'/g,'\x00EA\x00');}
+      else if(sid==='EQD'&&ed.type){rs=rs.replace(/\x00EA\x00/g,"'").replace(/(EQD\+CN\+[^+]+\+)[^+]*/,'$1'+ed.type).replace(/\?'/g,'\x00EA\x00');}
+      out.push(rs);
+    }
+  }
+  var result=out.join("'").replace(/\x00EA\x00/g,"?'");
+  downloadBaplieRaw(result,'plan'+LST.pn+'_editado.edi');
+  showToast('BAPLIE exportado con '+LST.changed.size+' cambio'+(LST.changed.size!==1?'s':''));
+}
+function downloadBaplieRaw(raw,fname){
+  var blob=new Blob([raw.replace(/\r\n/g,'\n').replace(/\n/g,'\r\n')],{type:'text/plain;charset=utf-8'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fname;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function readFile(f){return new Promise(function(ok,no){var r=new FileReader();r.onload=function(){ok(r.result)};r.onerror=function(){no(r.error)};r.readAsText(f,'latin1')});}
+document.getElementById('f1').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(1,[]);var t=await readFile(f);S.raw1=t;S.shipName1=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn1').textContent=f.name;document.getElementById('lb1').classList.add('ok');loadPanel(1,c);}catch(er){console.error(er);}});
+document.getElementById('f2').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(2,[]);S.raw2=null;var old=document.getElementById('exportBaplieBtn');if(old)old.remove();var t=await readFile(f);S.shipName2=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn2').textContent=f.name;document.getElementById('lb2').classList.add('ok');loadPanel(2,c);}catch(er){console.error(er);}});
+function setupDrop(wid,pn){var el=document.getElementById(wid);el.addEventListener('dragover',function(e){e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});el.addEventListener('drop',async function(e){e.preventDefault();el.classList.remove('drag-over');var f=e.dataTransfer.files[0];if(!f)return;try{var t=await readFile(f);if(pn===1)S.raw1=t;if(pn===1)S.shipName1=extractShipName(t);else S.shipName2=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn'+pn).textContent=f.name;document.getElementById('lb'+pn).classList.add('ok');loadPanel(pn,c);}catch(er){console.error(er);}});}
+setupDrop('w1',1);setupDrop('w2',2);
+
+function clearSelIfNeeded(){if(!S.sel)return;var found=false;var all=[].concat(S.c1||[],S.c2||[]);for(var i=0;i<all.length;i++){if(S.sel.has&&S.sel.has(all[i].id)&&passF_noTrt(all[i])){found=true;break;}}if(!found)S.sel=null;}
+function regPods(cts){for(var i=0;i<cts.length;i++){var pod=cts[i].pod||'';if(!POD_MAP[pod])pC(pod);}}
+function loadPanel(pn,cts){
+  var cvEl=document.getElementById('c'+pn),pw=document.getElementById('w'+pn),em=document.getElementById('e'+pn),st=document.getElementById('s'+pn);
+  if(!cts||!cts.length){
+    cvEl.style.display='none';em.classList.remove('hid');st.textContent='';
+    if(pn===1){S.c1=null;S.L1=null;S._L1=null;}else{S.c2=null;S.L2=null;S._L2=null;document.getElementById('col2').style.display='none';}
+    rebuildPods();rebuildBayFilter();computeDiff();updateDiffToggleBtn();return;
+  }
+  regPods(cts);var plan=buildPlan(cts);
+  if(pn===1){S.c1=cts;S.L1=plan;}else{S.c2=cts;S.L2=plan;}
+  F[pn]={view:'3b'};Z[pn]=1;S.sel=null;S.hl=null;
+  cvEl.style.display='block';em.classList.add('hid');
+  if(pn===2)document.getElementById('col2').style.display=''; // show col2 when plan2 loaded
+  rebuildPods();rebuildBayFilter();computeDiff();updateDiffToggleBtn();updateTB(pn);render(pn);
+}
+// PageDown/PageUp: navigate bays in Vista 4 (1b view)
+var _1b_bayIdx={1:0,2:0};
+document.addEventListener('keydown',function(e){
+  if(e.key!=='PageDown'&&e.key!=='PageUp')return;
+  // Only in 1b view
+  var pn=(S.fs===2)?2:1; // use whichever is fullscreen, else plan 1
+  if(F[pn].view!=='1b')return;
+  var L=pn===1?S._L1:S._L2;if(!L||!L.grps||!L.grps.length)return;
+  e.preventDefault();
+  var idx=_1b_bayIdx[pn]||0;
+  if(e.key==='PageDown')idx=Math.min(L.grps.length-1,idx+1);
+  else idx=Math.max(0,idx-1);
+  _1b_bayIdx[pn]=idx;
+  var bayNum=L.grps[idx][0];
+  scrollToBay(pn,bayNum);
+});
+
+/* ── SUMMARY MODAL ── */
+var SUM={pn:1,tab:'pod'};
+function openSummary(pn){
+  SUM.pn=pn;
+  document.getElementById('summaryModal').classList.add('open');
+  renderSummary();
+}
+function closeSummary(){document.getElementById('summaryModal').classList.remove('open');}
+document.getElementById('summaryModal').addEventListener('click',function(e){if(e.target===this)closeSummary();});
+
+function renderSummary(){
+  var cts=SUM.pn===1?S.c1:S.c2;
+  if(!cts||!cts.length){
+    document.getElementById('summaryModalBody').innerHTML='<div style="color:var(--muted);text-align:center;padding:40px">Sin datos en Plan '+SUM.pn+'</div>';
+    return;
+  }
+  // Apply current filters
+  var filtered=cts.filter(passF_noTrt);
+  var tabs=['pod','pol','type','bay','row','dg','rf','oog'];
+  var tabLabels={pod:'POD',pol:'POL',type:'Tipo',bay:'Bay',row:'Row',dg:'DG',rf:'RF',oog:'OOG'};
+  var h='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--border);padding-bottom:0">';
+  for(var i=0;i<tabs.length;i++){
+    h+='<div class="sum-tab'+(SUM.tab===tabs[i]?' active':'')+'" onclick="SUM.tab=\''+tabs[i]+'\';renderSummary()">'+tabLabels[tabs[i]]+'</div>';
+  }
+  h+='</div>';
+  
+  // Group by selected criteria
+  var groups={};
+  for(var i=0;i<filtered.length;i++){
+    var c=filtered[i];
+    var key;
+    switch(SUM.tab){
+      case 'pod': key=c.pod||'—'; break;
+      case 'pol': key=c.pol||'—'; break;
+      case 'type': key=c.type||'—'; break;
+      case 'bay': key=c.positions&&c.positions.length?String(c.positions[0].bay):'—'; break;
+      case 'row': key=c.positions&&c.positions.length?String(c.positions[0].row):'—'; break;
+      case 'dg': key=c.isDangerous?(c.dgClass||'DG'):'No DG'; break;
+      case 'rf': key=c.isReefer?'RF':'No RF'; break;
+      case 'oog': key=c.isOog?'OOG':'No OOG'; break;
+    }
+    if(!groups[key])groups[key]={count:0,weight:0,full:0,mt:0,twenty:0,forty:0,fortyfive:0};
+    groups[key].count++;
+    groups[key].weight+=(c.weight||0)/1000;
+    if(c.isEmpty)groups[key].mt++; else groups[key].full++;
+    var sz=parseSz(c.type);
+    if(sz===20)groups[key].twenty++;
+    else if(sz===45)groups[key].fortyfive++;
+    else groups[key].forty++;
+  }
+  
+  // Sort groups
+  var keys=Object.keys(groups).sort();
+  
+  h+='<div style="overflow:auto;max-height:60vh;margin-top:8px">';
+  h+='<table class="sum-table"><thead><tr>';
+  h+='<th>'+tabLabels[SUM.tab]+'</th><th>EQ</th><th>Full</th><th>MT</th><th>20\'</th><th>40\'</th><th>45\'</th><th>Peso (t)</th><th>Peso medio (t)</th>';
+  h+='</tr></thead><tbody>';
+  
+  var totEq=0,totFull=0,totMt=0,tot20=0,tot40=0,tot45=0,totWt=0;
+  for(var i=0;i<keys.length;i++){
+    var g=groups[keys[i]];
+    totEq+=g.count;totFull+=g.full;totMt+=g.mt;tot20+=g.twenty;tot40+=g.forty;tot45+=g.fortyfive;totWt+=g.weight;
+    var avgWt=g.count>0?(g.weight/g.count).toFixed(1):'0.0';
+    h+='<tr><td><b>'+keys[i]+'</b></td><td>'+g.count+'</td><td>'+g.full+'</td><td>'+g.mt+'</td><td>'+g.twenty+'</td><td>'+g.forty+'</td><td>'+g.fortyfive+'</td><td>'+g.weight.toFixed(1)+'</td><td>'+avgWt+'</td></tr>';
+  }
+  h+='<tr class="sum-total"><td>TOTAL</td><td>'+totEq+'</td><td>'+totFull+'</td><td>'+totMt+'</td><td>'+tot20+'</td><td>'+tot40+'</td><td>'+tot45+'</td><td>'+totWt.toFixed(1)+'</td><td>'+(totEq>0?(totWt/totEq).toFixed(1):'0.0')+'</td></tr>';
+  h+='</tbody></table></div>';
+  
+  document.getElementById('summaryModalBody').innerHTML=h;
+}
+</script>
+
+
+</body>
+</html>
