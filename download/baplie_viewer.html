@@ -249,6 +249,8 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 #sumTable th .sort-arrow{margin-left:3px;opacity:.3;font-size:8px}
 #sumTable td{padding:4px 10px;border-bottom:1px solid var(--border);color:var(--fg);vertical-align:middle}
 #sumTable tr:hover td{background:rgba(2,136,209,.06)}
+#sumTable tr.sum-sel td{background:rgba(253,216,53,.18)}
+#sumTable tr.sum-sel:hover td{background:rgba(253,216,53,.28)}
 #sumTable td.sum-count{font-weight:700;color:var(--accent);cursor:pointer;text-align:right}
 #sumTable td.sum-count:hover{color:#fff;background:var(--accent);border-radius:3px}
 #sumTable td.sum-wt{text-align:right;color:var(--muted);font-size:10px}
@@ -345,7 +347,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POL</span>
     <button class="gbtn" id="polEsvlcBtn" onclick="togglePolEsvlc()">POL=ESVLC</button>
     <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores con POL distinto de ESVLC">TRT</button>
-    <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris todos los contenedores que no cumplan los filtros activos">No-sel</button>
+    <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris los contenedores no seleccionados o que no cumplan los filtros activos">No-sel</button>
   </div>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <button class="gbtn" id="wtBtn" onclick="toggleWt()" title="Colorear por peso: blanco=vacío, negro=35t">
@@ -1047,7 +1049,10 @@ function render(pn){
 }
 
 
+var _drawCellFullInfo=false; // true only for Vista 4 (1b view)
+
 function drawPlan(ctx,L){
+  _drawCellFullInfo=(L.view==='1b');
   var bg=cv('--cvbg');ctx.clearRect(0,0,L.cw,L.ch);ctx.fillStyle=bg;ctx.fillRect(0,0,L.cw,L.ch);
   if((L.effectiveView||L.view)==='3b'){
     for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;ctx.save();ctx.translate(p.x,p.y);ctx.scale(p.sc,p.sc);drawSingleBay(ctx,p.bay,L);ctx.restore();if(p.bayInGrp===0&&p.grpLen>1){var bayW=L.gw*p.sc;var totalW=p.grpLen*(bayW+6)-6;ctx.save();ctx.strokeStyle=cv('--border');ctx.lineWidth=1;ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(p.x,p.y+L.fgh*p.sc+4);ctx.lineTo(p.x+totalW,p.y+L.fgh*p.sc+4);ctx.stroke();ctx.restore();}}
@@ -1203,13 +1208,13 @@ function drawCell(ctx,x,y,w,h,c){
   var passesStrict=passF_noTrt(c);
   // TRT: dim containers that are not POL=ESVLC (tránsito)
   var trtDimmed=GF.trt&&c.pol!=='ESVLC';
-  // Non-sel gray: dim containers that don't pass current strict filter
-  var nonSelDimmed=GF.nonSelGray&&!passesStrict;
-  var dimmed=(trtDimmed||nonSelDimmed)&&!passesStrict===false?trtDimmed||nonSelDimmed:false;
-  // A container that passes strict AND is trtDimmed still draws dimmed
-  // A container that doesn't pass strict (hidden normally) only draws if dimming modes active
-  if(!passesStrict&&!trtDimmed&&!nonSelDimmed){ctx.restore();return;}
-  dimmed=trtDimmed||nonSelDimmed;
+  // Non-sel gray: dim containers that don't pass current strict filter OR are not in the current selection
+  var selActive=S.sel&&S.sel.size>0;
+  var isInSel=selActive&&S.sel.has(c.id);
+  var nonSelDimmed=GF.nonSelGray&&( !isInSel && ( !passesStrict || selActive ) );
+  var dimmed=trtDimmed||nonSelDimmed;
+  // A container that doesn't pass strict (hidden normally) only draws if dimming modes active OR it's in the current selection
+  if(!passesStrict&&!dimmed&&!isInSel){ctx.restore();return;}
   if(dimmed){
     ctx.globalAlpha=0.20;ctx.fillStyle='#888888';ctx.fillRect(x,y,w,h);
     ctx.strokeStyle='rgba(128,128,128,0.2)';ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
@@ -1300,8 +1305,8 @@ function drawCell(ctx,x,y,w,h,c){
   // Texto peso + datos extra si la celda es suficientemente ancha
   var textCol=GF.wtMode?((c.weight||0)>17500?'#ffffff':'#000000'):tC(col);
   ctx.fillStyle=textCol;
-  if(w>=80||h>=CH*2){
-    // Modo amplio (1b / tall slots): mostrar sztp + peso + POL
+  if((w>=80||h>=CH*2)&&_drawCellFullInfo){
+    // Modo amplio (1b only): mostrar sztp + peso + POL
     var fs2=Math.min(h*0.28,13)+GF.wtFontSize;fs2=Math.max(5,fs2);
     ctx.textAlign='center';ctx.textBaseline='middle';
     var lines=[];
@@ -1749,7 +1754,7 @@ function onCl(e,pn){
   var clickedPos=hitTestPos(mx,my,L);
   // Intercept for move wizard
   if(MW.active&&mwInterceptClick(c,clickedPos,pn))return;
-  if(!c){S.sel=null;render(1);render(2);return;}
+  if(!c){S.sel=null;render(1);render(2);sumSyncIfOpen();return;}
   if(e.ctrlKey||e.metaKey){
     // Multi-selección con Ctrl
     if(!S.sel)S.sel=new Set();
@@ -1759,7 +1764,7 @@ function onCl(e,pn){
     // Clic simple: seleccionar uno solo
     if(S.sel&&S.sel.has&&S.sel.has(c.id)){S.sel=null;}else{S.sel=new Set([c.id]);}
   }
-  render(1);render(2);
+  render(1);render(2);sumSyncIfOpen();
   // Centrar AMBAS vistas en el contenedor seleccionado (o el primero si hay multi-sel)
   if(S.sel&&S.sel.size>=1){
     var firstId=S.sel.size===1?Array.from(S.sel)[0]:Array.from(S.sel)[0];
@@ -2721,7 +2726,7 @@ function lstRowClick(id,e){
     var firstId=Array.from(S.sel)[0];
     scrollToContainer(firstId);
   }
-  render(1);render(2);
+  render(1);render(2);sumSyncIfOpen();
   // Update row highlights
   document.querySelectorAll('#listadoTbody tr').forEach(function(tr){
     var tid=tr.getAttribute('data-id');
@@ -2977,7 +2982,9 @@ function renderSummary(){
   for(var i=0;i<SUM_DATA.length;i++){
     var g=SUM_DATA[i];
     totC+=g.count;totW+=g.weight;
-    hbody+='<tr>';
+    // Check if this group's containers are all in current selection
+    var isSumSel=S.sel&&S.sel.size>0&&g.ids.every(function(id){return S.sel.has(id)});
+    hbody+='<tr class="'+(isSumSel?'sum-sel':'')+'">';
     for(var d=0;d<SUM_CFG.dims.length;d++){
       var dk=SUM_CFG.dims[d];
       var v=g.vals[dk]||'-';

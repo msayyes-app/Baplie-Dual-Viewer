@@ -175,3 +175,18 @@ Stage Summary:
 - Summary supports CTRL+click for cumulative multi-selection
 - Logo MSaYYeS in blue gradient, B/D/V in dark red gradient
 - Menu defaults to left sidebar on page load
+
+---
+Task ID: 2
+Agent: main
+Task: Implement user's three new changes to BAPLIE Dual Viewer
+
+Work Log:
+- Vista 2 (5b): Added _drawCellFullInfo flag, set true only for view==='1b' (Vista 4), so Vista 2 shows only weight in tall cells
+- Summary highlight: Added .sum-sel CSS class with yellow background, checked in renderSummary() if group's IDs are all in S.sel, added sumSyncIfOpen() calls to plan click handler and listado row click handler
+- No-sel button: Modified drawCell() logic to dim containers not in current selection when No-sel is active and selection exists. Selected containers that don't pass strict filters still show normally. Updated tooltip text.
+
+Stage Summary:
+- Vista 2 now shows only weight even in tall slot mode (multi-line SZTP+POL reserved for Vista 4)
+- Summary rows highlight yellow when their containers are selected
+- No-sel button dims non-selected containers when selection exists (from summary, list, or plan)
