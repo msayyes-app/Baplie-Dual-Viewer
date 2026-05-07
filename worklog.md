@@ -115,3 +115,32 @@ All ratios are capped at 1.0 (max) so triangles never exceed one full adjacent s
 - The HTML file remains a single standalone file
 - No external dependencies were added
 - All existing functionality is preserved
+
+---
+
+## Date: 2026-05-08
+## Session 2 Bug Fixes and Enhancements
+
+### Issues Fixed:
+1. **BAPLIE loading incomplete**: Changed `readFile()` to try UTF-8 first, then fallback to latin1. Added console.log of container count after parsing.
+2. **Missing total container count**: Updated `updateStats()` to show `N CTNR · X FLL · Y MT · ZZZ,zt` format with explicit MT count.
+3. **Removed summaries feature**: User said "Elimina los resúmenes de momento, no es eso lo que quiero" — the summary/Resumen tables feature was removed.
+
+### New Features:
+4. **Weight row sum font size increased**: Changed from 7px to 9px base (bold 700) for better readability. Adjustable via font size buttons.
+5. **Rounding button**: Added "Redondeo" button that toggles `GF.wtRound` to round all weight values to integers.
+6. **Font size +/- buttons**: Added `F+` and `F-` buttons that adjust `GF.wtFontSize` offset for all weight displays (containers + row summaries).
+7. **POD color customization**: Added palette button and modal with color picker per POD. Users can now change any POD color via `setPodColor()`.
+8. **Weight sum colors fixed for light mode**: Deck weights now use `#4dd0e1` (dark) / `#00838f` (light) — high contrast teal. Hold weights now use `#ffb74d` (dark) / `#bf360c` (light) — high contrast orange/red.
+9. **Weight sum positioning**: Deck weights at `MT_OFF-5` (above tier numbers, below bay name with clear gap). Hold weights at `lf+9`.
+
+### Code Changes:
+- `readFile()`: Now tries UTF-8 first, falls back to latin1 on U+FFFD detection
+- `GF` state: Added `wtRound: false` and `wtFontSize: 0`
+- `fmtW()`: Supports rounding via `GF.wtRound`
+- `drawCell()`: All font sizes include `+GF.wtFontSize` with `Math.max(5,...)` floor
+- `drawSingleBay()` and `drawGroup()`: Weight summaries use 9+fontSize, bold 700, new colors, rounding support
+- `updateStats()`: Shows FLL count, MT count, and total weight
+- `resetAllFilters()`: Resets `wtRound` and `wtFontSize`
+- Added HTML: POD color modal, Redondeo/Font+/Font- buttons, POD palette button
+- Added JS: `toggleWtRound()`, `changeWtFont()`, `openPodColorModal()`, `closePodColorModal()`, `setPodColor()`

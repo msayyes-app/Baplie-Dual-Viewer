@@ -287,6 +287,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
   <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
     <span style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POD</span>
     <button class="gbtn on" id="podAllBtn" onclick="podAll()">Todos</button>
+    <button class="gbtn" id="podColorBtn" onclick="openPodColorModal()" title="Cambiar colores de POD"><i class="fa-solid fa-palette" style="font-size:10px"></i></button>
     <div id="podbtns" class="flex items-center gap-1 flex-wrap"></div>
   </div>
   <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
@@ -299,6 +300,15 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
   <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <button class="gbtn" id="wtBtn" onclick="toggleWt()" title="Colorear por peso: blanco=vacío, negro=35t">
     <i class="fa-solid fa-weight-hanging" style="font-size:10px"></i> Peso
+  </button>
+  <button class="gbtn" id="wtRoundBtn" onclick="toggleWtRound()" title="Redondear pesos a enteros">
+    <i class="fa-solid fa-ruler" style="font-size:10px"></i> Redondeo
+  </button>
+  <button class="gbtn" id="wtFontPlusBtn" onclick="changeWtFont(1)" title="Aumentar fuente de pesos">
+    <i class="fa-solid fa-font" style="font-size:10px"></i><i class="fa-solid fa-plus" style="font-size:8px"></i>
+  </button>
+  <button class="gbtn" id="wtFontMinusBtn" onclick="changeWtFont(-1)" title="Reducir fuente de pesos">
+    <i class="fa-solid fa-font" style="font-size:10px"></i><i class="fa-solid fa-minus" style="font-size:8px"></i>
   </button>
   <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <!-- PESO RANGO -->
@@ -429,6 +439,17 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
     <div id="diffModalBody"></div>
 </div>
 </main>
+<!-- POD COLOR PICKER MODAL -->
+<div id="podColorModal" style="position:fixed;inset:0;z-index:1002;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:440px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <i class="fa-solid fa-palette" style="color:var(--accent);font-size:16px"></i>
+      <span style="font-weight:700;font-size:15px;flex:1">Colores de POD</span>
+      <button onclick="closePodColorModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="podColorBody" style="overflow:auto;padding:16px 18px;flex:1;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start"></div>
+  </div>
+</div>
 <footer class="px-5 py-1.5 flex items-center gap-4 shrink-0 text-xs flex-wrap" style="background:var(--panel);border-top:1px solid var(--border);color:var(--muted)" id="legend">
   <span style="margin-left:auto;opacity:.45;font-size:10px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">© 2025 MSaYYeS · BAPLIE Dual Viewer</span>
 </footer>
@@ -656,7 +677,7 @@ function buildPlan(cts){var pl={};for(var i=0;i<cts.length;i++){var c=cts[i];for
 /* ── CONSTANTES Y ESTADO ── */
 var CW=28,CH=16,CGAP=8,LO=40,MT_OFF=40,MB=20;
 var Z={1:1,2:1},F={1:{view:'3b'},2:{view:'3b'}};
-var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false};
+var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0};
 // S.sel ahora es: null | Set<string> (multi-selección)
 var S={c1:null,c2:null,L1:null,L2:null,_L1:null,_L2:null,hl:null,sel:null,srch:null,fs:null,raw1:null,raw2:null,shipName1:null,shipName2:null};
 
@@ -697,7 +718,7 @@ function pC(pod){if(!pod)return'#555555';if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD
 function lt(hex,n){var r=Math.min(255,parseInt(hex.slice(1,3),16)+n);var g=Math.min(255,parseInt(hex.slice(3,5),16)+n);var b=Math.min(255,parseInt(hex.slice(5,7),16)+n);return'rgb('+r+','+g+','+b+')'}
 function tC(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>140?'#000000':'#ffffff'}
 function parseSz(c){if(!c)return 20;var u=c.toUpperCase();if(is45ft(u))return 45;return(u.length>=4&&(u[0]==='4'||u[0]==='L'))?40:20;}
-function fmtW(c){if(c.isEmpty)return'MT';if(c.weight!==null)return(c.weight/1000).toFixed(1).replace('.',',');return'-'}
+function fmtW(c){if(c.isEmpty)return'MT';if(c.weight!==null){var w=c.weight/1000;return(GF.wtRound?Math.round(w).toString():w.toFixed(1)).replace('.',',');}return'-'}
 function fmtP(p){return String(p.bay).padStart(3,'0')+String(p.row).padStart(2,'0')+String(p.tier).padStart(2,'0')}
 function gC(pl,bay,row,tier){return(pl[bay]&&pl[bay][row])?pl[bay][row][tier]:null}
 function wtColor(c){if(c.isEmpty)return'#ffffff';var kg=c.weight||0;var ratio=Math.min(1,kg/35000);var v=Math.round(255*(1-ratio));var hex=v.toString(16).padStart(2,'0');return'#'+hex+hex+hex;}
@@ -904,7 +925,7 @@ function compLayout(plan,vw,pn){
   return{cw:Math.ceil(maxW),ch:Math.ceil(maxH),grps:grps,gP:gP,sR:sR,rO:rO,gw:gw,fgh:fgh,plan:plan,view:view,effectiveView:effectiveView,slotW:slotW,cellH:cellH};
 }
 
-function updateStats(pn){var cts=pn===1?S.c1:S.c2;var shipEl=document.getElementById('ship'+pn);if(!cts){document.getElementById('s'+pn).textContent='';if(shipEl)shipEl.textContent='';return;}var total=0,full=0,mt=0;var absTotal=cts.length;for(var i=0;i<cts.length;i++){if(passF_noTrt(cts[i])){total++;if(!cts[i].isEmpty)full++;mt+=(cts[i].weight||0);}}var txt=absTotal+' CTNR';if(total!==absTotal)txt+=' · '+total+' EQ';txt+=' / '+full+' FLL / '+(mt/1000).toFixed(1).replace('.',',')+'t';document.getElementById('s'+pn).textContent=txt;var sn=pn===1?S.shipName1:S.shipName2;if(shipEl)shipEl.textContent=sn?'🚢 '+sn:'';}
+function updateStats(pn){var cts=pn===1?S.c1:S.c2;var shipEl=document.getElementById('ship'+pn);if(!cts){document.getElementById('s'+pn).textContent='';if(shipEl)shipEl.textContent='';return;}var total=0,full=0,mt=0,mtCount=0;var absTotal=cts.length;for(var i=0;i<cts.length;i++){if(passF_noTrt(cts[i])){total++;if(!cts[i].isEmpty){full++;mt+=(cts[i].weight||0);mtCount++;}}}var txt=absTotal+' CTNR';if(total!==absTotal)txt+=' · '+total+' EQ';txt+=' · '+full+' FLL · '+(absTotal-full)+' MT';txt+=' · '+(mt/1000).toFixed(1).replace('.',',')+'t';document.getElementById('s'+pn).textContent=txt;var sn=pn===1?S.shipName1:S.shipName2;if(shipEl)shipEl.textContent=sn?'🚢 '+sn:'';}
 
 /* ── RENDER ── */
 /* ── PREVIEW PLAN: mueve contenedores en el plan virtual para pintarlos en destino ── */
@@ -1010,29 +1031,33 @@ function drawSingleBay(ctx,bay,L){
       }
     }
   }
-  // Draw deck weight above deck section (below bay name, above tier numbers)
+  // Draw deck weight above deck section (above tier numbers, with enough gap from bay name)
   if(cubF.length>0){
-    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var deckWtFs=9+GF.wtFontSize;deckWtFs=Math.max(7,deckWtFs);
+    ctx.font='700 '+deckWtFs+'px "IBM Plex Mono"';ctx.textAlign='center';
     var isDark5=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtDeck5[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle=isDark5?'#80cbc4':'#00796b';
-        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-7);
+        var wtStr=GF.wtRound?Math.round(wt)+'t':wt.toFixed(1)+'t';
+        ctx.fillStyle=isDark5?'#4dd0e1':'#00838f';
+        ctx.fillText(wtStr,sx+sw/2,MT_OFF-5);
       }
     }
   }
   // Draw hold weight below hold section
   if(bodF.length>0){
-    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var holdWtFs=9+GF.wtFontSize;holdWtFs=Math.max(7,holdWtFs);
+    ctx.font='700 '+holdWtFs+'px "IBM Plex Mono"';ctx.textAlign='center';
     var isDark5b=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtHold5[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle=isDark5b?'#ffcc80':'#e65100';
-        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,lf+8);
+        var wtStr=GF.wtRound?Math.round(wt)+'t':wt.toFixed(1)+'t';
+        ctx.fillStyle=isDark5b?'#ffb74d':'#bf360c';
+        ctx.fillText(wtStr,sx+sw/2,lf+9);
       }
     }
   }
@@ -1064,29 +1089,33 @@ function drawGroup(ctx,g,L){
       }
     }
   }
-  // Draw deck weight above deck section (below bay name, above tier numbers)
+  // Draw deck weight above deck section (above tier numbers, with enough gap from bay name)
   if(cubT.length>0){
-    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var deckWtFsG=9+GF.wtFontSize;deckWtFsG=Math.max(7,deckWtFsG);
+    ctx.font='700 '+deckWtFsG+'px "IBM Plex Mono"';ctx.textAlign='center';
     var isDarkG=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtDeckG[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle=isDarkG?'#80cbc4':'#00796b';
-        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-7);
+        var wtStr=GF.wtRound?Math.round(wt)+'t':wt.toFixed(1)+'t';
+        ctx.fillStyle=isDarkG?'#4dd0e1':'#00838f';
+        ctx.fillText(wtStr,sx+sw/2,MT_OFF-5);
       }
     }
   }
   // Draw hold weight below hold section
   if(bodT.length>0){
-    ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var holdWtFsG=9+GF.wtFontSize;holdWtFsG=Math.max(7,holdWtFsG);
+    ctx.font='700 '+holdWtFsG+'px "IBM Plex Mono"';ctx.textAlign='center';
     var isDarkGb=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtHoldG[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle=isDarkGb?'#ffcc80':'#e65100';
-        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,lf+8);
+        var wtStr=GF.wtRound?Math.round(wt)+'t':wt.toFixed(1)+'t';
+        ctx.fillStyle=isDarkGb?'#ffb74d':'#bf360c';
+        ctx.fillText(wtStr,sx+sw/2,lf+9);
       }
     }
   }
@@ -1110,7 +1139,7 @@ function drawCell(ctx,x,y,w,h,c){
     ctx.strokeStyle='rgba(128,128,128,0.2)';ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
     // show weight dimly
     ctx.globalAlpha=0.35;ctx.fillStyle=document.body.classList.contains('dark')?'#ffffff':'#000000';
-    var fsD=Math.min(CH-4,w>=36?8:6);ctx.font='500 '+fsD+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    var fsD=Math.min(CH-4,w>=36?8:6)+GF.wtFontSize;fsD=Math.max(5,fsD);ctx.font='500 '+fsD+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(fmtW(c),x+w/2,y+h/2+.5);
     ctx.restore();return;
   }
@@ -1197,7 +1226,7 @@ function drawCell(ctx,x,y,w,h,c){
   ctx.fillStyle=textCol;
   if(w>=80){
     // Modo amplio (1b): mostrar sztp + peso + POL
-    var fs2=Math.min(h*0.28,11);
+    var fs2=Math.min(h*0.28,11)+GF.wtFontSize;fs2=Math.max(5,fs2);
     ctx.textAlign='center';ctx.textBaseline='middle';
     var lines=[];
     if(c.type)lines.push(c.type);
@@ -1211,7 +1240,7 @@ function drawCell(ctx,x,y,w,h,c){
       ctx.fillText(lines[li],x+w/2,startY+li*lineH);
     }
   } else {
-    var fs=Math.min(CH-4,w>=50?10:w>=36?9:7);ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    var fs=Math.min(CH-4,w>=50?10:w>=36?9:7)+GF.wtFontSize;fs=Math.max(5,fs);ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
     var off=(c.isDangerous&&w<36)?4:0;
     ctx.fillText(fmtW(c),x+w/2+off,y+h/2+.5);
   }
@@ -1359,10 +1388,28 @@ function toggleShow(type){
 function rebuildPods(){GF.pods={};for(var i=0;i<POD_ORDER.length;i++)GF.pods[POD_ORDER[i]]=true;var box=document.getElementById('podbtns');var h='';for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;h+='<button class="gbtn on" data-pod="'+k+'" onclick="togglePod(\''+k+'\')"><span class="cdot" style="background:'+POD_MAP[k]+'"></span>'+k+'</button>'}box.innerHTML=h;updateLeg();document.getElementById('podAllBtn').classList.add('on');}
 function togglePod(pod){GF.pods[pod]=!GF.pods[pod];var btn=document.querySelector('[data-pod="'+pod+'"]');if(btn)btn.classList.toggle('on',GF.pods[pod]);var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}document.getElementById('podAllBtn').classList.toggle('on',!anyOff);render(1);render(2);lstSyncIfOpen();}
 function podAll(){var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}var turnAllOn=anyOff;for(var k in GF.pods)GF.pods[k]=turnAllOn;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.toggle('on',turnAllOn)});document.getElementById('podAllBtn').classList.toggle('on',turnAllOn);render(1);render(2);lstSyncIfOpen();updateLeg();}
+function openPodColorModal(){
+  var body=document.getElementById('podColorBody');
+  var h='';
+  for(var i=0;i<POD_ORDER.length;i++){
+    var pod=POD_ORDER[i];if(!pod)continue;
+    var col=POD_MAP[pod]||'#555555';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;min-width:120px">';
+    h+='<input type="color" value="'+col+'" onchange="setPodColor(\''+pod+'\',this.value)" style="width:28px;height:22px;border:1px solid var(--border);border-radius:3px;cursor:pointer;padding:0">';
+    h+='<span style="font-family:IBM Plex Mono,monospace;font-size:12px;font-weight:600;color:var(--fg)">'+pod+'</span>';
+    h+='</div>';
+  }
+  body.innerHTML=h;
+  document.getElementById('podColorModal').style.display='flex';
+}
+function closePodColorModal(){document.getElementById('podColorModal').style.display='none';}
+function setPodColor(pod,color){POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
 function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;document.getElementById('polEsvlcBtn').classList.toggle('on',GF.polEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();}
 function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.toggle('on',GF.trt);document.getElementById('trtBtn').classList.toggle('trt-on',GF.trt);updateLeg();render(1);render(2);lstSyncIfOpen();}
 function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();}
 function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);}
+function toggleWtRound(){GF.wtRound=!GF.wtRound;document.getElementById('wtRoundBtn').classList.toggle('wt-on',GF.wtRound);render(1);render(2);}
+function changeWtFont(delta){GF.wtFontSize=Math.max(-2,Math.min(6,GF.wtFontSize+delta));render(1);render(2);}
 
 /* ── BÚSQUEDA: selecciona, con opción de modo filtro ── */
 var _srchTimer=null;
@@ -1422,11 +1469,12 @@ function toggleSrchFilter(){
 document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
 
 function resetAllFilters(){
-  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;
+  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
   ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});document.getElementById('polEsvlcBtn').classList.remove('on');
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
+  document.getElementById('wtRoundBtn').classList.remove('wt-on');
   document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
   clearWrange();clearSearch();
   GF.srchFilter=false;
@@ -2607,9 +2655,28 @@ function downloadBaplieRaw(raw,fname){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-function readFile(f){return new Promise(function(ok,no){var r=new FileReader();r.onload=function(){ok(r.result)};r.onerror=function(){no(r.error)};r.readAsText(f,'latin1')});}
-document.getElementById('f1').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(1,[]);var t=await readFile(f);S.raw1=t;S.shipName1=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn1').textContent=f.name;document.getElementById('lb1').classList.add('ok');loadPanel(1,c);}catch(er){console.error(er);}});
-document.getElementById('f2').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(2,[]);S.raw2=null;var old=document.getElementById('exportBaplieBtn');if(old)old.remove();var t=await readFile(f);S.shipName2=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn2').textContent=f.name;document.getElementById('lb2').classList.add('ok');loadPanel(2,c);}catch(er){console.error(er);}});
+function readFile(f){
+  return new Promise(function(ok,no){
+    var r1=new FileReader();
+    r1.onload=function(){
+      var txt=r1.result;
+      // Check for replacement character (U+FFFD) which indicates UTF-8 decode failure
+      if(txt.indexOf('\uFFFD')>=0){
+        // Fallback to latin1
+        var r2=new FileReader();
+        r2.onload=function(){ok(r2.result);};
+        r2.onerror=function(){ok(txt);}; // return original if fallback also fails
+        r2.readAsText(f,'latin1');
+      } else {
+        ok(txt);
+      }
+    };
+    r1.onerror=function(){no(r1.error);};
+    r1.readAsText(f,'utf-8');
+  });
+}
+document.getElementById('f1').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(1,[]);var t=await readFile(f);S.raw1=t;S.shipName1=extractShipName(t);var c=parseBaplie(t);console.log('Plan 1: '+c.length+' contenedores encontrados');document.getElementById('fn1').textContent=f.name;document.getElementById('lb1').classList.add('ok');loadPanel(1,c);}catch(er){console.error(er);}});
+document.getElementById('f2').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(2,[]);S.raw2=null;var old=document.getElementById('exportBaplieBtn');if(old)old.remove();var t=await readFile(f);S.shipName2=extractShipName(t);var c=parseBaplie(t);console.log('Plan 2: '+c.length+' contenedores encontrados');document.getElementById('fn2').textContent=f.name;document.getElementById('lb2').classList.add('ok');loadPanel(2,c);}catch(er){console.error(er);}});
 function setupDrop(wid,pn){var el=document.getElementById(wid);el.addEventListener('dragover',function(e){e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});el.addEventListener('drop',async function(e){e.preventDefault();el.classList.remove('drag-over');var f=e.dataTransfer.files[0];if(!f)return;try{var t=await readFile(f);if(pn===1)S.raw1=t;if(pn===1)S.shipName1=extractShipName(t);else S.shipName2=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn'+pn).textContent=f.name;document.getElementById('lb'+pn).classList.add('ok');loadPanel(pn,c);}catch(er){console.error(er);}});}
 setupDrop('w1',1);setupDrop('w2',2);
 
