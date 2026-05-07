@@ -224,19 +224,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 .mw-btn.primary{background:#7c3aed;color:#fff}.mw-btn.primary:hover{background:#6d28d9}
 .mw-btn.primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
 .mw-btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--fg)}.mw-btn.ghost:hover{border-color:var(--accent)}
-/* ── SUMMARY MODAL ── */
-#summaryModal{position:fixed;inset:0;z-index:1002;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
-#summaryModal.open{display:flex}
-#summaryModalBox{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:900px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)}
-#summaryModalHeader{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.sum-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:8px}
-.sum-table th{background:var(--card);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:2px solid var(--border);text-align:left;position:sticky;top:0;z-index:1}
-.sum-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--fg)}
-.sum-table tr:hover td{background:rgba(2,136,209,.06)}
-.sum-table .sum-total{font-weight:700;background:var(--card)}
-.sum-tab{display:inline-block;padding:6px 14px;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-bottom:none;background:var(--card);transition:all .15s}
-.sum-tab.active{color:var(--accent);border-color:var(--accent);background:var(--panel)}
-.sum-tab:hover{color:var(--fg)}
+
 
 </style>
 </head>
@@ -463,33 +451,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
     <div id="dgModalBody"></div>
   </div>
 </div>
-<div id="pickBanner"><i class="fa-solid fa-crosshairs" style="margin-right:6px"></i>Clica en el plano · ESC para cancelar</div>
-<!-- DG INFO MODAL -->
-<div id="dgModal">
-  <div id="dgModalBox">
-    <div id="dgModalHeader">
-      <div id="dgModalIcon"><i class="fa-solid fa-radiation"></i></div>
-      <div style="flex:1">
-        <div id="dgModalTitle">Mercancía Peligrosa</div>
-        <div id="dgModalSubtitle" style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px"></div>
-      </div>
-      <div id="dgModalClass"></div>
-      <button id="dgModalClose" onclick="closeDgModal()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div id="dgModalBody"></div>
-  </div>
-</div>
-<!-- SUMMARY MODAL -->
-<div id="summaryModal">
-  <div id="summaryModalBox">
-    <div id="summaryModalHeader">
-      <i class="fa-solid fa-chart-bar" style="color:var(--accent);font-size:14px"></i>
-      <span id="summaryModalTitle" style="font-weight:700;font-size:15px;flex:1">Resumen Dinámico</span>
-      <button id="summaryModalClose" onclick="closeSummary()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div id="summaryModalBody" style="overflow:auto;padding:16px;flex:1"></div>
-  </div>
-</div>
+
 <script>
 /* ============================================================
    MSaYYeS BAPLIE Dual Viewer
@@ -525,14 +487,18 @@ function parseBaplie(raw){
   var segs=text.split("'").map(function(s){return s.trim()}).filter(Boolean);
   var out=[];
   // Agrupar segmentos en bloques de contenedor: cada bloque comienza con LOC+147
-  var blocks=[];var cur=null;
+  // Multiple LOC+147 before EQD = same container (40'/45' spanning two bays)
+  var blocks=[];var cur=null;var curHasEqd=false;
   for(var i=0;i<segs.length;i++){
     var seg=segs[i].replace(/\x00EA\x00/g,"'");
     var el=splitE(seg);var id=(el[0]||'').trim();
     if(id==='LOC'&&el[1]==='147'){
-      if(cur)blocks.push(cur);
-      cur=[seg];
+      // If current block already has an EQD, this LOC+147 starts a new container
+      if(cur&&curHasEqd){blocks.push(cur);cur=null;curHasEqd=false;}
+      if(!cur){cur=[seg];}
+      else{cur.push(seg);} // additional LOC+147 for same container (40'/45')
     } else if(cur){
+      if(id==='EQD')curHasEqd=true;
       cur.push(seg);
     }
   }
@@ -938,7 +904,7 @@ function compLayout(plan,vw,pn){
   return{cw:Math.ceil(maxW),ch:Math.ceil(maxH),grps:grps,gP:gP,sR:sR,rO:rO,gw:gw,fgh:fgh,plan:plan,view:view,effectiveView:effectiveView,slotW:slotW,cellH:cellH};
 }
 
-function updateStats(pn){var cts=pn===1?S.c1:S.c2;var shipEl=document.getElementById('ship'+pn);if(!cts){document.getElementById('s'+pn).textContent='';if(shipEl)shipEl.textContent='';return;}var total=0,full=0,mt=0;for(var i=0;i<cts.length;i++){if(passF_noTrt(cts[i])){total++;if(!cts[i].isEmpty)full++;mt+=(cts[i].weight||0);}}document.getElementById('s'+pn).textContent=total+' EQ / '+full+' FLL / '+(mt/1000).toFixed(1).replace('.',',')+'t';var sn=pn===1?S.shipName1:S.shipName2;if(shipEl)shipEl.textContent=sn?'🚢 '+sn:'';}
+function updateStats(pn){var cts=pn===1?S.c1:S.c2;var shipEl=document.getElementById('ship'+pn);if(!cts){document.getElementById('s'+pn).textContent='';if(shipEl)shipEl.textContent='';return;}var total=0,full=0,mt=0;var absTotal=cts.length;for(var i=0;i<cts.length;i++){if(passF_noTrt(cts[i])){total++;if(!cts[i].isEmpty)full++;mt+=(cts[i].weight||0);}}var txt=absTotal+' CTNR';if(total!==absTotal)txt+=' · '+total+' EQ';txt+=' / '+full+' FLL / '+(mt/1000).toFixed(1).replace('.',',')+'t';document.getElementById('s'+pn).textContent=txt;var sn=pn===1?S.shipName1:S.shipName2;if(shipEl)shipEl.textContent=sn?'🚢 '+sn:'';}
 
 /* ── RENDER ── */
 /* ── PREVIEW PLAN: mueve contenedores en el plan virtual para pintarlos en destino ── */
@@ -1027,8 +993,8 @@ function drawSingleBay(ctx,bay,L){
   }
   ctx.strokeStyle=gr;ctx.lineWidth=0.5;for(var ri=0;ri<L.sR.length;ri++){var sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var ty2=tY[allT[ti]];ctx.strokeRect(sx+.5,ty2+.5,sw-1,CH2-1)}}
   if(hY!==null){ctx.save();ctx.strokeStyle=cv('--hatch');ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(0,hY+1);ctx.lineTo(gw,hY+1);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.fillStyle=fg;ctx.font='600 8px "IBM Plex Mono"';ctx.textAlign='center';ctx.fillText('HATCH',gw/2,hY-3);}
-  ctx.textAlign='center';ctx.font='900 20px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(String(bay).padStart(3,'0'),gw/2,MT_OFF-15);
-  ctx.font='600 8px "IBM Plex Mono"';ctx.fillStyle=cv('--muted');ctx.fillText((bay%2===0)?"40'":"20'",gw/2,MT_OFF-4);
+  ctx.textAlign='center';ctx.font='900 20px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(String(bay).padStart(3,'0'),gw/2,MT_OFF-28);
+  ctx.font='600 8px "IBM Plex Mono"';ctx.fillStyle=cv('--muted');ctx.fillText((bay%2===0)?"40'":"20'",gw/2,MT_OFF-17);
   ctx.textAlign='right';ctx.font='600 9px "IBM Plex Mono"';for(var i=0;i<allT.length;i++){var t=allT[i];ctx.fillStyle=t>=70?cv('--accent'):fg;ctx.fillText(String(t).padStart(2,'0'),-4,tY[t]+CH2/2+3)}
   ctx.textAlign='center';ctx.font='700 9px "IBM Plex Mono"';ctx.fillStyle=fg;for(var ri=0;ri<L.sR.length;ri++)ctx.fillText(String(L.sR[ri]).padStart(2,'0'),L.rO[ri]+sw/2,lf-MB+CH2/2);
   for(var ri=0;ri<L.sR.length;ri++){var row=L.sR[ri],sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var tier=allT[ti],ty2=tY[tier];var c=gC(L.plan,bay,row,tier);if(c&&passF(c)){drawCell(ctx,sx,ty2,sw,CH2,c)}}}
@@ -1044,26 +1010,28 @@ function drawSingleBay(ctx,bay,L){
       }
     }
   }
-  // Draw deck weight above deck section
+  // Draw deck weight above deck section (below bay name, above tier numbers)
   if(cubF.length>0){
     ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var isDark5=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtDeck5[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle='#4fc3f7';
-        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-26);
+        ctx.fillStyle=isDark5?'#80cbc4':'#00796b';
+        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-7);
       }
     }
   }
   // Draw hold weight below hold section
   if(bodF.length>0){
     ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var isDark5b=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtHold5[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle='#ff8a65';
+        ctx.fillStyle=isDark5b?'#ffcc80':'#e65100';
         ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,lf+8);
       }
     }
@@ -1080,7 +1048,7 @@ function drawGroup(ctx,g,L){
   if(bodT.length>0){var holdTop2=hY!==null?hY+10:MT_OFF;ctx.fillStyle=hd;ctx.fillRect(0,holdTop2,gw,lf-holdTop2-MB);}
   ctx.strokeStyle=gr;ctx.lineWidth=0.5;for(var ri=0;ri<L.sR.length;ri++){var sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var ty=tY[allT[ti]];ctx.strokeRect(sx+.5,ty+.5,sw-1,CH2-1)}}
   if(hY!==null){ctx.save();ctx.strokeStyle=cv('--hatch');ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(0,hY+1);ctx.lineTo(gw,hY+1);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.fillStyle=fg;ctx.font='600 8px "IBM Plex Mono"';ctx.textAlign='center';ctx.fillText('HATCH',gw/2,hY-3);}
-  ctx.textAlign='center';ctx.font='900 16px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(g.map(function(b){return String(b).padStart(3,'0')}).join('/'),gw/2,MT_OFF-10);
+  ctx.textAlign='center';ctx.font='900 16px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(g.map(function(b){return String(b).padStart(3,'0')}).join('/'),gw/2,MT_OFF-22);
   ctx.textAlign='right';ctx.font='600 9px "IBM Plex Mono"';for(var i=0;i<allT.length;i++){var t=allT[i];ctx.fillStyle=t>=70?cv('--accent'):fg;ctx.fillText(String(t).padStart(2,'0'),-4,tY[t]+CH2/2+3)}
   ctx.textAlign='center';ctx.font='700 9px "IBM Plex Mono"';ctx.fillStyle=fg;for(var ri=0;ri<L.sR.length;ri++)ctx.fillText(String(L.sR[ri]).padStart(2,'0'),L.rO[ri]+sw/2,lf-MB+CH2/2);
   for(var ri=0;ri<L.sR.length;ri++){var row=L.sR[ri],sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var tier=allT[ti],ty=tY[tier];var bay=g[0];var c=gC(L.plan,bay,row,tier);if(c&&passF(c)){drawCell(ctx,sx,ty,sw,CH2,c)}}}
@@ -1096,26 +1064,28 @@ function drawGroup(ctx,g,L){
       }
     }
   }
-  // Draw deck weight above deck section
+  // Draw deck weight above deck section (below bay name, above tier numbers)
   if(cubT.length>0){
     ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var isDarkG=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtDeckG[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle='#4fc3f7';
-        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-16);
+        ctx.fillStyle=isDarkG?'#80cbc4':'#00796b';
+        ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,MT_OFF-7);
       }
     }
   }
   // Draw hold weight below hold section
   if(bodT.length>0){
     ctx.font='600 7px "IBM Plex Mono"';ctx.textAlign='center';
+    var isDarkGb=document.body.classList.contains('dark');
     for(var ri=0;ri<L.sR.length;ri++){
       var row=L.sR[ri];var wt=rowWtHoldG[row];
       if(wt>0){
         var sx=L.rO[ri];
-        ctx.fillStyle='#ff8a65';
+        ctx.fillStyle=isDarkGb?'#ffcc80':'#e65100';
         ctx.fillText(wt.toFixed(1)+'t',sx+sw/2,lf+8);
       }
     }
@@ -1538,7 +1508,6 @@ function updateTB(pn){
   var tb=document.getElementById('tb'+pn);var v=F[pn].view;
   tb.innerHTML=
     '<button class="tbtn" onclick="openListado('+pn+')" title="Listado de contenedores editable"><i class="fa-solid fa-table-list" style="font-size:9px;margin-right:3px"></i>Listado</button>'+
-    '<button class="tbtn" onclick="openSummary('+pn+')" title="Tablas de resumen dinámico"><i class="fa-solid fa-chart-bar" style="font-size:9px;margin-right:3px"></i>Resumen</button>'+
     '<button class="tbtn'+(v==='3b'?' on':'')+'" onclick="swV('+pn+',\'3b\')">Vista 2</button>'+
     '<button class="tbtn'+(v==='2b'?' on':'')+'" onclick="swV('+pn+',\'2b\')">Vista 3</button>'+
     '<button class="tbtn'+(v==='1b'?' on':'')+'" onclick="swV('+pn+',\'1b\')">Vista 4</button>'+
@@ -2677,77 +2646,7 @@ document.addEventListener('keydown',function(e){
   scrollToBay(pn,bayNum);
 });
 
-/* ── SUMMARY MODAL ── */
-var SUM={pn:1,tab:'pod'};
-function openSummary(pn){
-  SUM.pn=pn;
-  document.getElementById('summaryModal').classList.add('open');
-  renderSummary();
-}
-function closeSummary(){document.getElementById('summaryModal').classList.remove('open');}
-document.getElementById('summaryModal').addEventListener('click',function(e){if(e.target===this)closeSummary();});
 
-function renderSummary(){
-  var cts=SUM.pn===1?S.c1:S.c2;
-  if(!cts||!cts.length){
-    document.getElementById('summaryModalBody').innerHTML='<div style="color:var(--muted);text-align:center;padding:40px">Sin datos en Plan '+SUM.pn+'</div>';
-    return;
-  }
-  // Apply current filters
-  var filtered=cts.filter(passF_noTrt);
-  var tabs=['pod','pol','type','bay','row','dg','rf','oog'];
-  var tabLabels={pod:'POD',pol:'POL',type:'Tipo',bay:'Bay',row:'Row',dg:'DG',rf:'RF',oog:'OOG'};
-  var h='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--border);padding-bottom:0">';
-  for(var i=0;i<tabs.length;i++){
-    h+='<div class="sum-tab'+(SUM.tab===tabs[i]?' active':'')+'" onclick="SUM.tab=\''+tabs[i]+'\';renderSummary()">'+tabLabels[tabs[i]]+'</div>';
-  }
-  h+='</div>';
-  
-  // Group by selected criteria
-  var groups={};
-  for(var i=0;i<filtered.length;i++){
-    var c=filtered[i];
-    var key;
-    switch(SUM.tab){
-      case 'pod': key=c.pod||'—'; break;
-      case 'pol': key=c.pol||'—'; break;
-      case 'type': key=c.type||'—'; break;
-      case 'bay': key=c.positions&&c.positions.length?String(c.positions[0].bay):'—'; break;
-      case 'row': key=c.positions&&c.positions.length?String(c.positions[0].row):'—'; break;
-      case 'dg': key=c.isDangerous?(c.dgClass||'DG'):'No DG'; break;
-      case 'rf': key=c.isReefer?'RF':'No RF'; break;
-      case 'oog': key=c.isOog?'OOG':'No OOG'; break;
-    }
-    if(!groups[key])groups[key]={count:0,weight:0,full:0,mt:0,twenty:0,forty:0,fortyfive:0};
-    groups[key].count++;
-    groups[key].weight+=(c.weight||0)/1000;
-    if(c.isEmpty)groups[key].mt++; else groups[key].full++;
-    var sz=parseSz(c.type);
-    if(sz===20)groups[key].twenty++;
-    else if(sz===45)groups[key].fortyfive++;
-    else groups[key].forty++;
-  }
-  
-  // Sort groups
-  var keys=Object.keys(groups).sort();
-  
-  h+='<div style="overflow:auto;max-height:60vh;margin-top:8px">';
-  h+='<table class="sum-table"><thead><tr>';
-  h+='<th>'+tabLabels[SUM.tab]+'</th><th>EQ</th><th>Full</th><th>MT</th><th>20\'</th><th>40\'</th><th>45\'</th><th>Peso (t)</th><th>Peso medio (t)</th>';
-  h+='</tr></thead><tbody>';
-  
-  var totEq=0,totFull=0,totMt=0,tot20=0,tot40=0,tot45=0,totWt=0;
-  for(var i=0;i<keys.length;i++){
-    var g=groups[keys[i]];
-    totEq+=g.count;totFull+=g.full;totMt+=g.mt;tot20+=g.twenty;tot40+=g.forty;tot45+=g.fortyfive;totWt+=g.weight;
-    var avgWt=g.count>0?(g.weight/g.count).toFixed(1):'0.0';
-    h+='<tr><td><b>'+keys[i]+'</b></td><td>'+g.count+'</td><td>'+g.full+'</td><td>'+g.mt+'</td><td>'+g.twenty+'</td><td>'+g.forty+'</td><td>'+g.fortyfive+'</td><td>'+g.weight.toFixed(1)+'</td><td>'+avgWt+'</td></tr>';
-  }
-  h+='<tr class="sum-total"><td>TOTAL</td><td>'+totEq+'</td><td>'+totFull+'</td><td>'+totMt+'</td><td>'+tot20+'</td><td>'+tot40+'</td><td>'+tot45+'</td><td>'+totWt.toFixed(1)+'</td><td>'+(totEq>0?(totWt/totEq).toFixed(1):'0.0')+'</td></tr>';
-  h+='</tbody></table></div>';
-  
-  document.getElementById('summaryModalBody').innerHTML=h;
-}
 </script>
 
 
