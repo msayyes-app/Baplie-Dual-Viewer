@@ -148,3 +148,30 @@ All ratios are capped at 1.0 (max) so triangles never exceed one full adjacent s
 ### Bug Fix (critical):
 - **CRASH BUG**: `drawCell()` OOG code referenced `CH2` (a local variable from `drawSingleBay`/`drawGroup`) which was NOT in scope, causing `ReferenceError` that stopped rendering midway through the BAPLIE when OOG containers were encountered. Fixed by replacing `CH2` with `h` (the cell height parameter passed to drawCell).
 - Reverted `readFile()` back to latin1-only encoding (same as original) since the UTF-8-first approach didn't help and the original was known to work.
+---
+Task ID: 1
+Agent: main
+Task: Implement user-requested changes to BAPLIE Dual Viewer
+
+Work Log:
+- Read current baplie_viewer.html (3097 lines) to understand view system, summary, logo, and menu
+- Redesigned View 4 ('1b'): changed effectiveView from standalone to '2b' (like View 3), added tall slot computation to fill viewport, removed fullscreen behavior, removed zoom reset on view switch
+- Updated swV() to simply set view and render without fullscreen/zoom reset
+- Updated bay name click handler to switch to View 4 without fullscreen
+- Updated drawGroup() with adaptive font sizes for tall cell mode (isBig flag)
+- Updated drawCell() to use actual cell height (h) instead of global CH for font sizing, added tall cell threshold (h>=CH*2) for multi-line display mode
+- Updated PageUp/PageDown handler for View 4 to not depend on fullscreen state
+- Implemented summary multi-select: sumSelect() now accepts event parameter, CTRL+click adds to existing selection, normal click replaces selection
+- Updated sum-count cell onclick to pass event: sumSelect(i,event)
+- Changed logo MSaYYeS to blue gradient (#1565c0 → #42a5f5)
+- Added .logo-title, .logo-red, .logo-norm CSS classes
+- Changed BAPLIE Dual Viewer title: B, D, V letters in dark red gradient (#7f1d1d → #b91c1c)
+- Changed menu default position to left sidebar (MENU_POS='left', body class 'menu-left')
+- Added initialization IIFE to move filterBar into mainArea on page load
+
+Stage Summary:
+- View 4 now renders like View 3 (single-bay per group) with taller slots that fill the viewport
+- No fullscreen toggle or zoom reset when switching views
+- Summary supports CTRL+click for cumulative multi-selection
+- Logo MSaYYeS in blue gradient, B/D/V in dark red gradient
+- Menu defaults to left sidebar on page load

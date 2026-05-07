@@ -111,8 +111,11 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 #srchInput.notfound{border-color:#c62828;background:rgba(198,40,40,.06)}
 #srchClear{position:absolute;right:5px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:0;line-height:1;display:none}
 #srchClear:hover{color:var(--fg)}
-.logo-text{font-family:'DM Sans',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.5px;background:linear-gradient(135deg,var(--accent),#0288d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;user-select:none}
+.logo-text{font-family:'DM Sans',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.5px;background:linear-gradient(135deg,#1565c0,#42a5f5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;user-select:none}
 .logo-text:hover{opacity:.8}
+.logo-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.5px}
+.logo-red{background:linear-gradient(135deg,#7f1d1d,#b91c1c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-norm{color:var(--fg)}
 #bayFilterPanel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;position:absolute;z-index:200;top:100%;left:0;margin-top:4px;min-width:280px;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
 #bayFilterPanel .bfp-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
 #bayFilterPanel .bay-group{display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid var(--border)}
@@ -273,11 +276,11 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 
 </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden select-none">
+<body class="h-screen flex flex-col overflow-hidden select-none menu-left">
 <header class="px-4 py-2 flex items-center gap-3 shrink-0 flex-wrap" style="background:var(--panel);border-bottom:1px solid var(--border)">
   <div class="flex items-center gap-2">
     <span class="logo-text" onclick="resetAllFilters()" title="Reset de todos los filtros">MSaYYeS</span>
-    <h1 class="text-base font-bold tracking-tight">BAPLIE Dual Viewer</h1>
+    <h1 class="logo-title tracking-tight"><span class="logo-red">B</span>APLIE <span class="logo-red">D</span>ual <span class="logo-red">V</span>iewer</h1>
   </div>
   <div style="width:1px;height:20px;background:var(--border)"></div>
   <button class="mbtn" id="themeBtn" onclick="toggleTheme()" title="Cambiar tema"><i class="fa-solid fa-moon"></i></button>
@@ -887,36 +890,10 @@ function compLayout(plan,vw,pn){
   var sR=makeMR(maxR,_existRows);
 
   var effectiveView=view;
-  // ── 1b mode: compute tier count first, then derive cell size to fill viewport ──
-  var ch1b=CH, cw1b=CW*2; // default cell dimensions (overridden for 1b)
+  // ── 1b mode: like 2b (single-bay per group) but with tall slots filling viewport ──
+  var ch1b=CH, cw1b=CW*2;
   if(view==='1b'){
-    // Find tiers for all bays (we use first bay as reference for tier count)
-    var allTiersSet=new Set();
-    for(var i=0;i<fBays.length;i++){
-      var bay=fBays[i];
-      if(plan[bay]){for(var r in plan[bay])for(var t in plan[bay][r])if(passF(plan[bay][r][t]))allTiersSet.add(Number(t));}
-      var pairB=(bay%2===0)?bay-1:bay+1;
-      if(plan[pairB]){for(var r in plan[pairB])for(var t in plan[pairB][r])if(passF(plan[pairB][r][t]))allTiersSet.add(Number(t));}
-    }
-    var cubTall=[],bodTall=[];allTiersSet.forEach(function(t){if(t>=70)cubTall.push(t);else bodTall.push(t);});
-    var deckBaseAll=82;for(var i=0;i<cubTall.length;i++){if(cubTall[i]<82){deckBaseAll=72;break;}}
-    var cubFall=fillT(cubTall,deckBaseAll);
-    var nTiers=cubFall.length+bodTall.length;
-    var hasHatch=(cubFall.length>0&&bodTall.length>0)?1:0;
-    var nRows=sR.length;
-    // Available pixels for the canvas area
-    var availW=vw-LO-15;
-    var availH=(document.getElementById('w'+pn)?document.getElementById('w'+pn).clientHeight:600)||600;
-    availH=availH-20; // small margin
-    // Height occupied by bay label + hatch gap + row labels = MT_OFF + (hasHatch?20:0) + MB
-    var fixedH=MT_OFF+(hasHatch?20:0)+MB;
-    // Each tier gets ch1b pixels. Each row (column) gets cw1b pixels.
-    // We want: nTiers*ch1b + fixedH = availH  AND  nRows*cw1b + LO = availW (with scale=1)
-    if(nTiers>0)ch1b=Math.max(14,Math.floor((availH-fixedH)/nTiers));
-    if(nRows>0)cw1b=Math.max(20,Math.floor(availW/nRows));
-    // Make cells square-ish: use the smaller of the two to drive the other
-    var cellSq=Math.min(ch1b,cw1b);
-    ch1b=cellSq;cw1b=Math.max(cellSq,Math.floor(availW/nRows)); // keep width generous
+    effectiveView='2b'; // reuse 2b rendering (single bay per group)
   }
 
   // ── 5b mode: like 3b trio view but with tall slots filling viewport ──
@@ -926,7 +903,7 @@ function compLayout(plan,vw,pn){
   }
 
   // Slot width: initial (overridden later for 5b)
-  var slotW=(view==='1b')?cw1b:CW*2;
+  var slotW=CW*2; // slot width for all modes (1b uses scaling instead of wider slots)
   var rO=[];var ox=0;
   for(var i=0;i<sR.length;i++){if(sR[i]===0)ox+=CGAP/2;rO.push(ox);ox+=slotW;if(sR[i]===0)ox+=CGAP/2;}var gw=ox;
   var grps=[];
@@ -967,18 +944,53 @@ function compLayout(plan,vw,pn){
     for(var i=0;i<sR.length;i++){if(sR[i]===0)ox+=CGAP/2;rO.push(ox);ox+=slotW;if(sR[i]===0)ox+=CGAP/2;}
     gw=ox;
   }
+  // ── 1b mode: compute tall cell dimensions to fill viewport ──
+  if(view==='1b'){
+    var availH1b=(document.getElementById('w'+pn)?document.getElementById('w'+pn).clientHeight:600)||600;
+    availH1b=availH1b-30;
+    // Count max tiers across all bays (each group is a single bay in 2b mode)
+    var maxTiers1b=0;
+    for(var gi1=0;gi1<grps.length;gi1++){
+      var g1=grps[gi1]; var tiersSet1b=new Set();
+      for(var bi1=0;bi1<g1.length;bi1++){
+        var bay1=g1[bi1];
+        if(plan[bay1]){for(var r in plan[bay1])for(var t in plan[bay1][r])if(passF(plan[bay1][r][t]))tiersSet1b.add(Number(t));}
+        var pair1=(bay1%2===0)?bay1-1:bay1+1;
+        if(plan[pair1]){for(var r in plan[pair1])for(var t in plan[pair1][r])if(passF(plan[pair1][r][t]))tiersSet1b.add(Number(t));}
+      }
+      var cubT1b=[],bodT1b=[];tiersSet1b.forEach(function(t){if(t>=70)cubT1b.push(t);else bodT1b.push(t);});
+      var deckBase1b=82;for(var ii1=0;ii1<cubT1b.length;ii1++){if(cubT1b[ii1]<82){deckBase1b=72;break;}}
+      var cubF1b=fillT(cubT1b,deckBase1b);
+      var nT1b=cubF1b.length+bodT1b.length;
+      var hasH1b=(cubF1b.length>0&&bodT1b.length>0)?1:0;
+      if(nT1b>maxTiers1b)maxTiers1b=nT1b+hasH1b;
+    }
+    var fixedOverhead1b=MT_OFF+MB+20;
+    if(maxTiers1b>0)ch1b=Math.max(20,Math.floor((availH1b-fixedOverhead1b)/maxTiers1b));
+    else ch1b=CH;
+    // slotW: fill available width per bay
+    var availW1b=vw-LO-15;
+    var nRows1b=sR.length;
+    cw1b=Math.max(CW,Math.floor(availW1b/(nRows1b+1)));
+    // Use the taller of ch1b and cw1b but keep aspect reasonable
+    slotW=cw1b;
+    rO=[];ox=0;
+    for(var i=0;i<sR.length;i++){if(sR[i]===0)ox+=CGAP/2;rO.push(ox);ox+=slotW;if(sR[i]===0)ox+=CGAP/2;}
+    gw=ox;
+  }
 
   // Compute fgh using ch1b (or CH for other modes)
   var cellH=(view==='1b')?ch1b:(view==='5b')?cellH5b:CH;
+  if(view==='1b'){slotW=cw1b;}
   var maxFgh=0;
   for(var gi=0;gi<grps.length;gi++){var g=grps[gi];var yy=MT_OFF;var tiersSet=new Set();for(var bi=0;bi<g.length;bi++){var bay=g[bi];if(plan[bay]){for(var r in plan[bay])for(var t in plan[bay][r])if(passF(plan[bay][r][t]))tiersSet.add(Number(t));}var pair=(bay%2===0)?bay-1:bay+1;if(plan[pair]){for(var r in plan[pair])for(var t in plan[pair][r])if(passF(plan[pair][r][t]))tiersSet.add(Number(t));}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}var cubF2=fillT(cubT,deckBase);var bodF2=bodT.slice().sort(function(a,b){return a-b});for(var j=0;j<cubF2.length;j++)yy+=cellH;if(cubF2.length>0&&bodF2.length>0)yy+=20;for(var j=0;j<bodF2.length;j++)yy+=cellH;yy+=MB;if(yy>maxFgh)maxFgh=yy;}
   var fgh=maxFgh;var avail=vw-LO-15;var sc;
   if(effectiveView==='3b'){var fitSc=(avail-18)/(3*gw);if(fitSc<0.15)fitSc=0.15;sc=fitSc*Z[pn];}
-  else if(view==='1b'){sc=Z[pn];} // cells already sized to fill viewport
+  else if(view==='1b'){var baseSc1b=Math.max(0.3,avail/gw);sc=baseSc1b*Z[pn];}
   else{var baseSc=Math.max(0.3,avail/gw);sc=baseSc*Z[pn];}
   var gpr;
   if(effectiveView==='3b'){var triplePixW=3*gw*sc+2*6+14;gpr=Math.max(1,Math.floor((avail+14)/triplePixW));if(gpr>grps.length)gpr=grps.length;}
-  else if(view==='1b'){gpr=1;}
+  else if(view==='1b'){var bayW1b=gw*sc;gpr=Math.max(1,Math.floor((avail+10)/(bayW1b+10)));if(gpr>grps.length)gpr=grps.length;}
   else{gpr=Math.max(1,Math.floor((avail+8*sc)/((gw+10)*sc)));if(gpr>grps.length)gpr=grps.length;}
   var vRows=[];for(var i=0;i<grps.length;i+=gpr)vRows.push(grps.slice(i,Math.min(i+gpr,grps.length)));
   var gP=[];var maxW=0,maxH=0;
@@ -1127,16 +1139,19 @@ function drawSingleBay(ctx,bay,L){
 function drawGroup(ctx,g,L){
   var gw=L.gw,sw=L.slotW,fg=cv('--fg'),gr=cv('--grid'),hd=cv('--cvhold');
   var CH2=L.cellH||CH;
+  var isBig=CH2>CH*1.5; // true for 1b (tall slot mode)
+  var bayFs=isBig?20:16, tierFs=isBig?11:9, rowFs=isBig?11:9, hatchFs=isBig?10:8;
   var bt=getAlignedTiers(L.plan,g);var cubT=bt.cub,bodT=bt.bod;var tY={};var y=MT_OFF;
   for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=y;y+=CH2}var hY=(cubT.length>0&&bodT.length>0)?y:null;if(hY!==null)y+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=y;y+=CH2}
   var lf=y+MB;var allT=cubT.concat(bodT);
   // Always draw hold background for body tiers
   if(bodT.length>0){var holdTop2=hY!==null?hY+10:MT_OFF;ctx.fillStyle=hd;ctx.fillRect(0,holdTop2,gw,lf-holdTop2-MB);}
   ctx.strokeStyle=gr;ctx.lineWidth=0.5;for(var ri=0;ri<L.sR.length;ri++){var sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var ty=tY[allT[ti]];ctx.strokeRect(sx+.5,ty+.5,sw-1,CH2-1)}}
-  if(hY!==null){ctx.save();ctx.strokeStyle=cv('--hatch');ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(0,hY+1);ctx.lineTo(gw,hY+1);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.fillStyle=fg;ctx.font='600 8px "IBM Plex Mono"';ctx.textAlign='center';ctx.fillText('HATCH',gw/2,hY-3);}
-  ctx.textAlign='center';ctx.font='900 16px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(g.map(function(b){return String(b).padStart(3,'0')}).join('/'),gw/2,MT_OFF-22);
-  ctx.textAlign='right';ctx.font='600 9px "IBM Plex Mono"';for(var i=0;i<allT.length;i++){var t=allT[i];ctx.fillStyle=t>=70?cv('--accent'):fg;ctx.fillText(String(t).padStart(2,'0'),-4,tY[t]+CH2/2+3)}
-  ctx.textAlign='center';ctx.font='700 9px "IBM Plex Mono"';ctx.fillStyle=fg;for(var ri=0;ri<L.sR.length;ri++)ctx.fillText(String(L.sR[ri]).padStart(2,'0'),L.rO[ri]+sw/2,lf-MB+CH2/2);
+  if(hY!==null){ctx.save();ctx.strokeStyle=cv('--hatch');ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(0,hY+1);ctx.lineTo(gw,hY+1);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.fillStyle=fg;ctx.font='600 '+hatchFs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.fillText('HATCH',gw/2,hY-3);}
+  ctx.textAlign='center';ctx.font='900 '+bayFs+'px "IBM Plex Mono"';ctx.fillStyle=fg;ctx.fillText(g.map(function(b){return String(b).padStart(3,'0')}).join('/'),gw/2,MT_OFF-(isBig?30:22));
+  if(isBig){ctx.font='600 '+(hatchFs)+'px "IBM Plex Mono"';ctx.fillStyle=cv('--muted');var mainBay=g[0];ctx.fillText((mainBay%2===0)?"40'":"20'",gw/2,MT_OFF-17);}
+  ctx.textAlign='right';ctx.font='600 '+tierFs+'px "IBM Plex Mono"';for(var i=0;i<allT.length;i++){var t=allT[i];ctx.fillStyle=t>=70?cv('--accent'):fg;ctx.fillText(String(t).padStart(2,'0'),-4,tY[t]+CH2/2+3)}
+  ctx.textAlign='center';ctx.font='700 '+rowFs+'px "IBM Plex Mono"';ctx.fillStyle=fg;for(var ri=0;ri<L.sR.length;ri++)ctx.fillText(String(L.sR[ri]).padStart(2,'0'),L.rO[ri]+sw/2,lf-MB+CH2/2);
   for(var ri=0;ri<L.sR.length;ri++){var row=L.sR[ri],sx=L.rO[ri];for(var ti=0;ti<allT.length;ti++){var tier=allT[ti],ty=tY[tier];var bay=g[0];var c=gC(L.plan,bay,row,tier);if(c&&passF(c)){drawCell(ctx,sx,ty,sw,CH2,c)}}}
   // ── WEIGHT SUMMARY PER ROW ──
   var rowWtDeckG={},rowWtHoldG={};
@@ -1200,7 +1215,7 @@ function drawCell(ctx,x,y,w,h,c){
     ctx.strokeStyle='rgba(128,128,128,0.2)';ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
     // show weight dimly
     ctx.globalAlpha=0.35;ctx.fillStyle=document.body.classList.contains('dark')?'#ffffff':'#000000';
-    var fsD=Math.min(CH-4,w>=36?8:6)+GF.wtFontSize;fsD=Math.max(5,fsD);ctx.font='500 '+fsD+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    var fsD=Math.min(h-4,w>=36?8:6)+GF.wtFontSize;fsD=Math.max(5,fsD);ctx.font='500 '+fsD+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(fmtW(c),x+w/2,y+h/2+.5);
     ctx.restore();return;
   }
@@ -1285,9 +1300,9 @@ function drawCell(ctx,x,y,w,h,c){
   // Texto peso + datos extra si la celda es suficientemente ancha
   var textCol=GF.wtMode?((c.weight||0)>17500?'#ffffff':'#000000'):tC(col);
   ctx.fillStyle=textCol;
-  if(w>=80){
-    // Modo amplio (1b): mostrar sztp + peso + POL
-    var fs2=Math.min(h*0.28,11)+GF.wtFontSize;fs2=Math.max(5,fs2);
+  if(w>=80||h>=CH*2){
+    // Modo amplio (1b / tall slots): mostrar sztp + peso + POL
+    var fs2=Math.min(h*0.28,13)+GF.wtFontSize;fs2=Math.max(5,fs2);
     ctx.textAlign='center';ctx.textBaseline='middle';
     var lines=[];
     if(c.type)lines.push(c.type);
@@ -1301,7 +1316,7 @@ function drawCell(ctx,x,y,w,h,c){
       ctx.fillText(lines[li],x+w/2,startY+li*lineH);
     }
   } else {
-    var fs=Math.min(CH-4,w>=50?10:w>=36?9:7)+GF.wtFontSize;fs=Math.max(5,fs);ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    var fs=Math.min(h-4,w>=50?10:w>=36?9:7)+GF.wtFontSize;fs=Math.max(5,fs);ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
     var off=(c.isDangerous&&w<36)?4:0;
     ctx.fillText(fmtW(c),x+w/2+off,y+h/2+.5);
   }
@@ -1637,7 +1652,7 @@ function updateTB(pn){
     '<button class="tbtn" onclick="zB('+pn+',1)"><i class="fa-solid fa-plus" style="font-size:10px"></i></button>'+
     '<button class="tbtn" onclick="togFS('+pn+')" title="Pantalla completa"><i class="fa-solid fa-expand" style="font-size:10px"></i></button>';
 }
-function swV(pn,m){F[pn].view=m;Z[pn]=1;updateTB(pn);if(m==='1b'&&S.fs!==pn){closeSidePanels();togFS(pn);}else if(m!=='1b'&&S.fs===pn){togFS(pn);}render(pn);}
+function swV(pn,m){F[pn].view=m;updateTB(pn);render(pn);}
 function closeSidePanels(){document.getElementById('lstPanel').classList.remove('open');document.getElementById('diffPanel').classList.remove('open');document.getElementById('sumPanel').classList.remove('open');document.getElementById('movePanel').classList.remove('open');}
 function zB(pn,d){Z[pn]=Math.max(0.3,Math.min(5,Z[pn]+d*0.3));render(pn);}
 function togFS(pn){var col1=document.getElementById('col1'),col2=document.getElementById('col2');if(S.fs===null){S.fs=pn;if(pn===1){col1.style.width='100%';col1.style.borderRight='none';col2.style.display='none';}else{col2.style.width='100%';col2.style.borderRight='none';col1.style.display='none';}}else{S.fs=null;col1.style.width='';col1.style.borderRight='1px solid var(--border)';col1.style.display='';col2.style.width='';col2.style.borderRight='';col2.style.display='';}setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);}
@@ -1724,10 +1739,8 @@ function onCl(e,pn){
   // Check if click is on a bay name header
   var bayClicked=hitTestBayName(mx,my,L);
   if(bayClicked!==null&&bayClicked!==undefined){
-    // Navigate to Vista 4 centered on this bay
-    F[pn].view='1b';Z[pn]=1;
-    if(S.fs!==pn)closeSidePanels();
-    if(S.fs!==pn)togFS(pn);
+    // Navigate to Vista 4 centered on this bay (no fullscreen, no reset)
+    F[pn].view='1b';
     updateTB(pn);render(pn);
     setTimeout(function(){scrollToBay(pn,bayClicked);},80);
     return;
@@ -2792,7 +2805,7 @@ var _1b_bayIdx={1:0,2:0};
 document.addEventListener('keydown',function(e){
   if(e.key!=='PageDown'&&e.key!=='PageUp')return;
   // Only in 1b view
-  var pn=(S.fs===2)?2:1; // use whichever is fullscreen, else plan 1
+  var pn=(S.L2&&F[2].view==='1b')?2:1; // use plan with 1b view active
   if(F[pn].view!=='1b')return;
   var L=pn===1?S._L1:S._L2;if(!L||!L.grps||!L.grps.length)return;
   e.preventDefault();
@@ -2975,8 +2988,7 @@ function renderSummary(){
         hbody+='<td>'+v+'</td>';
       }
     }
-    var idsJson=JSON.stringify(g.ids).replace(/"/g,'&quot;');
-    hbody+='<td class="sum-count" onclick="sumSelect('+i+')" title="Clic para seleccionar estos contenedores">'+g.count+'</td>';
+    hbody+='<td class="sum-count" onclick="sumSelect('+i+',event)" title="Clic para seleccionar · Ctrl+Clic para añadir a la selección">'+g.count+'</td>';
     hbody+='<td class="sum-wt">'+(g.weight>0?g.weight.toFixed(1).replace('.',','):'-')+'</td>';
     hbody+='</tr>';
   }
@@ -2996,11 +3008,20 @@ function sumSort(col){
   renderSummary();
 }
 
-function sumSelect(idx){
+var _sumCtrlKey=false;
+function sumSelect(idx,event){
   var g=SUM_DATA[idx];if(!g)return;
-  S.sel=new Set(g.ids);
+  var isCtrl=event&&(event.ctrlKey||event.metaKey);
+  if(isCtrl){
+    // Add to existing selection
+    if(!S.sel)S.sel=new Set();
+    for(var i=0;i<g.ids.length;i++)S.sel.add(g.ids[i]);
+    showToast('Añadidos '+g.ids.length+' contenedor'+(g.ids.length!==1?'es':'')+' (total: '+S.sel.size+')');
+  }else{
+    S.sel=new Set(g.ids);
+    showToast('Seleccionados '+g.ids.length+' contenedor'+(g.ids.length!==1?'es':''));
+  }
   render(1);render(2);
-  showToast('Seleccionados '+g.ids.length+' contenedor'+(g.ids.length!==1?'es':''));
   // Scroll to first container
   if(g.ids.length>0){
     var id=g.ids[0];
@@ -3032,7 +3053,7 @@ function exportSummaryTSV(){
 }
 
 /* ── TOGGLE MENU POSITION (left sidebar vs top bar) ── */
-var MENU_POS='top'; // 'top' or 'left'
+var MENU_POS='left'; // 'top' or 'left'
 function toggleMenuPos(){
   var body=document.body;
   var bar=document.getElementById('filterBar');
@@ -3056,6 +3077,18 @@ function toggleMenuPos(){
   }
   setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},100);
 }
+
+// Initialize menu position on page load (default: left sidebar)
+(function(){
+  var bar=document.getElementById('filterBar');
+  var main=document.getElementById('mainArea');
+  var btn=document.getElementById('menuToggleBtn');
+  if(MENU_POS==='left'){
+    main.insertBefore(bar,main.firstChild);
+    btn.innerHTML='<i class="fa-solid fa-grip-lines" style="font-size:12px"></i>';
+    btn.title='Mover filtros arriba';
+  }
+})();
 
 
 </script>
