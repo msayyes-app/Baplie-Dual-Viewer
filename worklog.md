@@ -144,3 +144,7 @@ All ratios are capped at 1.0 (max) so triangles never exceed one full adjacent s
 - `resetAllFilters()`: Resets `wtRound` and `wtFontSize`
 - Added HTML: POD color modal, Redondeo/Font+/Font- buttons, POD palette button
 - Added JS: `toggleWtRound()`, `changeWtFont()`, `openPodColorModal()`, `closePodColorModal()`, `setPodColor()`
+
+### Bug Fix (critical):
+- **CRASH BUG**: `drawCell()` OOG code referenced `CH2` (a local variable from `drawSingleBay`/`drawGroup`) which was NOT in scope, causing `ReferenceError` that stopped rendering midway through the BAPLIE when OOG containers were encountered. Fixed by replacing `CH2` with `h` (the cell height parameter passed to drawCell).
+- Reverted `readFile()` back to latin1-only encoding (same as original) since the UTF-8-first approach didn't help and the original was known to work.

@@ -1176,14 +1176,14 @@ function drawCell(ctx,x,y,w,h,c){
     // TOP overflow - proportional to height of adjacent tier
     if(dim.top>0){
       var topRatio=Math.min(1,dim.top/maxOogCm);
-      var topTs=topRatio*CH2; // proportional to cell height (adjacent tier)
+      var topTs=topRatio*h; // proportional to cell height (h = cell height parameter)
       var tx=x+w/2;
       ctx.beginPath();ctx.moveTo(tx,y-topTs);ctx.lineTo(tx+Math.min(w*0.3,topTs),y+1);ctx.lineTo(tx-Math.min(w*0.3,topTs),y+1);ctx.closePath();ctx.fill();ctx.stroke();
     }
     // LEFT overflow (port) - proportional to width of adjacent slot
     if(dim.port>0){
       var portRatio=Math.min(1,dim.port/maxOogCm);
-      var portTs=portRatio*w; // proportional to cell width (adjacent slot)
+      var portTs=portRatio*w; // proportional to cell width (w = cell width parameter)
       ctx.beginPath();ctx.moveTo(x-portTs,y+h/2);ctx.lineTo(x+1,y+h/2-Math.min(h*0.4,portTs*0.5));ctx.lineTo(x+1,y+h/2+Math.min(h*0.4,portTs*0.5));ctx.closePath();ctx.fill();ctx.stroke();
     }
     // RIGHT overflow (starboard) - proportional to width of adjacent slot
@@ -1209,10 +1209,10 @@ function drawCell(ctx,x,y,w,h,c){
     if(w>=40){
       ctx.fillStyle='#f57f17';ctx.font='bold 6px "IBM Plex Mono"';ctx.textBaseline='top';
       var dimParts=[];
-      if(dim.top)dimParts.push('↑'+Math.round(dim.top)+'cm');
-      if(dim.port)dimParts.push('←'+Math.round(dim.port)+'cm');
-      if(dim.stbd)dimParts.push('→'+Math.round(dim.stbd)+'cm');
-      if(dim.fwd)dimParts.push('⟷'+Math.round(dim.fwd)+'cm');
+      if(dim.top)dimParts.push('\u2191'+Math.round(dim.top)+'cm');
+      if(dim.port)dimParts.push('\u2190'+Math.round(dim.port)+'cm');
+      if(dim.stbd)dimParts.push('\u2192'+Math.round(dim.stbd)+'cm');
+      if(dim.fwd)dimParts.push('\u27F7'+Math.round(dim.fwd)+'cm');
       if(dimParts.length){
         ctx.textAlign='right';
         ctx.fillText(dimParts.join(' '),x+w-2,y+2);
@@ -2655,26 +2655,7 @@ function downloadBaplieRaw(raw,fname){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-function readFile(f){
-  return new Promise(function(ok,no){
-    var r1=new FileReader();
-    r1.onload=function(){
-      var txt=r1.result;
-      // Check for replacement character (U+FFFD) which indicates UTF-8 decode failure
-      if(txt.indexOf('\uFFFD')>=0){
-        // Fallback to latin1
-        var r2=new FileReader();
-        r2.onload=function(){ok(r2.result);};
-        r2.onerror=function(){ok(txt);}; // return original if fallback also fails
-        r2.readAsText(f,'latin1');
-      } else {
-        ok(txt);
-      }
-    };
-    r1.onerror=function(){no(r1.error);};
-    r1.readAsText(f,'utf-8');
-  });
-}
+function readFile(f){return new Promise(function(ok,no){var r=new FileReader();r.onload=function(){ok(r.result)};r.onerror=function(){no(r.error)};r.readAsText(f,'latin1')});}
 document.getElementById('f1').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(1,[]);var t=await readFile(f);S.raw1=t;S.shipName1=extractShipName(t);var c=parseBaplie(t);console.log('Plan 1: '+c.length+' contenedores encontrados');document.getElementById('fn1').textContent=f.name;document.getElementById('lb1').classList.add('ok');loadPanel(1,c);}catch(er){console.error(er);}});
 document.getElementById('f2').addEventListener('change',async function(e){var f=e.target.files[0];if(!f)return;try{loadPanel(2,[]);S.raw2=null;var old=document.getElementById('exportBaplieBtn');if(old)old.remove();var t=await readFile(f);S.shipName2=extractShipName(t);var c=parseBaplie(t);console.log('Plan 2: '+c.length+' contenedores encontrados');document.getElementById('fn2').textContent=f.name;document.getElementById('lb2').classList.add('ok');loadPanel(2,c);}catch(er){console.error(er);}});
 function setupDrop(wid,pn){var el=document.getElementById(wid);el.addEventListener('dragover',function(e){e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});el.addEventListener('drop',async function(e){e.preventDefault();el.classList.remove('drag-over');var f=e.dataTransfer.files[0];if(!f)return;try{var t=await readFile(f);if(pn===1)S.raw1=t;if(pn===1)S.shipName1=extractShipName(t);else S.shipName2=extractShipName(t);var c=parseBaplie(t);document.getElementById('fn'+pn).textContent=f.name;document.getElementById('lb'+pn).classList.add('ok');loadPanel(pn,c);}catch(er){console.error(er);}});}
