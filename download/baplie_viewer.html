@@ -275,6 +275,25 @@ body.menu-left #filterBar .gbtn{font-size:10px;padding:2px 6px}
 body.menu-left #filterBar .wrange-wrap{width:auto}
 body.menu-left #filterBar .wrange-inp{width:36px}
 
+/* ── HELP MODAL ── */
+#helpModal{position:fixed;inset:0;z-index:1100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+#helpModal.open{display:flex}
+#helpBox{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:780px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+#helpHead{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--card)}
+#helpHead .help-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(2,136,209,.12);color:var(--accent);flex-shrink:0}
+#helpHead h2{font-weight:700;font-size:16px;flex:1}
+#helpClose{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px;border-radius:4px}#helpClose:hover{color:var(--fg)}
+#helpBody{overflow:auto;padding:20px 24px;flex:1;font-size:13px;line-height:1.7}
+#helpBody h3{font-size:14px;font-weight:700;color:var(--accent);margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+#helpBody h3:first-child{margin-top:0}
+#helpBody .hsec{margin-bottom:4px}
+#helpBody .hk{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;color:var(--fg)}
+#helpBody .hk.on{border-color:var(--accent);color:var(--accent);background:rgba(2,136,209,.08)}
+#helpBody ul{padding-left:18px;margin:4px 0 8px}
+#helpBody li{margin-bottom:3px}
+#helpBody li .hk{margin:0 1px}
+#helpBody .htip{color:var(--muted);font-size:11px;margin-left:4px}
+
 
 </style>
 </head>
@@ -293,6 +312,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     <i class="fa-solid fa-chart-pie" style="font-size:10px"></i> Resumen
   </button>
   <button class="mbtn" id="menuToggleBtn" onclick="toggleMenuPos()" title="Mover filtros a la izquierda o arriba"><i class="fa-solid fa-bars" style="font-size:12px"></i></button>
+  <button class="mbtn" id="helpBtn" onclick="openHelp()" title="Ayuda — Instrucciones de uso" style="font-size:13px;font-weight:700;color:var(--accent)">?</button>
   <div class="srch-wrap">
     <input id="srchInput" type="text" placeholder="Buscar contenedor(es)…" oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
     <button id="srchClear" onclick="clearSearch()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
@@ -521,6 +541,178 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 </footer>
 <div id="tt" class="fixed pointer-events-none hidden"></div>
 <div id="copyToast"></div>
+<!-- HELP MODAL -->
+<div id="helpModal">
+  <div id="helpBox">
+    <div id="helpHead">
+      <div class="help-icon"><i class="fa-solid fa-circle-question"></i></div>
+      <h2>Guía de uso — BAPLIE Dual Viewer</h2>
+      <button id="helpClose" onclick="closeHelp()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="helpBody">
+
+<h3>Carga de archivos</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk">Archivo 1</span> / <span class="hk">Archivo 2</span> — Clica para seleccionar un fichero BAPLIE (.edi, .txt, .baplie) o arrástralo directamente al panel. El Plan 1 se muestra a la izquierda; al cargar un segundo archivo aparece el Plan 2 a la derecha.</li>
+  <li><span class="hk">×</span> junto a cada archivo — Descarga (elimina) ese plan de la vista.</li>
+  <li><span class="hk on">MSaYYeS</span> — Clic en el logo resetea <b>todos</b> los filtros y selecciones a su estado por defecto.</li>
+</ul>
+</div>
+
+<h3>Vistas del plano</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk">Vista 1</span> — Triple bay: muestra bays agrupados de 3 en 3 (impar-par-impar), la vista compacta estándar.</li>
+  <li><span class="hk">Vista 2</span> — Bay individual alto: cada bay por separado con celdas más altas que se adaptan a la ventana. Muestra solo el peso.</li>
+  <li><span class="hk">Vista 3</span> — Bay agrupado: bays individuales pero en formato compacto.</li>
+  <li><span class="hk">Vista 4</span> — Bay individual detalle: como Vista 3 pero con celdas más altas que llenan la ventana. Muestra información completa: tamaño/tipo, peso, POL. <span class="htip">El tamaño del bay no cambia al filtrar.</span></li>
+  <li><span class="hk">−</span> / <span class="hk">+</span> — Zoom del plano.</li>
+  <li><span class="hk">⛶</span> — Pantalla completa: expande ese plan a todo el ancho; clic de nuevo para volver a la vista dual.</li>
+  <li><span class="hk">Listado</span> — Abre el panel lateral con la tabla de contenedores editable.</li>
+</ul>
+</div>
+
+<h3>Interacción con el plano</h3>
+<div class="hsec">
+<ul>
+  <li><b>Clic</b> en un contenedor — Lo selecciona (resaltado amarillo). Ambas vistas se centran en ese contenedor en cada plan.</li>
+  <li><b>Ctrl+Clic</b> — Añade/elimina el contenedor de la selección múltiple.</li>
+  <li><b>Clic</b> en zona vacía — Deselecciona todo.</li>
+  <li><b>Clic</b> en el nombre del bay (cabecera) — Cambia a Vista 4 centrada en ese bay.</li>
+  <li><b>Doble clic</b> en un contenedor DG (peligroso) — Abre el modal de información IMDG con clase, estiba y segregación.</li>
+  <li><b>Hover</b> sobre un contenedor — Muestra tooltip con datos completos (ID, tipo, posición, peso, POL, POD, DG…).</li>
+  <li><b>Ctrl+C</b> — Copia los IDs de los contenedores seleccionados al portapapeles.</li>
+  <li><b>AvPág / RePág</b> — Navega al bay siguiente/anterior en Vista 4.</li>
+</ul>
+</div>
+
+<h3>Barra de filtros</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk">Todos</span> / <span class="hk">20'</span> / <span class="hk">40'</span> / <span class="hk">45'</span> — Filtra por tamaño de contenedor. <span class="hk">Todos</span> desactiva el filtro; los demás son conmutables.</li>
+  <li><span class="hk">F+E</span> / <span class="hk">Full</span> / <span class="hk">MT</span> — Muestra todos, solo llenos o solo vacíos.</li>
+  <li><span class="hk">RF</span> / <span class="hk">DG</span> / <span class="hk">OOG</span> / <span class="hk">RS</span> / <span class="hk">GEN</span> — Activa/desactiva la visibilidad de cada tipo de carga (Reefer, Peligroso, Sobredimensionado, Remoción, General). Cuando están apagados (sin resaltar), esos contenedores desaparecen del plano.</li>
+  <li><span class="hk"><i class="fa-solid fa-code-compare" style="font-size:9px"></i> Diferencias</span> — Activa el resaltado naranja de los contenedores que difieren entre los dos planes. El badge muestra el total. <span class="htip">Requiere ambos archivos cargados.</span></li>
+  <li><span class="hk"><i class="fa-solid fa-list-ul" style="font-size:9px"></i> Ver log</span> — Abre el panel lateral con el listado detallado de cambios: posición, POD, POL, peso, SZTP. Se puede filtrar por tipo de cambio. <span class="htip">Clic en una fila selecciona ese contenedor y centra ambas vistas.</span></li>
+</ul>
+</div>
+
+<h3>Filtros de POD / POL</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk">Todos</span> (POD) — Muestra/oculta todos los PODs de golpe.</li>
+  <li>Botones de cada POD — Clic para ocultar/mostrar ese puerto de descarga.</li>
+  <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i></span> — Abre el selector de colores para personalizar cada POD.</li>
+  <li><span class="hk">POL=ESVLC</span> — Resalta los contenedores con POL=ESVLC (Valencia).</li>
+  <li><span class="hk">TRT</span> — Atenua en gris los contenedores con POL distinto de ESVLC (tránsito).</li>
+  <li><span class="hk">No-sel</span> — Atenua en gris los contenedores que no están seleccionados o no cumplen los filtros activos. Los seleccionados siempre se muestran.</li>
+</ul>
+</div>
+
+<h3>Peso y rango</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk"><i class="fa-solid fa-weight-hanging" style="font-size:9px"></i> Peso</span> — Colorea los contenedores por peso: blanco=vacío, negro=35 toneladas.</li>
+  <li><span class="hk"><i class="fa-solid fa-ruler" style="font-size:9px"></i> Redondeo</span> — Redondea los pesos a enteros en el plano.</li>
+  <li><span class="hk">A</span><span class="hk">+</span> / <span class="hk">A</span><span class="hk">−</span> — Aumenta/reduce el tamaño de la fuente de los pesos.</li>
+  <li><span class="hk">desde — hasta t</span> — Filtra por rango de peso en toneladas.</li>
+</ul>
+</div>
+
+<h3>Bay y otros filtros</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk"><i class="fa-solid fa-layer-group" style="font-size:9px"></i> Todos</span> — Abre el panel para seleccionar qué bays mostrar/ocultar. Usa <span class="hk">Todos</span> / <span class="hk">Ninguno</span> para activar/desactivar todos de golpe.</li>
+  <li><span class="hk"><i class="fa-solid fa-clipboard-list" style="font-size:9px"></i> Copiar filtrados</span> — Copia al portapapeles la lista de contenedores visibles con los filtros actuales.</li>
+</ul>
+</div>
+
+<h3>Barra superior</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk"><i class="fa-solid fa-moon" style="font-size:9px"></i></span> / <span class="hk"><i class="fa-solid fa-sun" style="font-size:9px"></i></span> — Cambia entre tema claro y oscuro.</li>
+  <li><span class="hk"><i class="fa-solid fa-arrows-up-down-left-right" style="font-size:9px"></i> Mover</span> — Abre el asistente de movimiento de contenedores para reubicar y generar un nuevo BAPLIE.</li>
+  <li><span class="hk"><i class="fa-solid fa-chart-pie" style="font-size:9px"></i> Resumen</span> — Abre la tabla dinámica interactiva (pivot table) para agrupar y contar contenedores por POD, SZTP, Bay, etc.</li>
+  <li><span class="hk"><i class="fa-solid fa-bars" style="font-size:9px"></i></span> — Mueve la barra de filtros de la izquierda a arriba y viceversa.</li>
+  <li><span class="hk on">?</span> — Abre esta ayuda.</li>
+</ul>
+</div>
+
+<h3>Búsqueda</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk">Buscar contenedor(es)…</span> — Escribe un ID de contenedor o una posición (5-7 dígitos). Separa varios con espacios o comas para buscar múltiples.</li>
+  <li><span class="hk"><i class="fa-solid fa-filter" style="font-size:9px"></i> Filtro</span> — Cuando hay resultados de búsqueda, convierte la selección en filtro: oculta los demás y muestra solo los buscados.</li>
+  <li><span class="hk"><i class="fa-solid fa-xmark" style="font-size:9px"></i></span> — Limpia la búsqueda.</li>
+</ul>
+</div>
+
+<h3>Panel de Listado</h3>
+<div class="hsec">
+<ul>
+  <li>Tabla editable de contenedores con columnas: ID, posición, tipo, peso, POL, POD, estado, etc.</li>
+  <li>Clic en cabeceras para ordenar. Se puede buscar dentro del listado.</li>
+  <li><span class="hk"><i class="fa-solid fa-copy" style="font-size:9px"></i></span> — Copia la tabla como TSV (tab-separated values) para pegar en Excel.</li>
+  <li><span class="hk"><i class="fa-solid fa-download" style="font-size:9px"></i></span> — Exporta como archivo BAPLIE EDIFACT.</li>
+  <li>Clic en una fila — Selecciona el contenedor y centra ambas vistas.</li>
+</ul>
+</div>
+
+<h3>Panel de Diferencias</h3>
+<div class="hsec">
+<ul>
+  <li>Se abre con <span class="hk">Ver log</span> cuando hay dos planes cargados.</li>
+  <li>Lista todos los contenedores que cambiaron: posición, POD, POL, peso, SZTP. También los que solo están en un plan.</li>
+  <li>Pastillas de filtro: clic para mostrar solo un tipo de cambio.</li>
+  <li><span class="hk"><i class="fa-solid fa-map-pin" style="font-size:9px"></i> Mostrar en plano</span> — Selecciona todos los contenedores del log en el plano.</li>
+  <li><span class="hk">CSV</span> — Exporta a archivo CSV.</li>
+  <li><span class="hk">Copiar tabla</span> — Copia como TSV.</li>
+  <li>Clic en una fila del log — Selecciona ese contenedor y centra cada plan en la posición que tiene en ese plan.</li>
+</ul>
+</div>
+
+<h3>Panel de Resumen</h3>
+<div class="hsec">
+<ul>
+  <li>Tabla dinámica: agrupa contenedores por dimensiones configurables (POD, POL, SZTP, Tamaño, Bay, Carga, F/E, D/H).</li>
+  <li>Clic en <span class="hk">+</span> para añadir más niveles de agrupación. Clic en una dimensión para cambiarla.</li>
+  <li>Clic en un conteo — Selecciona esos contenedores en el plano.</li>
+  <li>Ctrl+Clic en un conteo — Añade a la selección existente.</li>
+  <li><span class="hk"><i class="fa-solid fa-copy" style="font-size:9px"></i></span> — Copia la tabla como TSV.</li>
+</ul>
+</div>
+
+<h3>Asistente de Movimiento</h3>
+<div class="hsec">
+<ul>
+  <li><b>A mano</b> — Clica contenedores en el plano o búscalos, luego asigna posición destino una a una.</li>
+  <li><b>Por lista</b> — Pega desde Excel (contenedor + tab + posición destino). Se validan las posiciones.</li>
+  <li><span class="hk"><i class="fa-solid fa-crosshairs" style="font-size:9px"></i></span> — Modo cruceta: clica en el plano para asignar la posición destino.</li>
+  <li>Al finalizar genera un nuevo BAPLIE EDIFACT descargable.</li>
+</ul>
+</div>
+
+<h3>Modal de Mercancía Peligrosa</h3>
+<div class="hsec">
+<ul>
+  <li>Doble clic en un contenedor DG abre la ficha IMDG con: clase, descripción, ejemplos, reglas de estiba y segregación.</li>
+</ul>
+</div>
+
+<h3>Atajos de teclado</h3>
+<div class="hsec">
+<ul>
+  <li><span class="hk">Ctrl+C</span> — Copiar IDs seleccionados</li>
+  <li><span class="hk">Ctrl+Clic</span> — Selección múltiple</li>
+  <li><span class="hk">AvPág</span> / <span class="hk">RePág</span> — Navegar bays en Vista 4</li>
+  <li><span class="hk">Esc</span> — Cerrar búsqueda / cancelar cruceta</li>
+</ul>
+</div>
+
+    </div>
+  </div>
+</div>
 <!-- MOVE WIZARD -->
 <div id="pickBanner"><i class="fa-solid fa-crosshairs" style="margin-right:6px"></i>Clica en el plano · ESC para cancelar</div>
 <!-- DG INFO MODAL -->
@@ -2098,6 +2290,12 @@ function openDgModal(c){
 }
 function closeDgModal(){document.getElementById('dgModal').classList.remove('open');}
 document.getElementById('dgModal').addEventListener('click',function(e){if(e.target===this)closeDgModal();});
+
+/* ── HELP MODAL ── */
+function openHelp(){document.getElementById('helpModal').classList.add('open');}
+function closeHelp(){document.getElementById('helpModal').classList.remove('open');}
+document.getElementById('helpModal').addEventListener('click',function(e){if(e.target===this)closeHelp();});
+
 function hexToRgb(hex){hex=hex.replace('#','');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return r+','+g+','+b;}
 
 /* ── PESO RANGE ── */
