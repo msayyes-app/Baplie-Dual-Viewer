@@ -311,6 +311,9 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <button class="gbtn" id="addRsBtn" onclick="openRsModal()" title="Añadir contenedores como remociones (R/S)" style="border-color:#e65100;color:#e65100">
     <i class="fa-solid fa-circle-xmark" style="font-size:10px"></i> Añadir R/S
   </button>
+  <button class="gbtn" id="addSeqBtn" onclick="openSeqModal()" title="Añadir secuencia de carga (Bay Seq)" style="border-color:#1565c0;color:#1565c0">
+    <i class="fa-solid fa-sort-numeric-down" style="font-size:10px"></i> Secuencia
+  </button>
   <button class="gbtn" id="sumBtn" onclick="toggleSummary()" title="Resumen interactivo del BAPLIE">
     <i class="fa-solid fa-chart-pie" style="font-size:10px"></i> Resumen
   </button>
@@ -379,6 +382,9 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   </button>
   <button class="gbtn" id="wtRoundBtn" onclick="toggleWtRound()" title="Redondear pesos a enteros">
     <i class="fa-solid fa-ruler" style="font-size:10px"></i> Redondeo
+  </button>
+  <button class="gbtn" id="seqShowBtn" onclick="toggleSeqShow()" title="Mostrar Bay Seq en lugar del peso (o pulsa W)">
+    <i class="fa-solid fa-sort-numeric-down" style="font-size:10px"></i> Seq
   </button>
   <button class="gbtn" id="wtFontPlusBtn" onclick="changeWtFont(1)" title="Aumentar fuente de pesos">
     <i class="fa-solid fa-font" style="font-size:10px"></i><i class="fa-solid fa-plus" style="font-size:8px"></i>
@@ -564,6 +570,30 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     </div>
   </div>
 </div>
+<!-- SECUENCIA ADD MODAL -->
+<div id="seqModal" style="position:fixed;inset:0;z-index:1002;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(21,101,192,.15);color:#1565c0;flex-shrink:0"><i class="fa-solid fa-sort-numeric-down"></i></div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:15px">Añadir Secuencia</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Asignar Bay Seq (orden de carga) a contenedores <span id="seqModalCount" style="display:none;color:#1565c0;font-weight:600"></span></div>
+      </div>
+      <button onclick="clearManualSeq()" title="Quitar todas las secuencias manuales" style="background:none;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-size:10px;padding:3px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;transition:all .15s" onmouseover="this.style.borderColor='#c62828';this.style.color='#c62828'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"><i class="fa-solid fa-eraser" style="font-size:9px;margin-right:3px"></i>Limpiar</button>
+      <button onclick="closeSeqModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px;border-radius:4px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="overflow:auto;padding:16px 18px;flex:1;font-size:13px;line-height:1.7">
+      <p style="color:var(--muted);font-size:11px;margin-bottom:8px"><i class="fa-solid fa-circle-info" style="color:#1565c0;margin-right:4px"></i>Pega desde Excel 2 columnas: <b>ID contenedor</b> y <b>Bay Seq</b> (separados por tabulador). El número de secuencia sustituirá al peso en el plano al activar <span class="hk">Seq</span> o pulsar <span class="hk">W</span>.</p>
+      <textarea id="seqPasteArea" placeholder="MSMU1234567&#9;12&#10;TCKU9876543&#9;5&#10;CSLU5555123&#9;108" style="width:100%;min-height:120px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none"></textarea>
+      <div id="seqPreview" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-height:200px;overflow-y:auto"></div>
+      <div id="seqCountInfo" style="display:none;margin-top:8px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace"></div>
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;background:var(--card)">
+      <button onclick="closeSeqModal()" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg);transition:all .15s">Cancelar</button>
+      <button id="seqApplyBtn" onclick="applySeqList()" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:#1565c0;color:#fff;transition:all .15s"><i class="fa-solid fa-check" style="font-size:9px;margin-right:4px"></i>Aplicar</button>
+    </div>
+  </div>
+</div>
 <footer class="px-5 py-1.5 flex items-center gap-4 shrink-0 text-xs flex-wrap" style="background:var(--panel);border-top:1px solid var(--border);color:var(--muted)" id="legend">
   <span style="margin-left:auto;opacity:.45;font-size:10px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">© 2025 MSaYYeS · BAPLIE Dual Viewer</span>
 </footer>
@@ -644,6 +674,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <ul>
   <li><span class="hk"><i class="fa-solid fa-weight-hanging" style="font-size:9px"></i> Peso</span> — Colorea los contenedores por peso: blanco=vacío, negro=35 toneladas.</li>
   <li><span class="hk"><i class="fa-solid fa-ruler" style="font-size:9px"></i> Redondeo</span> — Redondea los pesos a enteros en el plano.</li>
+  <li><span class="hk"><i class="fa-solid fa-sort-numeric-down" style="font-size:9px"></i> Seq</span> — Alterna entre mostrar peso o Bay Seq (número de orden de carga). También con la tecla <span class="hk">W</span>.</li>
   <li><span class="hk">A</span><span class="hk">+</span> / <span class="hk">A</span><span class="hk">−</span> — Aumenta/reduce el tamaño de la fuente de los pesos.</li>
   <li><span class="hk">desde — hasta t</span> — Filtra por rango de peso en toneladas.</li>
 </ul>
@@ -663,6 +694,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li><span class="hk"><i class="fa-solid fa-moon" style="font-size:9px"></i></span> / <span class="hk"><i class="fa-solid fa-sun" style="font-size:9px"></i></span> — Cambia entre tema claro y oscuro.</li>
   <li><span class="hk"><i class="fa-solid fa-arrows-up-down-left-right" style="font-size:9px"></i> Mover</span> — Abre el asistente de movimiento de contenedores para reubicar y generar un nuevo BAPLIE.</li>
   <li><span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> — Abre el diálogo para pegar IDs de contenedores y marcarlos como remociones. Los contenedores de tránsito se muestran con su POD y el círculo de remoción. El badge muestra cuántos contenedores están marcados manualmente.</li>
+  <li><span class="hk"><i class="fa-solid fa-sort-numeric-down" style="font-size:9px"></i> Secuencia</span> — Abre el diálogo para pegar desde Excel: ID contenedor + Bay Seq (orden de carga). Sustituye al peso al activar <span class="hk">Seq</span> o pulsar <span class="hk">W</span>.</li>
   <li><span class="hk"><i class="fa-solid fa-chart-pie" style="font-size:9px"></i> Resumen</span> — Abre la tabla dinámica interactiva (pivot table) para agrupar y contar contenedores por POD, SZTP, Bay, etc.</li>
   <li><span class="hk"><i class="fa-solid fa-bars" style="font-size:9px"></i></span> — Mueve la barra de filtros de la izquierda a arriba y viceversa.</li>
   <li><span class="hk on">?</span> — Abre esta ayuda.</li>
@@ -737,7 +769,19 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li>Pega una lista de IDs de contenedores (uno por línea o separados por espacios/comas). La vista previa muestra si cada ID se encuentra en los planes cargados.</li>
   <li>Al aplicar, los contenedores se marcan como RS: se muestran con su POD y el círculo de remoción en el plano.</li>
   <li>El filtro <span class="hk">R/S</span> en la barra de POL permite ver solo las remociones. Es acumulativo con <span class="hk">POL=ESVLC</span>: si ambos están activos se ven los de Valencia y los RS.</li>
+  <li>Cuando <span class="hk">R/S</span> y <span class="hk">TRT</span> están ambos activos, los RS prevalecen sobre TRT (no se atenuan).</li>
   <li>El badge naranja en el botón indica cuántos contenedores están marcados manualmente como RS.</li>
+</ul>
+</div>
+
+<h3>Secuencia de Carga (Bay Seq)</h3>
+<div class="hsec">
+<ul>
+  <li>Clica <span class="hk"><i class="fa-solid fa-sort-numeric-down" style="font-size:9px"></i> Secuencia</span> para abrir el diálogo donde pegar desde Excel 2 columnas: <b>ID contenedor</b> y <b>Bay Seq</b> (número de hasta 3 cifras que indica el orden de carga).</li>
+  <li>Las columnas deben estar separadas por tabulador (pegado directo desde Excel).</li>
+  <li>Al aplicar, el número de secuencia sustituye al peso en el plano.</li>
+  <li><span class="hk">Seq</span> (junto a Redondeo) — Alterna entre mostrar peso o Bay Seq. También se activa/desactiva con la tecla <span class="hk">W</span>.</li>
+  <li>El badge azul en el botón indica cuántos contenedores tienen secuencia asignada.</li>
 </ul>
 </div>
 
@@ -746,6 +790,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <ul>
   <li><span class="hk">Ctrl+C</span> — Copiar IDs seleccionados</li>
   <li><span class="hk">Ctrl+Clic</span> — Selección múltiple</li>
+  <li><span class="hk">W</span> — Alternar entre peso y Bay Seq</li>
   <li><span class="hk">AvPág</span> / <span class="hk">RePág</span> — Navegar bays en Vista 4</li>
   <li><span class="hk">Esc</span> — Cerrar búsqueda / cancelar cruceta</li>
 </ul>
@@ -976,7 +1021,7 @@ function buildPlan(cts){var pl={};for(var i=0;i<cts.length;i++){var c=cts[i];for
 /* ── CONSTANTES Y ESTADO ── */
 var CW=28,CH=16,CGAP=8,LO=40,MT_OFF=40,MB=20;
 var Z={1:1,2:1},F={1:{view:'3b'},2:{view:'3b'}};
-var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0};
+var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0,seqShow:false};
 // S.sel ahora es: null | Set<string> (multi-selección)
 var S={c1:null,c2:null,L1:null,L2:null,_L1:null,_L2:null,hl:null,sel:null,srch:null,fs:null,raw1:null,raw2:null,shipName1:null,shipName2:null};
 
@@ -1017,7 +1062,7 @@ function pC(pod){if(!pod)return'#555555';if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD
 function lt(hex,n){var r=Math.min(255,parseInt(hex.slice(1,3),16)+n);var g=Math.min(255,parseInt(hex.slice(3,5),16)+n);var b=Math.min(255,parseInt(hex.slice(5,7),16)+n);return'rgb('+r+','+g+','+b+')'}
 function tC(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>140?'#000000':'#ffffff'}
 function parseSz(c){if(!c)return 20;var u=c.toUpperCase();if(is45ft(u))return 45;return(u.length>=4&&(u[0]==='4'||u[0]==='L'))?40:20;}
-function fmtW(c){if(c.isEmpty)return'MT';if(c.weight!==null){var w=c.weight/1000;return(GF.wtRound?Math.round(w).toString():w.toFixed(1)).replace('.',',');}return'-'}
+function fmtW(c){if(GF.seqShow&&c._baySeq!=null)return String(c._baySeq);if(c.isEmpty)return'MT';if(c.weight!==null){var w=c.weight/1000;return(GF.wtRound?Math.round(w).toString():w.toFixed(1)).replace('.',',');}return'-'}
 function fmtP(p){return String(p.bay).padStart(3,'0')+String(p.row).padStart(2,'0')+String(p.tier).padStart(2,'0')}
 function gC(pl,bay,row,tier){return(pl[bay]&&pl[bay][row])?pl[bay][row][tier]:null}
 function wtColor(c){if(c.isEmpty)return'#ffffff';var kg=c.weight||0;var ratio=Math.min(1,kg/35000);var v=Math.round(255*(1-ratio));var hex=v.toString(16).padStart(2,'0');return'#'+hex+hex+hex;}
@@ -1445,7 +1490,7 @@ function drawCell(ctx,x,y,w,h,c){
   ctx.save();
   var passesStrict=passF_noTrt(c);
   // TRT: dim containers that are not POL=ESVLC (tránsito)
-  var trtDimmed=GF.trt&&c.pol!=='ESVLC';
+  var trtDimmed=GF.trt&&c.pol!=='ESVLC'&&!(c.isRemocion&&GF.rsFilter);
   // Non-sel gray: dim containers that don't pass current strict filter OR are not in the current selection
   var selActive=S.sel&&S.sel.size>0;
   var isInSel=selActive&&S.sel.has(c.id);
@@ -1739,6 +1784,7 @@ function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.
 function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);sumSyncIfOpen();}
 function toggleWtRound(){GF.wtRound=!GF.wtRound;document.getElementById('wtRoundBtn').classList.toggle('wt-on',GF.wtRound);render(1);render(2);sumSyncIfOpen();}
+function toggleSeqShow(){GF.seqShow=!GF.seqShow;var btn=document.getElementById('seqShowBtn');btn.classList.toggle('on',GF.seqShow);btn.classList.toggle('wt-on',GF.seqShow);render(1);render(2);sumSyncIfOpen();}
 function changeWtFont(delta){GF.wtFontSize=Math.max(-2,Math.min(6,GF.wtFontSize+delta));render(1);render(2);}
 
 /* ── BÚSQUEDA: selecciona, con opción de modo filtro ── */
@@ -1799,12 +1845,12 @@ function toggleSrchFilter(){
 document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
 
 function resetAllFilters(){
-  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;
+  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
   ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});document.getElementById('polEsvlcBtn').classList.remove('on');document.getElementById('rsFilterBtn').classList.remove('on','diff-on');
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
-  document.getElementById('wtRoundBtn').classList.remove('wt-on');
+  document.getElementById('wtRoundBtn').classList.remove('wt-on');document.getElementById('seqShowBtn').classList.remove('on','wt-on');
   document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
   clearWrange();clearSearch();
   GF.srchFilter=false;
@@ -1938,6 +1984,7 @@ function showTT(c,mx,my){
   h+='<div class="tr"><span>Tipo</span><span>'+(c.type||'-')+' ('+sz+"'"+(hc?' HC':'')+(c._is45ft?' 45ft':'')+')</span></div>';
   h+='<div class="tr"><span>Posición</span><span>'+c.positions.map(fmtP).join(', ')+'</span></div>';
   h+='<div class="tr"><span>Peso</span><span>'+(c.isEmpty?'MT':c.weight?(c.weight/1000).toFixed(1).replace('.',',')+' Tons':'-')+'</span></div>';
+  if(c._baySeq!=null)h+='<div class="tr"><span>Bay Seq</span><span style="color:#1565c0;font-weight:600">'+c._baySeq+'</span></div>';
   h+='<div class="tr"><span>Estado</span><span>'+(c.isEmpty?'Vacío':'Full')+'</span></div>';
   if(c.pol)h+='<div class="tr"><span>POL</span><span>'+c.pol+'</span></div>';
   if(c.pod)h+='<div class="tr"><span>POD</span><span>'+c.pod+'</span></div>';
@@ -2340,6 +2387,7 @@ function openDgModal(c){
   if(c.origPos)body+=' <span style="color:var(--muted)">(orig: '+fmtP(c.origPos)+')</span>';
   body+='<br>POL: '+(c.pol||'-')+' · POD: '+(c.pod||'-')+'<br>';
   body+='Peso: '+(c.isEmpty?'MT (vacío)':c.weight?(c.weight/1000).toFixed(1)+' t':'-');
+  if(c._baySeq!=null)body+=' · Seq: <span style="color:#1565c0;font-weight:600">'+c._baySeq+'</span>';
   if(c.isRemocion)body+=' <span style="color:#e65100;font-weight:600">⟳ REMOCIÓN</span>';
   body+='</div></div>';
   document.getElementById('dgModalBody').innerHTML=body;
@@ -2471,6 +2519,134 @@ function clearManualRs(){
   var mc=document.getElementById('rsModalCount');
   if(mc)mc.style.display='none';
   showToast('Marcas RS manuales eliminadas');
+}
+
+/* ── SECUENCIA (BAY SEQ) ADD MODAL ── */
+var _seqMap={}; // { containerId: baySeq }
+
+function openSeqModal(){
+  document.getElementById('seqPasteArea').value='';
+  document.getElementById('seqPreview').style.display='none';
+  document.getElementById('seqCountInfo').style.display='none';
+  var mc=document.getElementById('seqModalCount');
+  var seqCount=Object.keys(_seqMap).length;
+  if(seqCount>0){mc.style.display='inline';mc.textContent='('+seqCount+' asignado(s))';}
+  else{mc.style.display='none';}
+  document.getElementById('seqModal').style.display='flex';
+  var ta=document.getElementById('seqPasteArea');
+  ta.oninput=function(){previewSeqList(ta.value);};
+  setTimeout(function(){ta.focus();},100);
+}
+function closeSeqModal(){document.getElementById('seqModal').style.display='none';}
+document.getElementById('seqModal').addEventListener('click',function(e){if(e.target===this)closeSeqModal();});
+
+function parseSeqLines(val){
+  var lines=val.split(/[\n\r]+/).filter(Boolean);
+  var result=[];
+  for(var i=0;i<lines.length;i++){
+    var parts=lines[i].split(/[\t,]+/);
+    if(parts.length>=2){
+      var id=parts[0].trim().toUpperCase();
+      var seq=parseInt(parts[1].trim(),10);
+      if(/^[A-Z]{4}\d{7}$/.test(id)&&!isNaN(seq)&&seq>=0&&seq<=999){
+        result.push({id:id,seq:seq});
+      }
+    }
+  }
+  return result;
+}
+
+function previewSeqList(val){
+  var items=parseSeqLines(val);
+  var preview=document.getElementById('seqPreview');
+  var countEl=document.getElementById('seqCountInfo');
+  if(items.length===0){preview.style.display='none';countEl.style.display='none';return;}
+  var all=[].concat(S.c1||[],S.c2||[]);
+  var found=0,notFound=0,updated=0;
+  var h='<div style="display:grid;grid-template-columns:1fr 50px 1fr;gap:4px;padding:4px 8px;font-size:10px;font-family:\'IBM Plex Mono\',monospace">';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">ID</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">Seq</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">Estado</div>';
+  for(var i=0;i<items.length;i++){
+    var c=null;
+    for(var j=0;j<all.length;j++){if(all[j].id===items[i].id){c=all[j];break;}}
+    if(!c){
+      h+='<div style="color:#c62828">'+items[i].id+'</div><div>'+items[i].seq+'</div><div style="color:#c62828">No encontrado</div>';
+      notFound++;
+    } else if(_seqMap[items[i].id]!==undefined){
+      h+='<div style="color:#e65100">'+items[i].id+'</div><div>'+items[i].seq+'</div><div style="color:#e65100">Actualizar</div>';
+      updated++;
+    } else {
+      h+='<div>'+items[i].id+'</div><div>'+items[i].seq+'</div><div style="color:#388e3c">OK</div>';
+      found++;
+    }
+  }
+  h+='</div>';
+  preview.innerHTML=h;
+  preview.style.display='block';
+  countEl.style.display='block';
+  countEl.textContent=found+' nuevo(s) · '+updated+' actualizar · '+notFound+' no encontrado(s)';
+}
+
+function applySeqList(){
+  var val=document.getElementById('seqPasteArea').value;
+  var items=parseSeqLines(val);
+  if(items.length===0)return;
+  var all=[].concat(S.c1||[],S.c2||[]);
+  var applied=0;
+  for(var i=0;i<items.length;i++){
+    _seqMap[items[i].id]=items[i].seq;
+    for(var j=0;j<all.length;j++){
+      if(all[j].id===items[i].id){
+        all[j]._baySeq=items[i].seq;
+        applied++;
+      }
+    }
+  }
+  closeSeqModal();
+  if(applied>0){
+    updateSeqBadge();
+    // Auto-activate Seq show if not already
+    if(!GF.seqShow)toggleSeqShow();
+    render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+    showToast(applied+' contenedor(es) con secuencia asignada');
+  }
+}
+
+function updateSeqBadge(){
+  var btn=document.getElementById('addSeqBtn');
+  if(!btn)return;
+  var badge=btn.querySelector('.seq-badge');
+  var cnt=Object.keys(_seqMap).length;
+  if(cnt>0){
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='seq-badge';
+      badge.style.cssText='background:#1565c0;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:2px;font-weight:700';
+      btn.appendChild(badge);
+    }
+    badge.textContent=cnt;
+  } else if(badge){
+    badge.remove();
+  }
+}
+
+function clearManualSeq(){
+  var cnt=Object.keys(_seqMap).length;
+  if(cnt===0)return;
+  var all=[].concat(S.c1||[],S.c2||[]);
+  for(var i=0;i<all.length;i++){
+    if(_seqMap[all[i].id]!==undefined){
+      delete all[i]._baySeq;
+    }
+  }
+  _seqMap={};
+  updateSeqBadge();
+  if(GF.seqShow)toggleSeqShow();
+  render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+  var mc=document.getElementById('seqModalCount');
+  if(mc)mc.style.display='none';
+  showToast('Secuencias manuales eliminadas');
 }
 function hexToRgb(hex){hex=hex.replace('#','');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return r+','+g+','+b;}
 
@@ -2955,6 +3131,13 @@ function clearPanel(pn){
     _manualRsIds.forEach(function(id){if(!remainingIds.has(id))_manualRsIds.delete(id);});
     updateRsBadge();
   }
+  // Clean up seq data for containers being removed
+  if(Object.keys(_seqMap).length>0){
+    var remaining2=pn===1?S.c2:S.c1;
+    var remainingIds2=remaining2?new Set(remaining2.map(function(c){return c.id;})):new Set();
+    Object.keys(_seqMap).forEach(function(id){if(!remainingIds2.has(id))delete _seqMap[id];});
+    updateSeqBadge();
+  }
   loadPanel(pn,[]);
   var lb=document.getElementById('lb'+pn);if(lb)lb.classList.remove('ok');
   var fn=document.getElementById('fn'+pn);if(fn)fn.textContent='Archivo '+pn;
@@ -3190,11 +3373,30 @@ function loadPanel(pn,cts){
       }
     }
   }
+  // Re-apply Bay Seq from _seqMap
+  var seqKeys=Object.keys(_seqMap);
+  if(seqKeys.length>0){
+    for(var si=0;si<cts.length;si++){
+      if(_seqMap[cts[si].id]!==undefined){
+        cts[si]._baySeq=_seqMap[cts[si].id];
+      }
+    }
+  }
   F[pn]={view:'3b'};Z[pn]=1;S.sel=null;S.hl=null;
   cvEl.style.display='block';em.classList.add('hid');
   if(pn===2)document.getElementById('col2').style.display=''; // show col2 when plan2 loaded
   rebuildPods();rebuildBayFilter();computeDiff();updateDiffToggleBtn();updateTB(pn);render(pn);
 }
+// W key: toggle between weight and Bay Seq display
+document.addEventListener('keydown',function(e){
+  if(e.key==='w'||e.key==='W'){
+    // Don't trigger if typing in an input/textarea
+    var tag=(e.target||{}).tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+    toggleSeqShow();
+  }
+});
+
 // PageDown/PageUp: navigate bays in Vista 4 (1b view)
 var _1b_bayIdx={1:0,2:0};
 document.addEventListener('keydown',function(e){

@@ -221,3 +221,35 @@ Stage Summary:
 - "R/S" filter button is accumulative with "POL=ESVLC" (shows both when both active)
 - Manual RS markings persist across file reloads and are cleaned up on panel clear
 - All changes saved to /home/z/my-project/download/baplie_viewer.html
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: RS prevails over TRT + Add Secuencia (Bay Seq) feature
+
+Work Log:
+- Fixed TRT dimming so RS containers are not dimmed when both RS filter and TRT are active
+- Added "Secuencia" button next to "Añadir R/S" with blue styling
+- Created Secuencia Modal with paste textarea for 2-column Excel data (ID + Bay Seq)
+- Added live preview with validation of pasted container IDs and Bay Seq numbers
+- Implemented parseSeqLines() to extract container ID + sequence from pasted text
+- Implemented applySeqList() to assign _baySeq property to containers
+- Added _seqMap object to track manually-assigned sequences
+- Added badge on "Secuencia" button showing count of assigned sequences
+- Added "Limpiar" button in modal to clear all manual sequences
+- Added "Seq" toggle button next to "Redondeo" in filter bar
+- Modified fmtW() to return Bay Seq number when GF.seqShow is active
+- Added W key handler to toggle between weight and Bay Seq display
+- Added toggleSeqShow() function with wt-on styling
+- Added Bay Seq display in tooltip (hover info)
+- Added Bay Seq display in DG modal info
+- Re-apply seq data when new file is loaded
+- Clean up seq data when panel is cleared
+- Updated resetAllFilters to reset seqShow and Seq button
+- Updated help modal with Secuencia documentation and W shortcut
+
+Stage Summary:
+- RS containers now prevail over TRT dimming (not greyed out when both active)
+- "Secuencia" button allows pasting container IDs + Bay Seq from Excel
+- Bay Seq replaces weight display when Seq toggle or W key is active
+- All changes saved to /home/z/my-project/download/baplie_viewer.html
