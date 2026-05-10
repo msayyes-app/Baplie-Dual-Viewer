@@ -190,3 +190,34 @@ Stage Summary:
 - Vista 2 now shows only weight even in tall slot mode (multi-line SZTP+POL reserved for Vista 4)
 - Summary rows highlight yellow when their containers are selected
 - No-sel button dims non-selected containers when selection exists (from summary, list, or plan)
+---
+Task ID: 1
+Agent: Main Agent
+Task: Add "Añadir R/S" button and R/S filter to BAPLIE Dual Viewer
+
+Work Log:
+- Added "Añadir R/S" button next to "Mover" in the header bar with orange styling
+- Created RS Modal with paste textarea, live preview, and apply/cancel buttons
+- Added "Limpiar" button in modal to clear all manual RS markings
+- Implemented `parseRsIds()` to extract container IDs from pasted text
+- Implemented `previewRsList()` for live validation of pasted container IDs
+- Implemented `applyRsList()` to mark containers as RS (isRemocion=true)
+- Added `_manualRsIds` Set to track manually-marked RS containers
+- Added badge on "Añadir R/S" button showing count of manual RS marks
+- Added `clearManualRs()` to remove all manual RS markings
+- Added "R/S" filter button next to "POL=ESVLC" in filter bar
+- Implemented accumulative filter: POL=ESVLC + R/S shows both types (OR logic)
+- Updated `passF_noTrt()` with accumulative POL+RS filter logic
+- Updated View 4 full-info display to show POD instead of POL for RS containers
+- Updated RS circle rendering: in View 4 draws orange dot in corner, in other views draws full circle
+- Added re-application of manual RS markings when new file is loaded
+- Added cleanup of RS markings when panel is cleared
+- Updated `resetAllFilters()` to reset rsFilter and button state
+- Updated help modal with documentation for Añadir R/S and R/S filter
+
+Stage Summary:
+- "Añadir R/S" button allows pasting container IDs to mark as remociones
+- RS containers show POD + removal circle in the plan view
+- "R/S" filter button is accumulative with "POL=ESVLC" (shows both when both active)
+- Manual RS markings persist across file reloads and are cleaned up on panel clear
+- All changes saved to /home/z/my-project/download/baplie_viewer.html

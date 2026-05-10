@@ -308,6 +308,9 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <button class="gbtn" id="moveBtn" onclick="openMoveWizard()" title="Mover contenedores y generar nuevo BAPLIE" style="border-color:#7c3aed;color:#7c3aed">
     <i class="fa-solid fa-arrows-up-down-left-right" style="font-size:10px"></i> Mover
   </button>
+  <button class="gbtn" id="addRsBtn" onclick="openRsModal()" title="Añadir contenedores como remociones (R/S)" style="border-color:#e65100;color:#e65100">
+    <i class="fa-solid fa-circle-xmark" style="font-size:10px"></i> Añadir R/S
+  </button>
   <button class="gbtn" id="sumBtn" onclick="toggleSummary()" title="Resumen interactivo del BAPLIE">
     <i class="fa-solid fa-chart-pie" style="font-size:10px"></i> Resumen
   </button>
@@ -366,6 +369,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
     <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POL</span>
     <button class="gbtn" id="polEsvlcBtn" onclick="togglePolEsvlc()">POL=ESVLC</button>
+    <button class="gbtn" id="rsFilterBtn" onclick="toggleRsFilter()" title="Filtrar por remociones (R/S) — acumulativo con POL=ESVLC">R/S</button>
     <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores con POL distinto de ESVLC">TRT</button>
     <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris los contenedores no seleccionados o que no cumplan los filtros activos">No-sel</button>
   </div>
@@ -536,6 +540,30 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     <div id="podColorBody" style="overflow:auto;padding:16px 18px;flex:1;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start"></div>
   </div>
 </div>
+<!-- RS ADD MODAL -->
+<div id="rsModal" style="position:fixed;inset:0;z-index:1002;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(230,81,0,.15);color:#e65100;flex-shrink:0"><i class="fa-solid fa-circle-xmark"></i></div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:15px">Añadir R/S</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Marcar contenedores como remociones <span id="rsModalCount" style="display:none;color:#e65100;font-weight:600"></span></div>
+      </div>
+      <button onclick="clearManualRs()" title="Quitar todas las marcas RS manuales" style="background:none;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-size:10px;padding:3px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;transition:all .15s" onmouseover="this.style.borderColor='#c62828';this.style.color='#c62828'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"><i class="fa-solid fa-eraser" style="font-size:9px;margin-right:3px"></i>Limpiar</button>
+      <button onclick="closeRsModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px;border-radius:4px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="overflow:auto;padding:16px 18px;flex:1;font-size:13px;line-height:1.7">
+      <p style="color:var(--muted);font-size:11px;margin-bottom:8px"><i class="fa-solid fa-circle-info" style="color:#e65100;margin-right:4px"></i>Pega un listado de IDs de contenedores (uno por línea o separados por espacios/comas). Esos contenedores de tránsito se marcarán como remociones, mostrando su POD y el círculo de remoción.</p>
+      <textarea id="rsPasteArea" placeholder="MSMU1234567&#10;TCKU9876543&#10;CSLU5555123" style="width:100%;min-height:120px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none"></textarea>
+      <div id="rsPreview" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-height:200px;overflow-y:auto"></div>
+      <div id="rsCount" style="display:none;margin-top:8px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace"></div>
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;background:var(--card)">
+      <button onclick="closeRsModal()" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg);transition:all .15s">Cancelar</button>
+      <button id="rsApplyBtn" onclick="applyRsList()" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:#e65100;color:#fff;transition:all .15s"><i class="fa-solid fa-check" style="font-size:9px;margin-right:4px"></i>Aplicar</button>
+    </div>
+  </div>
+</div>
 <footer class="px-5 py-1.5 flex items-center gap-4 shrink-0 text-xs flex-wrap" style="background:var(--panel);border-top:1px solid var(--border);color:var(--muted)" id="legend">
   <span style="margin-left:auto;opacity:.45;font-size:10px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">© 2025 MSaYYeS · BAPLIE Dual Viewer</span>
 </footer>
@@ -605,6 +633,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li>Botones de cada POD — Clic para ocultar/mostrar ese puerto de descarga.</li>
   <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i></span> — Abre el selector de colores para personalizar cada POD.</li>
   <li><span class="hk">POL=ESVLC</span> — Resalta los contenedores con POL=ESVLC (Valencia).</li>
+  <li><span class="hk">R/S</span> — Filtra para mostrar solo los contenedores marcados como remoción. <span class="htip">Acumulativo con POL=ESVLC: si ambos están activos, se muestran los de POL=ESVLC y los RS.</span></li>
   <li><span class="hk">TRT</span> — Atenua en gris los contenedores con POL distinto de ESVLC (tránsito).</li>
   <li><span class="hk">No-sel</span> — Atenua en gris los contenedores que no están seleccionados o no cumplen los filtros activos. Los seleccionados siempre se muestran.</li>
 </ul>
@@ -633,6 +662,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <ul>
   <li><span class="hk"><i class="fa-solid fa-moon" style="font-size:9px"></i></span> / <span class="hk"><i class="fa-solid fa-sun" style="font-size:9px"></i></span> — Cambia entre tema claro y oscuro.</li>
   <li><span class="hk"><i class="fa-solid fa-arrows-up-down-left-right" style="font-size:9px"></i> Mover</span> — Abre el asistente de movimiento de contenedores para reubicar y generar un nuevo BAPLIE.</li>
+  <li><span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> — Abre el diálogo para pegar IDs de contenedores y marcarlos como remociones. Los contenedores de tránsito se muestran con su POD y el círculo de remoción. El badge muestra cuántos contenedores están marcados manualmente.</li>
   <li><span class="hk"><i class="fa-solid fa-chart-pie" style="font-size:9px"></i> Resumen</span> — Abre la tabla dinámica interactiva (pivot table) para agrupar y contar contenedores por POD, SZTP, Bay, etc.</li>
   <li><span class="hk"><i class="fa-solid fa-bars" style="font-size:9px"></i></span> — Mueve la barra de filtros de la izquierda a arriba y viceversa.</li>
   <li><span class="hk on">?</span> — Abre esta ayuda.</li>
@@ -697,6 +727,17 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <div class="hsec">
 <ul>
   <li>Doble clic en un contenedor DG abre la ficha IMDG con: clase, descripción, ejemplos, reglas de estiba y segregación.</li>
+</ul>
+</div>
+
+<h3>Añadir R/S (Remociones)</h3>
+<div class="hsec">
+<ul>
+  <li>Clica <span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> para abrir el diálogo de marcado manual de remociones.</li>
+  <li>Pega una lista de IDs de contenedores (uno por línea o separados por espacios/comas). La vista previa muestra si cada ID se encuentra en los planes cargados.</li>
+  <li>Al aplicar, los contenedores se marcan como RS: se muestran con su POD y el círculo de remoción en el plano.</li>
+  <li>El filtro <span class="hk">R/S</span> en la barra de POL permite ver solo las remociones. Es acumulativo con <span class="hk">POL=ESVLC</span>: si ambos están activos se ven los de Valencia y los RS.</li>
+  <li>El badge naranja en el botón indica cuántos contenedores están marcados manualmente como RS.</li>
 </ul>
 </div>
 
@@ -935,7 +976,7 @@ function buildPlan(cts){var pl={};for(var i=0;i<cts.length;i++){var c=cts[i];for
 /* ── CONSTANTES Y ESTADO ── */
 var CW=28,CH=16,CGAP=8,LO=40,MT_OFF=40,MB=20;
 var Z={1:1,2:1},F={1:{view:'3b'},2:{view:'3b'}};
-var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0};
+var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0};
 // S.sel ahora es: null | Set<string> (multi-selección)
 var S={c1:null,c2:null,L1:null,L2:null,_L1:null,_L2:null,hl:null,sel:null,srch:null,fs:null,raw1:null,raw2:null,shipName1:null,shipName2:null};
 
@@ -1004,8 +1045,13 @@ function computeDiff(){
 function passF_noTrt(c){
   // 1. Tamaño (multi-select Set: empty = todos)
   if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
-  // 2. POL
-  if(GF.polEsvlc&&c.pol!=='ESVLC')return false;
+  // 2. POL + RS filter (acumulativo: si ambos activos, mostrar POL=ESVLC o RS)
+  if(GF.polEsvlc&&GF.rsFilter){
+    if(c.pol!=='ESVLC'&&!c.isRemocion)return false;
+  } else {
+    if(GF.polEsvlc&&c.pol!=='ESVLC')return false;
+    if(GF.rsFilter&&!c.isRemocion)return false;
+  }
   // 3. F/E (Full/Empty): mutuamente exclusivos
   if(GF.feMode==='full'&&c.isEmpty)return false;
   if(GF.feMode==='empty'&&!c.isEmpty)return false;
@@ -1504,7 +1550,8 @@ function drawCell(ctx,x,y,w,h,c){
     var lines=[];
     if(c.type)lines.push(c.type);
     lines.push(fmtW(c));
-    if(c.pol)lines.push(c.pol);
+    if(c.isRemocion&&c.pod)lines.push(c.pod);
+    else if(c.pol)lines.push(c.pol);
     var lineH=Math.min(fs2+2,h/Math.max(lines.length,1));
     var startY=y+h/2-(lines.length-1)*lineH/2;
     for(var li=0;li<lines.length;li++){
@@ -1519,7 +1566,15 @@ function drawCell(ctx,x,y,w,h,c){
   }
   // REMOCIÓN: círculo relleno con color opuesto al texto, texto encima
   if(c.isRemocion){
-    var cx2=x+w/2+off,cy2=y+h/2+.5,rr=Math.min(w,h)/2-1;
+    var isFullInfo=(w>=80||h>=CH*2)&&_drawCellFullInfo;
+    var cx2,cy2,rr;
+    if(isFullInfo){
+      // En modo amplio, círculo en la esquina superior derecha
+      rr=Math.min(6,w*0.12,h*0.12);cx2=x+w-rr-2;cy2=y+rr+2;
+      ctx.fillStyle='#e65100';ctx.beginPath();ctx.arc(cx2,cy2,rr,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx2,cy2,rr,0,Math.PI*2);ctx.stroke();
+    } else {
+      cx2=x+w/2+off;cy2=y+h/2+.5;rr=Math.min(w,h)/2-1;
     // Color de relleno del círculo = opuesto al color del texto
     var circleFill=textCol==='#ffffff'||textCol==='#FFFFFF'?'#000000':'#ffffff';
     ctx.fillStyle=circleFill;ctx.beginPath();ctx.arc(cx2,cy2,rr,0,Math.PI*2);ctx.fill();
@@ -1527,6 +1582,7 @@ function drawCell(ctx,x,y,w,h,c){
     // Redibujar el texto encima del círculo con el color original
     ctx.fillStyle=textCol;ctx.font='600 '+fs+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(fmtW(c),cx2,cy2);
+    }
   }
   ctx.restore();
 }
@@ -1678,6 +1734,7 @@ function openPodColorModal(){
 function closePodColorModal(){document.getElementById('podColorModal').style.display='none';}
 function setPodColor(pod,color){POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
 function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;document.getElementById('polEsvlcBtn').classList.toggle('on',GF.polEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function toggleRsFilter(){GF.rsFilter=!GF.rsFilter;var btn=document.getElementById('rsFilterBtn');btn.classList.toggle('on',GF.rsFilter);btn.classList.toggle('diff-on',GF.rsFilter);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.toggle('on',GF.trt);document.getElementById('trtBtn').classList.toggle('trt-on',GF.trt);updateLeg();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);sumSyncIfOpen();}
@@ -1742,10 +1799,10 @@ function toggleSrchFilter(){
 document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
 
 function resetAllFilters(){
-  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;
+  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
-  ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});document.getElementById('polEsvlcBtn').classList.remove('on');
+  ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});document.getElementById('polEsvlcBtn').classList.remove('on');document.getElementById('rsFilterBtn').classList.remove('on','diff-on');
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
   document.getElementById('wtRoundBtn').classList.remove('wt-on');
   document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
@@ -2296,6 +2353,125 @@ function openHelp(){document.getElementById('helpModal').classList.add('open');}
 function closeHelp(){document.getElementById('helpModal').classList.remove('open');}
 document.getElementById('helpModal').addEventListener('click',function(e){if(e.target===this)closeHelp();});
 
+/* ── RS (REMOCIONES) ADD MODAL ── */
+var _manualRsIds=new Set(); // IDs marcados manualmente como RS
+
+function openRsModal(){
+  document.getElementById('rsPasteArea').value='';
+  document.getElementById('rsPreview').style.display='none';
+  document.getElementById('rsCount').style.display='none';
+  // Show current manual RS count
+  var mc=document.getElementById('rsModalCount');
+  if(_manualRsIds.size>0){mc.style.display='inline';mc.textContent='('+_manualRsIds.size+' marcado(s))';}
+  else{mc.style.display='none';}
+  document.getElementById('rsModal').style.display='flex';
+  // Live preview on input
+  var ta=document.getElementById('rsPasteArea');
+  ta.oninput=function(){previewRsList(ta.value);};
+  setTimeout(function(){ta.focus();},100);
+}
+function closeRsModal(){document.getElementById('rsModal').style.display='none';}
+document.getElementById('rsModal').addEventListener('click',function(e){if(e.target===this)closeRsModal();});
+
+function previewRsList(val){
+  var ids=parseRsIds(val);
+  var preview=document.getElementById('rsPreview');
+  var count=document.getElementById('rsCount');
+  if(ids.length===0){preview.style.display='none';count.style.display='none';return;}
+  var all=[].concat(S.c1||[],S.c2||[]);
+  var found=0,notFound=0,already=0;
+  var h='<div style="display:grid;grid-template-columns:1fr 60px 50px 1fr;gap:4px;padding:4px 8px;font-size:10px;font-family:\'IBM Plex Mono\',monospace">';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">ID</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">POL</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">POD</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">Estado</div>';
+  for(var i=0;i<ids.length;i++){
+    var c=null;
+    for(var j=0;j<all.length;j++){if(all[j].id===ids[i]){c=all[j];break;}}
+    if(!c){
+      h+='<div style="color:#c62828">'+ids[i]+'</div><div></div><div></div><div style="color:#c62828">No encontrado</div>';
+      notFound++;
+    } else if(c.isRemocion||_manualRsIds.has(c.id)){
+      h+='<div style="color:var(--accent)">'+ids[i]+'</div><div>'+c.pol+'</div><div>'+c.pod+'</div><div style="color:#e65100">Ya RS</div>';
+      already++;
+    } else {
+      h+='<div>'+ids[i]+'</div><div>'+c.pol+'</div><div>'+c.pod+'</div><div style="color:#388e3c">OK</div>';
+      found++;
+    }
+  }
+  h+='</div>';
+  preview.innerHTML=h;
+  preview.style.display='block';
+  count.style.display='block';
+  count.textContent=found+' nuevo(s) · '+already+' ya RS · '+notFound+' no encontrado(s)';
+}
+
+function parseRsIds(val){
+  return val.split(/[\s,\t\n\r]+/).filter(Boolean).map(function(t){return t.trim().toUpperCase();}).filter(function(t){return/^[A-Z]{4}\d{7}$/.test(t);});
+}
+
+function applyRsList(){
+  var val=document.getElementById('rsPasteArea').value;
+  var ids=parseRsIds(val);
+  if(ids.length===0)return;
+  var all=[].concat(S.c1||[],S.c2||[]);
+  var applied=0;
+  for(var i=0;i<ids.length;i++){
+    for(var j=0;j<all.length;j++){
+      if(all[j].id===ids[i]&&!all[j].isRemocion&&!_manualRsIds.has(all[j].id)){
+        _manualRsIds.add(all[j].id);
+        all[j].isRemocion=true;
+        all[j].origPos=all[j].positions&&all[j].positions.length?Object.assign({},all[j].positions[0]):null;
+        applied++;
+      }
+    }
+  }
+  closeRsModal();
+  if(applied>0){
+    // Make sure RS visibility is on
+    var rsBtn=document.getElementById('showRsBtn');
+    if(rsBtn&&!rsBtn.classList.contains('on')){rsBtn.classList.add('on');GF.hidden.delete('rs');}
+    // Update count badge on Añadir R/S button
+    updateRsBadge();
+    render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+    showToast(applied+' contenedor(es) marcado(s) como RS');
+  }
+}
+
+function updateRsBadge(){
+  var btn=document.getElementById('addRsBtn');
+  if(!btn)return;
+  var badge=btn.querySelector('.rs-badge');
+  if(_manualRsIds.size>0){
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='rs-badge';
+      badge.style.cssText='background:#e65100;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:2px;font-weight:700';
+      btn.appendChild(badge);
+    }
+    badge.textContent=_manualRsIds.size;
+  } else if(badge){
+    badge.remove();
+  }
+}
+
+function clearManualRs(){
+  if(_manualRsIds.size===0)return;
+  var all=[].concat(S.c1||[],S.c2||[]);
+  for(var i=0;i<all.length;i++){
+    if(_manualRsIds.has(all[i].id)){
+      all[i].isRemocion=false;
+      all[i].origPos=null;
+    }
+  }
+  _manualRsIds.clear();
+  updateRsBadge();
+  render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+  // Update modal count
+  var mc=document.getElementById('rsModalCount');
+  if(mc)mc.style.display='none';
+  showToast('Marcas RS manuales eliminadas');
+}
 function hexToRgb(hex){hex=hex.replace('#','');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return r+','+g+','+b;}
 
 /* ── PESO RANGE ── */
@@ -2772,6 +2948,13 @@ function mwInterceptClick(c,pos,pn){
 
 /* ── CLEAR PANEL ── */
 function clearPanel(pn){
+  // Clean up manual RS IDs that belong to containers being removed
+  if(_manualRsIds.size>0){
+    var remaining=pn===1?S.c2:S.c1;
+    var remainingIds=remaining?new Set(remaining.map(function(c){return c.id;})):new Set();
+    _manualRsIds.forEach(function(id){if(!remainingIds.has(id))_manualRsIds.delete(id);});
+    updateRsBadge();
+  }
   loadPanel(pn,[]);
   var lb=document.getElementById('lb'+pn);if(lb)lb.classList.remove('ok');
   var fn=document.getElementById('fn'+pn);if(fn)fn.textContent='Archivo '+pn;
@@ -2998,6 +3181,15 @@ function loadPanel(pn,cts){
   }
   regPods(cts);var plan=buildPlan(cts);
   if(pn===1){S.c1=cts;S.L1=plan;}else{S.c2=cts;S.L2=plan;}
+  // Re-apply manual RS markings from _manualRsIds
+  if(_manualRsIds.size>0){
+    for(var ri=0;ri<cts.length;ri++){
+      if(_manualRsIds.has(cts[ri].id)&&!cts[ri].isRemocion){
+        cts[ri].isRemocion=true;
+        cts[ri].origPos=cts[ri].positions&&cts[ri].positions.length?Object.assign({},cts[ri].positions[0]):null;
+      }
+    }
+  }
   F[pn]={view:'3b'};Z[pn]=1;S.sel=null;S.hl=null;
   cvEl.style.display='block';em.classList.add('hid');
   if(pn===2)document.getElementById('col2').style.display=''; // show col2 when plan2 loaded
