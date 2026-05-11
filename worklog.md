@@ -280,3 +280,36 @@ Stage Summary:
 - Verified containers show faded POD color with green border and checkmark
 - Export includes new Mismo_Hatch and Verificado columns
 - All features documented in help modal
+
+---
+Task ID: 3
+Agent: main
+Task: Enhance Mover/Diff log with Verify All, individual container colors, POD/individual toggle, old position in black, cargo all/none button
+
+Work Log:
+- Replaced DIFF_POD_COLOR_MODE with DIFF_COLOR_MODE (null/pod/individual 3-way toggle)
+- Added DIFF_INDIVIDUAL_COLORS object for per-container unique colors
+- Added toggleDiffColorMode() that cycles: null → 'pod' → 'individual' → null
+- Added generateDiffIndividualColors() using golden-angle color distribution
+- Changed button from "Color POD" to "Color" with dynamic label (Color POD / Color Ind.)
+- Individual colors apply to both diff log list rows AND canvas container cells
+- Verified dimming in canvas also uses individual colors when mode is active
+- Replaced "Reset verify" button with "Verify All" (toggleDiffVerifyAll)
+- Verify All: if all visible items verified → unverify all; otherwise verify all
+- Changed .chg-from CSS from strikethrough/muted to normal foreground color (black in light mode)
+- Added cargo all/none button (toggleCargoAll) next to GEN in filter bar
+- Added updateCargoAllBtn() to sync button state
+- Added toggleShow() to call updateCargoAllBtn() after state changes
+- Reset diff colors when closeMoveWizard() is called (DIFF_COLOR_MODE=null, DIFF_INDIVIDUAL_COLORS={})
+- Regenerate individual colors on openDiffModal() if mode is 'individual'
+- Reset diff colors in resetAllFilters()
+- Updated help modal documentation for all new features
+
+Stage Summary:
+- "Color" button now cycles: Off → POD → Individual (each container unique color) → Off
+- Individual colors show on both diff list and BAPLIE canvas for easy identification
+- Colors reset when Mover wizard closes
+- "Verify All" button verifies/unverifies all visible diff rows at once
+- Old position in diff list shows in normal color (no strikethrough)
+- Cargo filter group has all/none toggle button (✓✓ icon)
+- All changes saved to /home/z/my-project/download/baplie_viewer.html

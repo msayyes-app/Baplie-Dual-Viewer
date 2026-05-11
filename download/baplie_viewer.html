@@ -139,7 +139,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 .diff-changes{font-size:11px;color:var(--fg);line-height:1.5;flex:1;min-width:0}
 .diff-changes .chg-label{color:var(--muted);font-weight:600;font-size:10px;margin-right:2px}
 .diff-changes .chg-arrow{color:var(--muted);margin:0 3px;font-size:10px}
-.diff-changes .chg-from{color:var(--muted);text-decoration:line-through;opacity:.6}
+.diff-changes .chg-from{color:var(--fg);opacity:1}
 .diff-changes .chg-to{color:var(--diff-chg);font-weight:600}
 .diff-changes .chg-field{margin-right:10px;white-space:nowrap}
 .diff-header{display:none}
@@ -369,6 +369,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     <button class="gbtn on" id="showOogBtn" onclick="toggleShow('oog')" title="Sobredimensionados — clic para ocultar">OOG</button>
     <button class="gbtn on" id="showRsBtn" onclick="toggleShow('rs')" title="Remociones — clic para ocultar">RS</button>
     <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG/RS) — clic para ocultar">GEN</button>
+    <button class="gbtn" id="cargoAllBtn" onclick="toggleCargoAll()" title="Mostrar/ocultar todos los tipos de carga" style="font-size:10px;padding:2px 5px"><i class="fa-solid fa-check-double" style="font-size:9px"></i></button>
   </div>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <button class="gbtn" id="diffToggleBtn" onclick="toggleDiffFilter()" title="Resaltar en naranja los contenedores con diferencias entre los dos planes">
@@ -668,6 +669,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li><span class="hk">Todos</span> / <span class="hk">20'</span> / <span class="hk">40'</span> / <span class="hk">45'</span> — Filtra por tamaño de contenedor. <span class="hk">Todos</span> desactiva el filtro; los demás son conmutables.</li>
   <li><span class="hk">F+E</span> / <span class="hk">Full</span> / <span class="hk">MT</span> — Muestra todos, solo llenos o solo vacíos.</li>
   <li><span class="hk">RF</span> / <span class="hk">DG</span> / <span class="hk">OOG</span> / <span class="hk">RS</span> / <span class="hk">GEN</span> — Activa/desactiva la visibilidad de cada tipo de carga (Reefer, Peligroso, Sobredimensionado, Remoción, General). Cuando están apagados (sin resaltar), esos contenedores desaparecen del plano.</li>
+  <li><span class="hk"><i class="fa-solid fa-check-double" style="font-size:9px"></i></span> (junto a GEN) — Muestra/oculta todos los tipos de carga a la vez.</li>
   <li><span class="hk"><i class="fa-solid fa-code-compare" style="font-size:9px"></i> Diferencias</span> — Activa el resaltado naranja de los contenedores que difieren entre los dos planes. El badge muestra el total. <span class="htip">Requiere ambos archivos cargados.</span></li>
   <li><span class="hk"><i class="fa-solid fa-list-ul" style="font-size:9px"></i> Ver log</span> — Abre el panel lateral con el listado detallado de cambios: posición, POD, POL, peso, SZTP. Se puede filtrar por tipo de cambio. <span class="htip">Clic en una fila selecciona ese contenedor y centra ambas vistas.</span></li>
 </ul>
@@ -744,10 +746,10 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li>Se abre con <span class="hk">Ver log</span> cuando hay dos planes cargados.</li>
   <li>Lista todos los contenedores que cambiaron: posición, POD, POL, peso, SZTP. También los que solo están en un plan.</li>
   <li>Pastillas de filtro: clic para mostrar solo un tipo de cambio.</li>
-  <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i> Color POD</span> — Colorea las filas del log con el color del POD correspondiente, permitiendo agrupar visualmente por puerto de descarga. Clic en el punto de color junto a un contenedor para cambiar el color de ese POD.</li>
+  <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i> Color</span> — Alterna entre 3 modos: sin color → <b>Color POD</b> (colorea filas por puerto de descarga) → <b>Color Individual</b> (cada contenedor con un color único para ver de un vistazo dónde se mueve). El modo individual se resetea al cerrar la función Mover.</li>
   <li>Fondo de fila: naranja = movimiento dentro del <b>mismo hatch</b> (trío de bays), morado = movimiento a <b>distinto hatch</b>.</li>
-  <li><span class="hk">☑</span> Verificación — Cada fila tiene un tick clicable para marcarla como verificada. Al marcar, el contenedor se atenúa en la lista y en el plano (color POD pálido con borde verde y marca ✓). <span class="htip">Permite llevar control de qué movimientos se han comprobado.</span></li>
-  <li><span class="hk"><i class="fa-solid fa-eraser" style="font-size:9px"></i> Reset verify</span> — Quita todas las marcas de verificación.</li>
+  <li><span class="hk">☑</span> Verificación — Cada fila tiene un tick clicable para marcarla como verificada. Al marcar, el contenedor se atenúa en la lista y en el plano (color pálido con borde verde y marca ✓). <span class="htip">Permite llevar control de qué movimientos se han comprobado.</span></li>
+  <li><span class="hk"><i class="fa-solid fa-check-double" style="font-size:9px"></i> Verify All</span> — Verifica o desverifica todos los contenedores a la vez. Si todos están verificados, los desmarca todos; si no, los marca todos.</li>
   <li><span class="hk"><i class="fa-solid fa-map-pin" style="font-size:9px"></i> Mostrar en plano</span> — Selecciona todos los contenedores del log en el plano.</li>
   <li><span class="hk">CSV</span> — Exporta a archivo CSV.</li>
   <li><span class="hk">Copiar tabla</span> — Copia como TSV.</li>
@@ -1076,7 +1078,8 @@ var DIFF_DATA={moved:[],missing:[],appeared:[]};
 var DIFF_IDS=new Set();
 var LOG_SEL_IDS=null; // null = sin filtro de log, Set = IDs visibles en el log actual
 var _diffRows=[];
-var DIFF_POD_COLOR_MODE=false; // POD color mode in diff log
+var DIFF_COLOR_MODE=null; // null=off, 'pod'=by POD, 'individual'=each container unique color
+var DIFF_INDIVIDUAL_COLORS={}; // containerId -> color (individual mode)
 var DIFF_VERIFIED=new Set(); // Set of container IDs verified by user in diff log
 var _diffInlineColorPicker=null; // current open inline color picker {pod, el}
 
@@ -1546,9 +1549,12 @@ function drawCell(ctx,x,y,w,h,c){
   // A container that doesn't pass strict (hidden normally) only draws if dimming modes active OR it's in the current selection
   if(!passesStrict&&!dimmed&&!isInSel){ctx.restore();return;}
   if(dimmed){
-    // Verified containers: show with faded POD color instead of full gray
+    // Verified containers: show with faded color instead of full gray
     if(verifiedDimmed&&!trtDimmed&&!nonSelDimmed){
-      var vCol=GF.wtMode?wtColor(c):pC(c.pod);
+      var vCol;
+      if(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[c.id])vCol=DIFF_INDIVIDUAL_COLORS[c.id];
+      else if(GF.wtMode)vCol=wtColor(c);
+      else vCol=pC(c.pod);
       ctx.globalAlpha=0.25;ctx.fillStyle=vCol;ctx.fillRect(x,y,w,h);
       ctx.strokeStyle='rgba(56,142,60,0.4)';ctx.lineWidth=1;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
       // Show weight/seq faded
@@ -1568,7 +1574,10 @@ function drawCell(ctx,x,y,w,h,c){
     ctx.fillText(fmtW(c),x+w/2,y+h/2+.5);
     ctx.restore();return;
   }
-  var col=GF.wtMode?wtColor(c):pC(c.pod);
+  var col;
+  if(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[c.id])col=DIFF_INDIVIDUAL_COLORS[c.id];
+  else if(GF.wtMode)col=wtColor(c);
+  else col=pC(c.pod);
   // Selección (Set o hover) — amarillo
   var isSel=(S.sel&&S.sel.has&&S.sel.has(c.id));
   var isHl=(c.id===S.hl&&!isSel);
@@ -1818,7 +1827,27 @@ function toggleShow(type){
   if(GF.hidden.has(type))GF.hidden.delete(type);else GF.hidden.add(type);
   var btn=document.getElementById('show'+type.charAt(0).toUpperCase()+type.slice(1)+'Btn');
   if(btn)btn.classList.toggle('on',!GF.hidden.has(type));
+  updateCargoAllBtn();
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
+}
+function toggleCargoAll(){
+  var types=['rf','dg','oog','rs','gen'];
+  var anyHidden=types.some(function(t){return GF.hidden.has(t);});
+  if(anyHidden){types.forEach(function(t){GF.hidden.delete(t);});}
+  else{types.forEach(function(t){GF.hidden.add(t);});}
+  types.forEach(function(t){
+    var btn=document.getElementById('show'+t.charAt(0).toUpperCase()+t.slice(1)+'Btn');
+    if(btn)btn.classList.toggle('on',!GF.hidden.has(t));
+  });
+  updateCargoAllBtn();
+  clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
+}
+function updateCargoAllBtn(){
+  var types=['rf','dg','oog','rs','gen'];
+  var allOn=types.every(function(t){return !GF.hidden.has(t);});
+  var allOff=types.every(function(t){return GF.hidden.has(t);});
+  var btn=document.getElementById('cargoAllBtn');
+  if(btn){btn.classList.toggle('on',allOn);if(allOff)btn.classList.remove('on');}
 }
 function rebuildPods(){GF.pods={};for(var i=0;i<POD_ORDER.length;i++)GF.pods[POD_ORDER[i]]=true;var box=document.getElementById('podbtns');var h='';for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;h+='<button class="gbtn on" data-pod="'+k+'" onclick="togglePod(\''+k+'\')"><span class="cdot" style="background:'+POD_MAP[k]+'"></span>'+k+'</button>'}box.innerHTML=h;updateLeg();document.getElementById('podAllBtn').classList.add('on');}
 function togglePod(pod){GF.pods[pod]=!GF.pods[pod];var btn=document.querySelector('[data-pod="'+pod+'"]');if(btn)btn.classList.toggle('on',GF.pods[pod]);var anyOff=false;for(var k in GF.pods)if(!GF.pods[k]){anyOff=true;break;}document.getElementById('podAllBtn').classList.toggle('on',!anyOff);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
@@ -1916,7 +1945,7 @@ function resetAllFilters(){
   clearWrange();clearSearch();
   GF.srchFilter=false;
   for(var k in GF.pods)GF.pods[k]=true;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.add('on')});
-  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;DIFF_VERIFIED.clear();DIFF_POD_COLOR_MODE=false;render(1);render(2);updateLeg();sumSyncIfOpen();
+  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;DIFF_VERIFIED.clear();DIFF_COLOR_MODE=null;DIFF_INDIVIDUAL_COLORS={};updateCargoAllBtn();render(1);render(2);updateLeg();sumSyncIfOpen();
 }
 
 /* ── DIFF TOGGLE + LOG ── */
@@ -1944,7 +1973,7 @@ function refreshDiffList(){
   var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;_diffRows=[];
   function rowVisible(d,types){if(!DIFF_ACTIVE_TYPES)return true;for(var t of DIFF_ACTIVE_TYPES){if(t==='missing'&&types.indexOf('missing')>=0)return true;if(t==='appeared'&&types.indexOf('appeared')>=0)return true;if(t==='pos'&&d.posChanged)return true;if(t==='pod'&&d.podChanged)return true;if(t==='pol'&&d.polChanged)return true;if(t==='wt'&&d.wtChanged)return true;if(t==='sztp'&&d.sztpChanged)return true;}return false;}
   function chgFld(label,from,to){return '<span class="chg-field"><span class="chg-label">'+label+'</span><span class="chg-from">'+from+'</span><span class="chg-arrow">\u2192</span><span class="chg-to">'+to+'</span></span>';}
-  function podDot(pod){var col=pC(pod);var active=DIFF_POD_COLOR_MODE?'pod-color-active':'';return '<span class="diff-pod-dot '+active+'" style="background:'+col+'" title="POD: '+pod+' — clic para cambiar color" onclick="diffPodColorClick(\''+pod+'\',this,event)"></span>';}
+  function podDot(pod,id){var col=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[id])?DIFF_INDIVIDUAL_COLORS[id]:pC(pod);var active=(DIFF_COLOR_MODE==='pod'||DIFF_COLOR_MODE==='individual')?'pod-color-active':'';return '<span class="diff-pod-dot '+active+'" style="background:'+col+'" title="POD: '+pod+'" onclick="diffPodColorClick(\''+pod+'\',this,event)"></span>';}
   function tickHtml(id){var v=DIFF_VERIFIED.has(id);return '<span class="diff-tick'+(v?' verified':'')+'" data-diff-id="'+id+'" onclick="toggleDiffVerify(\''+id+'\')" title="'+(v?'Verificado — clic para desmarcar':'Clic para verificar')+'">'+(v?'<i class="fa-solid fa-check" style="font-size:9px"></i>':'')+'</span>';}
   var h='';var count=0;var vCount=0;
   for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;count++;
@@ -1961,31 +1990,34 @@ function refreshDiffList(){
     var hatchCls=d.posChanged?(isSameHatch?'diff-same-hatch':'diff-diff-hatch'):'diff-same-hatch';
     var pod=(d.b&&d.b.pod)||(d.a&&d.a.pod)||'';
     var podCol=pC(pod);
-    var podBgStyle=DIFF_POD_COLOR_MODE?'background:'+podCol+'22;':'';
+    var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
+    var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
     h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" style="'+podBgStyle+'">';
     h+=tickHtml(d.id);
-    h+=podDot(pod);
+    h+=podDot(pod,d.id);
     h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes">'+chgs+'</div></div>';
     _diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||'',sameHatch:isSameHatch});}
   for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;count++;
     var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
     var pod=d.a.pod||'';var podCol=pC(pod);
-    var podBgStyle=DIFF_POD_COLOR_MODE?'background:'+podCol+'22;':'';
+    var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
+    var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
     h+='<div class="diff-row diff-missing'+verifiedCls+'" style="'+podBgStyle+'">';
     h+=tickHtml(d.id);
-    h+=podDot(pod);
+    h+=podDot(pod,d.id);
     h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtP).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
     _diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:'',sameHatch:null});}
   for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;count++;
     var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
     var pod=d.b.pod||'';var podCol=pC(pod);
-    var podBgStyle=DIFF_POD_COLOR_MODE?'background:'+podCol+'22;':'';
+    var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
+    var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
     h+='<div class="diff-row diff-appeared'+verifiedCls+'" style="'+podBgStyle+'">';
     h+=tickHtml(d.id);
-    h+=podDot(pod);
+    h+=podDot(pod,d.id);
     h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtP).join(', ')+'</span></span></div></div>';
     _diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||'',sameHatch:null});}
   if(count===0)h+='<div style="color:var(--muted);font-size:12px;padding:16px 0;text-align:center"><i class="fa-solid fa-filter" style="margin-right:6px"></i>Ningún contenedor coincide con el filtro activo.</div>';
@@ -1995,7 +2027,26 @@ function refreshDiffList(){
   // Update legend
   updateDiffLegend();
 }
-function toggleDiffPodColor(){DIFF_POD_COLOR_MODE=!DIFF_POD_COLOR_MODE;var btn=document.getElementById('diffPodColorBtn');if(btn)btn.classList.toggle('on',DIFF_POD_COLOR_MODE);refreshDiffList();}
+function toggleDiffColorMode(){
+  // Cycle: null → 'pod' → 'individual' → null
+  if(DIFF_COLOR_MODE===null)DIFF_COLOR_MODE='pod';
+  else if(DIFF_COLOR_MODE==='pod'){DIFF_COLOR_MODE='individual';generateDiffIndividualColors();}
+  else{DIFF_COLOR_MODE=null;DIFF_INDIVIDUAL_COLORS={};}
+  var btn=document.getElementById('diffPodColorBtn');
+  if(btn){
+    btn.classList.toggle('on',DIFF_COLOR_MODE!==null);
+    var labels={'pod':'Color POD','individual':'Color Ind.',null:'Color'};
+    btn.innerHTML='<i class="fa-solid fa-palette" style="font-size:10px"></i> '+(labels[DIFF_COLOR_MODE]||'Color');
+  }
+  refreshDiffList();render(1);render(2);
+}
+function generateDiffIndividualColors(){
+  DIFF_INDIVIDUAL_COLORS={};
+  var allIds=DIFF_DATA.moved.map(function(d){return d.id;}).concat(DIFF_DATA.missing.map(function(d){return d.id;})).concat(DIFF_DATA.appeared.map(function(d){return d.id;}));
+  for(var i=0;i<allIds.length;i++){
+    DIFF_INDIVIDUAL_COLORS[allIds[i]]=h2x((i*47+10)%360,70,50);
+  }
+}
 function toggleDiffVerify(id){
   if(DIFF_VERIFIED.has(id)){DIFF_VERIFIED.delete(id);}else{DIFF_VERIFIED.add(id);}
   refreshDiffList();
@@ -2023,6 +2074,14 @@ function closeDiffInlineColorPicker(){
   if(existing)existing.remove();
   _diffInlineColorPicker=null;
 }
+function toggleDiffVerifyAll(){
+  var allIds=_diffRows.map(function(d){return d.id;});
+  if(!allIds.length)return;
+  var allVerified=allIds.every(function(id){return DIFF_VERIFIED.has(id);});
+  if(allVerified){allIds.forEach(function(id){DIFF_VERIFIED.delete(id);});}
+  else{allIds.forEach(function(id){DIFF_VERIFIED.add(id);});}
+  refreshDiffList();render(1);render(2);
+}
 function resetDiffVerified(){DIFF_VERIFIED.clear();refreshDiffList();render(1);render(2);}
 function updateDiffLegend(){
   var legEl=document.getElementById('diffLegendBar');if(!legEl)return;
@@ -2037,7 +2096,7 @@ function updateDiffLegend(){
 }
 function openDiffModal(){
   if(!S.c1||!S.c2){document.getElementById('diffModalBody').innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px 0">Se necesitan los dos archivos BAPLIE para comparar.</div>';document.getElementById('diffPanel').classList.add('open');return;}
-  computeDiff();var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;var total=moved.length+missing.length+appeared.length;
+  computeDiff();if(DIFF_COLOR_MODE==='individual')generateDiffIndividualColors();var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;var total=moved.length+missing.length+appeared.length;
   document.getElementById('diffModalTitle').textContent='Diferencias — '+total+' cambio'+(total!==1?'s':'');
   var cPos=0,cPod=0,cPol=0,cWt=0,cSztp=0,cMis=missing.length,cApp=appeared.length;
   for(var i=0;i<moved.length;i++){var d=moved[i];if(d.posChanged)cPos++;if(d.podChanged)cPod++;if(d.polChanged)cPol++;if(d.wtChanged)cWt++;if(d.sztpChanged)cSztp++;}
@@ -2049,8 +2108,9 @@ function openDiffModal(){
   h+='</div>';
   // Second bar: POD color toggle + verify controls + legend
   h+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">';
-  h+='<button id="diffPodColorBtn" class="diff-export-btn'+(DIFF_POD_COLOR_MODE?' on':'')+'" onclick="toggleDiffPodColor()" style="display:inline-flex;align-items:center;gap:4px'+(DIFF_POD_COLOR_MODE?';border-color:var(--accent);color:var(--accent)':'')+'" title="Colorear filas por POD"><i class="fa-solid fa-palette" style="font-size:10px"></i> Color POD</button>';
-  h+='<button class="diff-export-btn" onclick="resetDiffVerified()" title="Limpiar todas las verificaciones" style="display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-eraser" style="font-size:10px"></i> Reset verify</button>';
+  var colorLabels={'pod':'Color POD','individual':'Color Ind.',null:'Color'};
+  h+='<button id="diffPodColorBtn" class="diff-export-btn'+(DIFF_COLOR_MODE?' on':'')+'" onclick="toggleDiffColorMode()" style="display:inline-flex;align-items:center;gap:4px'+(DIFF_COLOR_MODE?';border-color:var(--accent);color:var(--accent)':'')+'" title="Alternar: sin color → POD → individual"><i class="fa-solid fa-palette" style="font-size:10px"></i> '+(colorLabels[DIFF_COLOR_MODE]||'Color')+'</button>';
+  h+='<button class="diff-export-btn" onclick="toggleDiffVerifyAll()" title="Verificar todos / Quitar todas las verificaciones" style="display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-check-double" style="font-size:10px"></i> Verify All</button>';
   h+='<span id="diffVerifiedCount" style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);margin-left:4px"></span>';
   h+='<div id="diffLegendBar" style="display:inline-flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap"></div>';
   h+='</div>';
@@ -2899,6 +2959,8 @@ function closeMoveWizard(){
   document.getElementById('movePanel').classList.remove('open');
   document.getElementById('pickBanner').style.display='none';
   MW.active=false;MW.pickingPos=null;_mwFocusedIdx=null;MW.preview={};
+  // Reset diff color mode when mover closes
+  DIFF_COLOR_MODE=null;DIFF_INDIVIDUAL_COLORS={};
   setTimeout(function(){render(1);render(2);},50);
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&MW.active){if(MW.pickingPos!==null){MW.pickingPos=null;clearCrosshairHighlight();document.getElementById('pickBanner').style.display='none';}else{closeMoveWizard();}}});
