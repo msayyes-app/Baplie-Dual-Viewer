@@ -253,3 +253,30 @@ Stage Summary:
 - "Secuencia" button allows pasting container IDs + Bay Seq from Excel
 - Bay Seq replaces weight display when Seq toggle or W key is active
 - All changes saved to /home/z/my-project/download/baplie_viewer.html
+---
+Task ID: 1
+Agent: main
+Task: Enhance diff log panel with POD color mode, verification ticks, same/different hatch backgrounds, and inline POD color picker
+
+Work Log:
+- Added CSS styles for new diff log elements: .diff-same-hatch, .diff-diff-hatch, .diff-pod-dot, .diff-tick, .verified-row, .diff-color-pick-inline
+- Added JavaScript variables: DIFF_POD_COLOR_MODE, DIFF_VERIFIED, _diffInlineColorPicker
+- Added helper functions: hatchOf(bay), sameHatch(posA, posB) for determining hatch membership
+- Rewrote refreshDiffList() to include POD color dots, verification ticks, same/different hatch backgrounds, and POD color mode
+- Added new functions: toggleDiffPodColor(), toggleDiffVerify(id), diffPodColorClick(), closeDiffInlineColorPicker(), resetDiffVerified(), updateDiffLegend()
+- Modified openDiffModal() to include second toolbar with "Color POD" toggle, "Reset verify" button, verified counter, and legend bar
+- Modified drawCell() to dim verified containers with faded POD color, green border, and checkmark
+- Added click handler on diff rows for container selection and scrolling
+- Added document click handler to close inline color picker on outside clicks
+- Updated buildExportData() with Mismo_Hatch and Verificado columns
+- Updated resetAllFilters() to clear DIFF_VERIFIED and DIFF_POD_COLOR_MODE
+- Updated help documentation with new diff panel features
+
+Stage Summary:
+- Diff log now shows POD color dots next to each container, clickable to change color
+- "Color POD" button toggles row background coloring by POD
+- Background differentiates same-hatch (orange tint) vs different-hatch (purple tint) moves
+- Each row has a clickable verification tick that dims the row and the container in the canvas
+- Verified containers show faded POD color with green border and checkmark
+- Export includes new Mismo_Hatch and Verificado columns
+- All features documented in help modal

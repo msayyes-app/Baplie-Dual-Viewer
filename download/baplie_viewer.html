@@ -133,11 +133,8 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 #diffModalClose{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:4px}#diffModalClose:hover{color:var(--fg)}
 .diff-export-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;transition:all .15s;display:inline-flex;align-items:center;gap:5px}.diff-export-btn:hover{border-color:var(--accent);color:var(--accent)}
 #diffModalBody{overflow:auto;padding:14px 18px;flex:1;font-family:'IBM Plex Mono',monospace;font-size:12px}
-.diff-row{display:flex;align-items:baseline;gap:8px;padding:4px 10px;border-radius:4px;margin-bottom:2px;font-size:12px;line-height:1.5}
+.diff-row{display:flex;align-items:baseline;gap:8px;padding:4px 10px;border-radius:4px;margin-bottom:2px;font-size:12px;line-height:1.5;transition:opacity .3s}
 .diff-row:nth-child(even){background:rgba(128,128,128,.03)}
-.diff-row.diff-moved{border-left:3px solid var(--diff-chg);background:rgba(239,108,0,.04)}
-.diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.04)}
-.diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.04)}
 .diff-id{font-weight:700;font-size:12px;color:var(--accent);white-space:nowrap;flex-shrink:0;min-width:110px}
 .diff-changes{font-size:11px;color:var(--fg);line-height:1.5;flex:1;min-width:0}
 .diff-changes .chg-label{color:var(--muted);font-weight:600;font-size:10px;margin-right:2px}
@@ -149,6 +146,26 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 .diff-type-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;border:1.5px solid;transition:all .15s;opacity:.38}
 .diff-type-pill.pill-on{opacity:1}
 .diff-type-pill:hover{opacity:1}
+/* ── DIFF LOG POD COLOR + VERIFY ── */
+.diff-row.diff-moved{border-left:3px solid var(--diff-chg)}
+.diff-row.diff-same-hatch{background:rgba(239,108,0,.04)}
+.diff-row.diff-diff-hatch{background:rgba(156,39,176,.05)}
+.diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.04)}
+.diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.04)}
+.diff-pod-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;cursor:pointer;border:1px solid rgba(128,128,128,.3);transition:all .15s}
+.diff-pod-dot:hover{transform:scale(1.3);box-shadow:0 0 6px rgba(0,0,0,.3)}
+.diff-pod-dot.pod-color-active{border:2px solid var(--fg)}
+.diff-tick{width:16px;height:16px;border-radius:3px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-size:10px;color:transparent;margin-right:6px}
+.diff-tick:hover{border-color:var(--accent);background:rgba(2,136,209,.08)}
+.diff-tick.verified{background:#388e3c;border-color:#388e3c;color:#fff}
+.diff-row.verified-row{opacity:.4;transition:opacity .3s}
+.diff-row.verified-row .diff-pod-dot{opacity:.3}
+.diff-row.verified-row .diff-id{text-decoration:line-through;opacity:.5}
+.diff-row.verified-row .diff-changes{opacity:.5}
+.diff-pod-color-row{background:rgba(var(--pod-bg-rgb,.05))!important}
+.diff-color-pick-inline{position:absolute;z-index:10;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none}
+.diff-color-pick-inline.open{display:block}
+.diff-color-pick-inline input[type=color]{width:32px;height:24px;border:1px solid var(--border);border-radius:3px;cursor:pointer;padding:0}
 #copyToast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);padding:7px 18px;border-radius:8px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2)}
 /* ── DG INFO MODAL ── */
 #dgModal{position:fixed;inset:0;z-index:1001;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
@@ -727,6 +744,10 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li>Se abre con <span class="hk">Ver log</span> cuando hay dos planes cargados.</li>
   <li>Lista todos los contenedores que cambiaron: posición, POD, POL, peso, SZTP. También los que solo están en un plan.</li>
   <li>Pastillas de filtro: clic para mostrar solo un tipo de cambio.</li>
+  <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i> Color POD</span> — Colorea las filas del log con el color del POD correspondiente, permitiendo agrupar visualmente por puerto de descarga. Clic en el punto de color junto a un contenedor para cambiar el color de ese POD.</li>
+  <li>Fondo de fila: naranja = movimiento dentro del <b>mismo hatch</b> (trío de bays), morado = movimiento a <b>distinto hatch</b>.</li>
+  <li><span class="hk">☑</span> Verificación — Cada fila tiene un tick clicable para marcarla como verificada. Al marcar, el contenedor se atenúa en la lista y en el plano (color POD pálido con borde verde y marca ✓). <span class="htip">Permite llevar control de qué movimientos se han comprobado.</span></li>
+  <li><span class="hk"><i class="fa-solid fa-eraser" style="font-size:9px"></i> Reset verify</span> — Quita todas las marcas de verificación.</li>
   <li><span class="hk"><i class="fa-solid fa-map-pin" style="font-size:9px"></i> Mostrar en plano</span> — Selecciona todos los contenedores del log en el plano.</li>
   <li><span class="hk">CSV</span> — Exporta a archivo CSV.</li>
   <li><span class="hk">Copiar tabla</span> — Copia como TSV.</li>
@@ -1055,6 +1076,30 @@ var DIFF_DATA={moved:[],missing:[],appeared:[]};
 var DIFF_IDS=new Set();
 var LOG_SEL_IDS=null; // null = sin filtro de log, Set = IDs visibles en el log actual
 var _diffRows=[];
+var DIFF_POD_COLOR_MODE=false; // POD color mode in diff log
+var DIFF_VERIFIED=new Set(); // Set of container IDs verified by user in diff log
+var _diffInlineColorPicker=null; // current open inline color picker {pod, el}
+
+/* ── HATCH HELPER ── */
+function hatchOf(bay){
+  // Returns the hatch (trio) index that a bay belongs to
+  for(var i=0;i<BAY_TRIPLES.length;i++){
+    var tr=BAY_TRIPLES[i];
+    if(bay===tr.lo||bay===tr.hi||(tr.mid!==null&&bay===tr.mid))return i;
+  }
+  return -1; // unknown
+}
+function sameHatch(posA,posB){
+  // Check if two position sets share any hatch
+  if(!posA||!posA.length||!posB||!posB.length)return false;
+  for(var i=0;i<posA.length;i++){
+    var ha=hatchOf(posA[i].bay);
+    for(var j=0;j<posB.length;j++){
+      if(ha===hatchOf(posB[j].bay)&&ha>=0)return true;
+    }
+  }
+  return false;
+}
 
 /* ── COLORES ── */
 function h2x(h,s,l){s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s;var x=c*(1-Math.abs((h/60)%2-1));var m=l-c/2;var r,g,b;if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}return'#'+((1<<24)+(Math.round((r+m)*255)<<16)+(Math.round((g+m)*255)<<8)+Math.round((b+m)*255)).toString(16).slice(1)}
@@ -1495,10 +1540,26 @@ function drawCell(ctx,x,y,w,h,c){
   var selActive=S.sel&&S.sel.size>0;
   var isInSel=selActive&&S.sel.has(c.id);
   var nonSelDimmed=GF.nonSelGray&&( !isInSel && ( !passesStrict || selActive ) );
-  var dimmed=trtDimmed||nonSelDimmed;
+  // Verified dim: dim containers that are verified in the diff log
+  var verifiedDimmed=DIFF_VERIFIED.has(c.id);
+  var dimmed=trtDimmed||nonSelDimmed||verifiedDimmed;
   // A container that doesn't pass strict (hidden normally) only draws if dimming modes active OR it's in the current selection
   if(!passesStrict&&!dimmed&&!isInSel){ctx.restore();return;}
   if(dimmed){
+    // Verified containers: show with faded POD color instead of full gray
+    if(verifiedDimmed&&!trtDimmed&&!nonSelDimmed){
+      var vCol=GF.wtMode?wtColor(c):pC(c.pod);
+      ctx.globalAlpha=0.25;ctx.fillStyle=vCol;ctx.fillRect(x,y,w,h);
+      ctx.strokeStyle='rgba(56,142,60,0.4)';ctx.lineWidth=1;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
+      // Show weight/seq faded
+      ctx.globalAlpha=0.3;ctx.fillStyle=tC(vCol)==='#000000'?'#000000':'#ffffff';
+      var fsV=Math.min(h-4,w>=36?8:6)+GF.wtFontSize;fsV=Math.max(5,fsV);ctx.font='500 '+fsV+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(fmtW(c),x+w/2,y+h/2+.5);
+      // Small green check mark in corner
+      ctx.globalAlpha=0.6;ctx.fillStyle='#388e3c';ctx.font='bold 7px sans-serif';ctx.textAlign='right';ctx.textBaseline='top';
+      ctx.fillText('\u2713',x+w-2,y+1);
+      ctx.restore();return;
+    }
     ctx.globalAlpha=0.20;ctx.fillStyle='#888888';ctx.fillRect(x,y,w,h);
     ctx.strokeStyle='rgba(128,128,128,0.2)';ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
     // show weight dimly
@@ -1855,7 +1916,7 @@ function resetAllFilters(){
   clearWrange();clearSearch();
   GF.srchFilter=false;
   for(var k in GF.pods)GF.pods[k]=true;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.add('on')});
-  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;render(1);render(2);updateLeg();sumSyncIfOpen();
+  document.getElementById('podAllBtn').classList.add('on');bayFilterAll();S.sel=null;DIFF_VERIFIED.clear();DIFF_POD_COLOR_MODE=false;render(1);render(2);updateLeg();sumSyncIfOpen();
 }
 
 /* ── DIFF TOGGLE + LOG ── */
@@ -1883,8 +1944,11 @@ function refreshDiffList(){
   var moved=DIFF_DATA.moved,missing=DIFF_DATA.missing,appeared=DIFF_DATA.appeared;_diffRows=[];
   function rowVisible(d,types){if(!DIFF_ACTIVE_TYPES)return true;for(var t of DIFF_ACTIVE_TYPES){if(t==='missing'&&types.indexOf('missing')>=0)return true;if(t==='appeared'&&types.indexOf('appeared')>=0)return true;if(t==='pos'&&d.posChanged)return true;if(t==='pod'&&d.podChanged)return true;if(t==='pol'&&d.polChanged)return true;if(t==='wt'&&d.wtChanged)return true;if(t==='sztp'&&d.sztpChanged)return true;}return false;}
   function chgFld(label,from,to){return '<span class="chg-field"><span class="chg-label">'+label+'</span><span class="chg-from">'+from+'</span><span class="chg-arrow">\u2192</span><span class="chg-to">'+to+'</span></span>';}
-  var h='';var count=0;
+  function podDot(pod){var col=pC(pod);var active=DIFF_POD_COLOR_MODE?'pod-color-active':'';return '<span class="diff-pod-dot '+active+'" style="background:'+col+'" title="POD: '+pod+' — clic para cambiar color" onclick="diffPodColorClick(\''+pod+'\',this,event)"></span>';}
+  function tickHtml(id){var v=DIFF_VERIFIED.has(id);return '<span class="diff-tick'+(v?' verified':'')+'" data-diff-id="'+id+'" onclick="toggleDiffVerify(\''+id+'\')" title="'+(v?'Verificado — clic para desmarcar':'Clic para verificar')+'">'+(v?'<i class="fa-solid fa-check" style="font-size:9px"></i>':'')+'</span>';}
+  var h='';var count=0;var vCount=0;
   for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;count++;
+    var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
     var chgs='';
     if(d.posChanged)chgs+=chgFld('POS',d.a.positions.map(fmtP).join(', '),d.b.positions.map(fmtP).join(', '));
     if(d.podChanged)chgs+=chgFld('POD',d.a.pod||'-',d.b.pod||'-');
@@ -1892,16 +1956,84 @@ function refreshDiffList(){
     if(d.stateChanged)chgs+=chgFld('EST',d.a.isEmpty?'MT':'Full',d.b.isEmpty?'MT':'Full');
     if(d.wtChanged)chgs+=chgFld('PESO',(d.a.weight?(d.a.weight/1000).toFixed(1).replace('.',','):'-')+'t',(d.b.weight?(d.b.weight/1000).toFixed(1).replace('.',','):'-')+'t');
     if(d.sztpChanged)chgs+=chgFld('SZTP',d.a.type||'-',d.b.type||'-');
-    h+='<div class="diff-row diff-moved"><div class="diff-id">'+d.id+'</div><div class="diff-changes">'+chgs+'</div></div>';
-    _diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
+    // Determine hatch: same or different
+    var isSameHatch=d.posChanged?sameHatch(d.a.positions,d.b.positions):true;
+    var hatchCls=d.posChanged?(isSameHatch?'diff-same-hatch':'diff-diff-hatch'):'diff-same-hatch';
+    var pod=(d.b&&d.b.pod)||(d.a&&d.a.pod)||'';
+    var podCol=pC(pod);
+    var podBgStyle=DIFF_POD_COLOR_MODE?'background:'+podCol+'22;':'';
+    var verifiedCls=isVerified?' verified-row':'';
+    h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" style="'+podBgStyle+'">';
+    h+=tickHtml(d.id);
+    h+=podDot(pod);
+    h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes">'+chgs+'</div></div>';
+    _diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||'',sameHatch:isSameHatch});}
   for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;count++;
-    h+='<div class="diff-row diff-missing"><div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtP).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
-    _diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:''});}
+    var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
+    var pod=d.a.pod||'';var podCol=pC(pod);
+    var podBgStyle=DIFF_POD_COLOR_MODE?'background:'+podCol+'22;':'';
+    var verifiedCls=isVerified?' verified-row':'';
+    h+='<div class="diff-row diff-missing'+verifiedCls+'" style="'+podBgStyle+'">';
+    h+=tickHtml(d.id);
+    h+=podDot(pod);
+    h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtP).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
+    _diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:'',sameHatch:null});}
   for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;count++;
-    h+='<div class="diff-row diff-appeared"><div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtP).join(', ')+'</span></span></div></div>';
-    _diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||''});}
+    var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
+    var pod=d.b.pod||'';var podCol=pC(pod);
+    var podBgStyle=DIFF_POD_COLOR_MODE?'background:'+podCol+'22;':'';
+    var verifiedCls=isVerified?' verified-row':'';
+    h+='<div class="diff-row diff-appeared'+verifiedCls+'" style="'+podBgStyle+'">';
+    h+=tickHtml(d.id);
+    h+=podDot(pod);
+    h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtP).join(', ')+'</span></span></div></div>';
+    _diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||'',sameHatch:null});}
   if(count===0)h+='<div style="color:var(--muted);font-size:12px;padding:16px 0;text-align:center"><i class="fa-solid fa-filter" style="margin-right:6px"></i>Ningún contenedor coincide con el filtro activo.</div>';
   listEl.innerHTML=h;
+  // Update verified counter
+  var vEl=document.getElementById('diffVerifiedCount');if(vEl)vEl.textContent=vCount>0?vCount+'/'+count:'';
+  // Update legend
+  updateDiffLegend();
+}
+function toggleDiffPodColor(){DIFF_POD_COLOR_MODE=!DIFF_POD_COLOR_MODE;var btn=document.getElementById('diffPodColorBtn');if(btn)btn.classList.toggle('on',DIFF_POD_COLOR_MODE);refreshDiffList();}
+function toggleDiffVerify(id){
+  if(DIFF_VERIFIED.has(id)){DIFF_VERIFIED.delete(id);}else{DIFF_VERIFIED.add(id);}
+  refreshDiffList();
+  // Dim verified containers in canvas
+  render(1);render(2);
+}
+function diffPodColorClick(pod,el,event){
+  event.stopPropagation();
+  // Close any existing picker
+  closeDiffInlineColorPicker();
+  var rect=el.getBoundingClientRect();
+  var picker=document.createElement('div');
+  picker.className='diff-color-pick-inline open';
+  picker.id='diffInlineColorPicker';
+  picker.style.position='fixed';
+  picker.style.left=rect.left+'px';
+  picker.style.top=(rect.bottom+4)+'px';
+  var col=pC(pod);
+  picker.innerHTML='<div style="display:flex;align-items:center;gap:8px"><input type="color" value="'+col+'" onchange="setPodColor(\''+pod+'\',this.value);closeDiffInlineColorPicker();refreshDiffList()" oninput="setPodColor(\''+pod+'\',this.value)"><span style="font-family:IBM Plex Mono,monospace;font-size:11px;font-weight:600;color:var(--fg)">'+pod+'</span></div>';
+  document.body.appendChild(picker);
+  _diffInlineColorPicker={pod:pod,el:picker};
+}
+function closeDiffInlineColorPicker(){
+  var existing=document.getElementById('diffInlineColorPicker');
+  if(existing)existing.remove();
+  _diffInlineColorPicker=null;
+}
+function resetDiffVerified(){DIFF_VERIFIED.clear();refreshDiffList();render(1);render(2);}
+function updateDiffLegend(){
+  var legEl=document.getElementById('diffLegendBar');if(!legEl)return;
+  var h='';
+  h+='<span style="display:inline-flex;align-items:center;gap:4px"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:rgba(239,108,0,.15);border:1px solid rgba(239,108,0,.3);vertical-align:middle"></span><span style="font-size:10px">Mismo hatch</span></span>';
+  h+='<span style="display:inline-flex;align-items:center;gap:4px;margin-left:10px"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:rgba(156,39,176,.12);border:1px solid rgba(156,39,176,.3);vertical-align:middle"></span><span style="font-size:10px">Distinto hatch</span></span>';
+  h+='<span style="display:inline-flex;align-items:center;gap:4px;margin-left:10px"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;border:1.5px solid var(--border);vertical-align:middle;background:var(--card)"></span><span style="font-size:10px">Sin cambio pos.</span></span>';
+  if(DIFF_VERIFIED.size>0){
+    h+='<span style="display:inline-flex;align-items:center;gap:4px;margin-left:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#388e3c;vertical-align:middle"></span><span style="font-size:10px">'+DIFF_VERIFIED.size+' verificado'+(DIFF_VERIFIED.size!==1?'s':'')+'</span></span>';
+  }
+  legEl.innerHTML=h;
 }
 function openDiffModal(){
   if(!S.c1||!S.c2){document.getElementById('diffModalBody').innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px 0">Se necesitan los dos archivos BAPLIE para comparar.</div>';document.getElementById('diffPanel').classList.add('open');return;}
@@ -1915,16 +2047,58 @@ function openDiffModal(){
   h+=pill('pos','Posición',cPos,'#ef6c00','rgba(239,108,0,.1)');h+=pill('pod','POD',cPod,'#0288d1','rgba(2,136,209,.1)');h+=pill('pol','POL',cPol,'#8e24aa','rgba(142,36,170,.1)');h+=pill('wt','Peso',cWt,'#558b2f','rgba(85,139,47,.1)');h+=pill('sztp','SZTP',cSztp,'#78909c','rgba(120,144,156,.1)');h+=pill('missing','Solo P1',cMis,'#c62828','rgba(198,40,40,.1)');h+=pill('appeared','Solo P2',cApp,'#388e3c','rgba(56,142,60,.1)');
   if(total>0)h+='<button id="diffTypeClearBtn" class="diff-export-btn" onclick="clearDiffTypeFilter()" style="display:none;margin-left:auto"><i class="fa-solid fa-xmark" style="font-size:10px"></i> Quitar filtro</button>';
   h+='</div>';
+  // Second bar: POD color toggle + verify controls + legend
+  h+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">';
+  h+='<button id="diffPodColorBtn" class="diff-export-btn'+(DIFF_POD_COLOR_MODE?' on':'')+'" onclick="toggleDiffPodColor()" style="display:inline-flex;align-items:center;gap:4px'+(DIFF_POD_COLOR_MODE?';border-color:var(--accent);color:var(--accent)':'')+'" title="Colorear filas por POD"><i class="fa-solid fa-palette" style="font-size:10px"></i> Color POD</button>';
+  h+='<button class="diff-export-btn" onclick="resetDiffVerified()" title="Limpiar todas las verificaciones" style="display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-eraser" style="font-size:10px"></i> Reset verify</button>';
+  h+='<span id="diffVerifiedCount" style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);margin-left:4px"></span>';
+  h+='<div id="diffLegendBar" style="display:inline-flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap"></div>';
+  h+='</div>';
   if(total===0){h+='<div style="color:var(--muted);font-size:12px;padding:20px 0;text-align:center"><i class="fa-solid fa-check-circle" style="color:#388e3c;margin-right:6px"></i>Sin diferencias entre los dos planes.</div>';document.getElementById('diffModalBody').innerHTML=h;document.getElementById('diffPanel').classList.add('open');return;}
   h+='<div id="diffRowsList"></div>';document.getElementById('diffModalBody').innerHTML=h;DIFF_ACTIVE_TYPES=null;refreshDiffPills();refreshDiffList();document.getElementById('diffPanel').classList.add('open');
+  // Add click handler on diff rows for selection
+  var listEl2=document.getElementById('diffRowsList');
+  if(listEl2&&!listEl2._diffClickAdded){
+    listEl2._diffClickAdded=true;
+    listEl2.addEventListener('click',function(e){
+      // Don't handle clicks on tick buttons or POD dots
+      if(e.target.closest('.diff-tick')||e.target.closest('.diff-pod-dot'))return;
+      var row=e.target.closest('.diff-row');
+      if(!row)return;
+      var idEl=row.querySelector('.diff-id');if(!idEl)return;
+      var id=idEl.textContent.trim();
+      // Find container in both plans
+      var c1=null,c2=null;
+      if(S.c1){for(var i=0;i<S.c1.length;i++){if(S.c1[i].id===id){c1=S.c1[i];break;}}}
+      if(S.c2){for(var i=0;i<S.c2.length;i++){if(S.c2[i].id===id){c2=S.c2[i];break;}}}
+      // Multi-select with Ctrl
+      if(e.ctrlKey||e.metaKey){
+        if(!S.sel)S.sel=new Set();
+        if(S.sel.has(id))S.sel.delete(id);else S.sel.add(id);
+      } else {
+        S.sel=new Set([id]);
+      }
+      // Scroll to in both plans
+      scrollToContainer(id);
+      render(1);render(2);
+    });
+  }
 }
 function closeDiffModal(){
   document.getElementById('diffPanel').classList.remove('open');
   DIFF_ACTIVE_TYPES=null;
+  closeDiffInlineColorPicker();
   // Clear log selection from canvas when closing
   if(LOG_SEL_IDS!==null){LOG_SEL_IDS=null;render(1);render(2);}
 }
 // diffPanel: no outside-click-to-close (it's a panel)
+
+// Close inline color picker when clicking outside
+document.addEventListener('click',function(e){
+  if(_diffInlineColorPicker&&!e.target.closest('.diff-color-pick-inline')&&!e.target.closest('.diff-pod-dot')){
+    closeDiffInlineColorPicker();
+  }
+});
 
 function applyLogToCanvas(){
   // Select on canvas all IDs currently visible in the log list
@@ -1935,7 +2109,7 @@ function applyLogToCanvas(){
   showToast('Seleccionados '+LOG_SEL_IDS.size+' contenedor'+(LOG_SEL_IDS.size!==1?'es':'')+' en el plano');
 }
 
-function buildExportData(){var cols=['Tipo','Contenedor','Cambios','P1_Posicion','P1_POL','P1_POD','P1_Estado','P1_Peso_t','P1_SZTP','P2_Posicion','P2_POL','P2_POD','P2_Estado','P2_Peso_t','P2_SZTP'];var rows=[cols];for(var i=0;i<_diffRows.length;i++){var d=_diffRows[i];rows.push([d.tipo,d.id,d.cambios||'',d.p1_pos,d.p1_pol,d.p1_pod,d.p1_estado,d.p1_peso||'',d.p1_tipo||'',d.p2_pos,d.p2_pol,d.p2_pod,d.p2_estado,d.p2_peso||'',d.p2_tipo||'']);}return rows;}
+function buildExportData(){var cols=['Tipo','Contenedor','Cambios','Mismo_Hatch','Verificado','P1_Posicion','P1_POL','P1_POD','P1_Estado','P1_Peso_t','P1_SZTP','P2_Posicion','P2_POL','P2_POD','P2_Estado','P2_Peso_t','P2_SZTP'];var rows=[cols];for(var i=0;i<_diffRows.length;i++){var d=_diffRows[i];var sh=d.sameHatch===null?'':d.sameHatch?'Si':'No';var v=DIFF_VERIFIED.has(d.id)?'Si':'No';rows.push([d.tipo,d.id,d.cambios||'',sh,v,d.p1_pos,d.p1_pol,d.p1_pod,d.p1_estado,d.p1_peso||'',d.p1_tipo||'',d.p2_pos,d.p2_pol,d.p2_pod,d.p2_estado,d.p2_peso||'',d.p2_tipo||'']);}return rows;}
 function exportDiffCSV(){var rows=buildExportData();var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"'}).join(';')}).join('\r\n');var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='diferencias_baplie.csv';a.click();URL.revokeObjectURL(url);}
 function exportDiffTSV(){var rows=buildExportData();var tsv=rows.map(function(r){return r.join('\t')}).join('\n');safeClipboard(tsv,function(){var btn=document.querySelectorAll('.diff-export-btn')[1];if(!btn)return;var orig=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check" style="font-size:11px;color:#388e3c"></i> Copiado';setTimeout(function(){btn.innerHTML=orig;},2000);});}
 
