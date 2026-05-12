@@ -4144,7 +4144,7 @@ function doPrint(){
     // Print diff log as table
     if(!_diffRows.length){h+='<p style="color:#999">Sin cambios</p>';}
     else{
-      h+='<h2>Log de cambios'+(S.shipName1?' ('+S.shipName1:'')+(S.shipName2?' vs '+S.shipName2:')':'')+'</h2>';
+      h+='<h2>Log de cambios'+(S.shipName1?' ('+S.shipName1:'')+(S.shipName2?' vs '+S.shipName2+')':'')+'</h2>';
       h+='<table class="print-table"><thead><tr><th></th><th>Contenedor</th><th>Peso</th><th>Cambios</th><th>Hatch</th><th>P1 Pos</th><th>P1 POL</th><th>P1 POD</th><th>P1 Peso</th><th>P2 Pos</th><th>P2 POL</th><th>P2 POD</th><th>P2 Peso</th></tr></thead><tbody>';
       for(var i=0;i<_diffRows.length;i++){
         var d=_diffRows[i];
