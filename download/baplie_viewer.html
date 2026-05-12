@@ -310,7 +310,16 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 #helpBody li{margin-bottom:3px}
 #helpBody li .hk{margin:0 1px}
 #helpBody .htip{color:var(--muted);font-size:11px;margin-left:4px}
-
+/* ── VLC DROPDOWN ── */
+.vlc-dd-item:hover{background:rgba(2,136,209,.1)}
+.vlc-chk.checked{background:var(--accent);border-color:var(--accent);color:#fff}
+.vlc-dd-item.active-item{background:rgba(2,136,209,.08)}
+/* ── LISTADO HOVER HIGHLIGHT (cross-window) ── */
+#listadoTable tr.lst-hl td{background:rgba(79,195,247,.15);outline:none}
+#listadoTable tr.lst-hl:hover td{background:rgba(79,195,247,.22)}
+/* ── HATCH FILTER BUTTONS ── */
+.gbtn.hatch-on{background:rgba(239,108,0,.12);border-color:#e65100;color:#e65100}
+.gbtn.hatch-diff-on{background:rgba(156,39,176,.1);border-color:#9c27b0;color:#9c27b0}
 
 </style>
 </head>
@@ -379,6 +388,12 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <button class="gbtn" id="diffLogBtn" onclick="openDiffModal()" title="Ver log de cambios entre los dos planes" style="display:none">
     <i class="fa-solid fa-list-ul" style="font-size:10px"></i> Ver log
   </button>
+  <button class="gbtn" id="sameHatchBtn" onclick="toggleHatchFilter('same')" title="Mostrar solo contenedores que se mueven dentro del mismo hatch" style="display:none">
+    <i class="fa-solid fa-arrows-left-right" style="font-size:9px"></i> Mismo H
+  </button>
+  <button class="gbtn" id="diffHatchBtn" onclick="toggleHatchFilter('diff')" title="Mostrar solo contenedores que se mueven a distinto hatch" style="display:none">
+    <i class="fa-solid fa-arrows-left-right-to-line" style="font-size:9px"></i> Distinto H
+  </button>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
   <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
     <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POD</span>
@@ -390,10 +405,14 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
     <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">POL/POD</span>
     <div id="locFilterWrap" style="position:relative;display:inline-flex;align-items:center;gap:4px">
-      <button class="gbtn" id="polEsvlcBtn" onclick="togglePolEsvlc()">POL=VLC</button>
-      <button class="gbtn" id="podEsvlcBtn" onclick="togglePodEsvlc()">POD=VLC</button>
+      <button class="gbtn" id="vlcDropdownBtn" onclick="toggleVlcDropdown()" title="Filtros acumulativos: POL=VLC, POD=VLC, R/S">VLC <span id="vlcBadge" style="display:none;background:var(--accent);color:#fff;padding:0 5px;border-radius:3px;font-size:9px;font-weight:700;margin-left:2px"></span><i class="fa-solid fa-caret-down" style="font-size:9px;margin-left:3px"></i></button>
+      <div id="vlcDropdown" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:200;min-width:140px;padding:4px">
+        <div id="vlcPolItem" class="vlc-dd-item" onclick="togglePolEsvlc()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s"><span class="vlc-chk" id="vlcPolChk" style="width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0"></span>POL=VLC</div>
+        <div id="vlcPodItem" class="vlc-dd-item" onclick="togglePodEsvlc()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s"><span class="vlc-chk" id="vlcPodChk" style="width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0"></span>POD=VLC</div>
+        <div style="height:1px;background:var(--border);margin:3px 8px"></div>
+        <div id="vlcRsItem" class="vlc-dd-item" onclick="toggleRsFilter()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s"><span class="vlc-chk" id="vlcRsChk" style="width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0"></span>R/S</div>
+      </div>
     </div>
-    <button class="gbtn" id="rsFilterBtn" onclick="toggleRsFilter()" title="Filtrar por remociones (R/S) — acumulativo con POL/POD=VLC">R/S</button>
     <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores con POL distinto de ESVLC">TRT</button>
     <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris los contenedores no seleccionados o que no cumplan los filtros activos">No-sel</button>
   </div>
@@ -660,7 +679,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li><b>Clic</b> en zona vacía — Deselecciona todo.</li>
   <li><b>Clic</b> en el nombre del bay (cabecera) — Cambia a Vista 4 centrada en ese bay.</li>
   <li><b>Doble clic</b> en un contenedor DG (peligroso) — Abre el modal de información IMDG con clase, estiba y segregación.</li>
-  <li><b>Hover</b> sobre un contenedor — Muestra tooltip con datos completos (ID, tipo, posición, peso, POL, POD, DG…).</li>
+  <li><b>Hover</b> sobre un contenedor — Muestra tooltip con datos completos (ID, tipo, posición, peso, POL, POD, DG…). También resalta el contenedor en el listado y en ambas vistas de plano de forma cruzada.</li>
   <li><b>Ctrl+C</b> — Copia los IDs de los contenedores seleccionados al portapapeles.</li>
   <li><b>AvPág / RePág</b> — Navega al bay siguiente/anterior en Vista 4.</li>
 </ul>
@@ -684,8 +703,8 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li><span class="hk">Todos</span> (POD) — Muestra/oculta todos los PODs de golpe.</li>
   <li>Botones de cada POD — Clic para ocultar/mostrar ese puerto de descarga.</li>
   <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i></span> — Abre el selector de colores para personalizar cada POD.</li>
-  <li><span class="hk">POL=VLC</span> / <span class="hk">POD=VLC</span> — Filtra contenedores con POL=ESVLC o POD=ESVLC (Valencia). Son acumulativos entre sí y con <span class="hk">R/S</span>: si varios están activos, se muestran los que cumplan cualquiera de ellos (OR lógico).</li>
-  <li><span class="hk">R/S</span> — Filtra para mostrar solo los contenedores marcados como remoción. <span class="htip">Acumulativo con POL/POD=VLC: si varios están activos, se ven los de Valencia, los de POD Valencia y los RS.</span></li>
+  <li><span class="hk">VLC ▼</span> — Desplegable con filtros acumulativos: <span class="hk">POL=VLC</span> (contenedores con POL=ESVLC), <span class="hk">POD=VLC</span> (contenedores con POD=ESVLC) y <span class="hk">R/S</span> (remociones). Son acumulativos entre sí: si varios están activos, se muestran los que cumplan cualquiera de ellos (OR lógico). El badge muestra cuántos filtros están activos.</li>
+  <li><span class="hk">Mismo H</span> / <span class="hk">Distinto H</span> — Filtra los contenedores que se han movido entre planes mostrando solo los que se mueven dentro del mismo hatch o a un hatch distinto. Solo aparece cuando hay dos planes cargados con diferencias.</li>
   <li><span class="hk">TRT</span> — Atenua en gris los contenedores con POL distinto de ESVLC (tránsito).</li>
   <li><span class="hk">No-sel</span> — Atenua en gris los contenedores que no están seleccionados o no cumplen los filtros activos. Los seleccionados siempre se muestran.</li>
 </ul>
@@ -1047,7 +1066,7 @@ function buildPlan(cts){var pl={};for(var i=0;i<cts.length;i++){var c=cts[i];for
 /* ── CONSTANTES Y ESTADO ── */
 var CW=28,CH=16,CGAP=8,LO=40,MT_OFF=40,MB=20;
 var Z={1:1,2:1},F={1:{view:'3b'},2:{view:'3b'}};
-var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,podEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0,seqShow:false};
+var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,podEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0,seqShow:false,hatchFilter:null};
 // S.sel ahora es: null | Set<string> (multi-selección)
 var S={c1:null,c2:null,L1:null,L2:null,_L1:null,_L2:null,hl:null,sel:null,srch:null,fs:null,raw1:null,raw2:null,shipName1:null,shipName2:null};
 
@@ -1081,6 +1100,7 @@ var DIFF_DATA={moved:[],missing:[],appeared:[]};
 var DIFF_IDS=new Set();
 var LOG_SEL_IDS=null; // null = sin filtro de log, Set = IDs visibles en el log actual
 var _diffRows=[];
+function _findDiffInfo(id){for(var i=0;i<DIFF_DATA.moved.length;i++){if(DIFF_DATA.moved[i].id===id)return DIFF_DATA.moved[i];}for(var i=0;i<DIFF_DATA.missing.length;i++){if(DIFF_DATA.missing[i].id===id)return DIFF_DATA.missing[i];}for(var i=0;i<DIFF_DATA.appeared.length;i++){if(DIFF_DATA.appeared[i].id===id)return DIFF_DATA.appeared[i];}return null;}
 var DIFF_COLOR_MODE=null; // null=off, 'pod'=by POD, 'individual'=each container unique color
 var DIFF_INDIVIDUAL_COLORS={}; // containerId -> color (individual mode)
 var DIFF_VERIFIED=new Set(); // Set of container IDs verified by user in diff log
@@ -1164,6 +1184,18 @@ function passF_noTrt(c){
   if(c.pod&&Object.keys(GF.pods).length>0&&!GF.pods[c.pod])return false;
   // 6. Diff only
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
+  // 6b. Hatch filter (same/diff hatch — only when two plans loaded and container has moved)
+  if(GF.hatchFilter&&DIFF_IDS.has(c.id)){
+    var dInfo=_findDiffInfo(c.id);
+    if(dInfo&&dInfo.posChanged){
+      var isSH=sameHatch(dInfo.a.positions,dInfo.b.positions);
+      if(GF.hatchFilter==='same'&&!isSH)return false;
+      if(GF.hatchFilter==='diff'&&isSH)return false;
+    } else {
+      // Container didn't move position — hide when hatch filter active
+      return false;
+    }
+  }
   // 7. Rango de peso (MT excluido si hay filtro de peso)
   if(GF.wtMin!==null||GF.wtMax!==null){
     if(c.isEmpty)return false;
@@ -1871,9 +1903,48 @@ function openPodColorModal(){
 }
 function closePodColorModal(){document.getElementById('podColorModal').style.display='none';}
 function setPodColor(pod,color){POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
-function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;document.getElementById('polEsvlcBtn').classList.toggle('on',GF.polEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
-function togglePodEsvlc(){GF.podEsvlc=!GF.podEsvlc;document.getElementById('podEsvlcBtn').classList.toggle('on',GF.podEsvlc);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
-function toggleRsFilter(){GF.rsFilter=!GF.rsFilter;var btn=document.getElementById('rsFilterBtn');btn.classList.toggle('on',GF.rsFilter);btn.classList.toggle('diff-on',GF.rsFilter);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function togglePodEsvlc(){GF.podEsvlc=!GF.podEsvlc;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function toggleRsFilter(){GF.rsFilter=!GF.rsFilter;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
+function updateVlcDropdown(){
+  var polChk=document.getElementById('vlcPolChk');var podChk=document.getElementById('vlcPodChk');var rsChk=document.getElementById('vlcRsChk');
+  var polItem=document.getElementById('vlcPolItem');var podItem=document.getElementById('vlcPodItem');var rsItem=document.getElementById('vlcRsItem');
+  if(polChk){polChk.classList.toggle('checked',GF.polEsvlc);polChk.textContent=GF.polEsvlc?'\u2713':'';}
+  if(podChk){podChk.classList.toggle('checked',GF.podEsvlc);podChk.textContent=GF.podEsvlc?'\u2713':'';}
+  if(rsChk){rsChk.classList.toggle('checked',GF.rsFilter);rsChk.textContent=GF.rsFilter?'\u2713':'';}
+  if(polItem)polItem.classList.toggle('active-item',GF.polEsvlc);
+  if(podItem)podItem.classList.toggle('active-item',GF.podEsvlc);
+  if(rsItem)rsItem.classList.toggle('active-item',GF.rsFilter);
+  var count=(GF.polEsvlc?1:0)+(GF.podEsvlc?1:0)+(GF.rsFilter?1:0);
+  var badge=document.getElementById('vlcBadge');
+  var btn=document.getElementById('vlcDropdownBtn');
+  if(badge){badge.style.display=count>0?'inline':'none';badge.textContent=count;}
+  if(btn)btn.classList.toggle('on',count>0);
+}
+function toggleVlcDropdown(){
+  var dd=document.getElementById('vlcDropdown');
+  var isOpen=dd.style.display!=='none';
+  dd.style.display=isOpen?'none':'block';
+  if(!isOpen)updateVlcDropdown();
+}
+function toggleHatchFilter(mode){
+  if(!S.c1||!S.c2){showToast('Se necesitan dos planes para filtrar por hatch');return;}
+  computeDiff();
+  // Toggle: clicking same mode turns it off, clicking different mode switches
+  if(GF.hatchFilter===mode){GF.hatchFilter=null;}
+  else{GF.hatchFilter=mode;}
+  var sameBtn=document.getElementById('sameHatchBtn');
+  var diffBtn=document.getElementById('diffHatchBtn');
+  if(sameBtn){sameBtn.classList.toggle('hatch-on',GF.hatchFilter==='same');sameBtn.classList.remove('hatch-diff-on');}
+  if(diffBtn){diffBtn.classList.toggle('hatch-diff-on',GF.hatchFilter==='diff');diffBtn.classList.remove('hatch-on');}
+  clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+}
+// Close VLC dropdown when clicking outside
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('locFilterWrap');
+  var dd=document.getElementById('vlcDropdown');
+  if(dd&&dd.style.display!=='none'&&wrap&&!wrap.contains(e.target)){dd.style.display='none';}
+});
 function toggleTrt(){GF.trt=!GF.trt;document.getElementById('trtBtn').classList.toggle('on',GF.trt);document.getElementById('trtBtn').classList.toggle('trt-on',GF.trt);updateLeg();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleNonSelGray(){GF.nonSelGray=!GF.nonSelGray;document.getElementById('nonSelGrayBtn').classList.toggle('on',GF.nonSelGray);document.getElementById('nonSelGrayBtn').classList.toggle('trt-on',GF.nonSelGray);render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleWt(){GF.wtMode=!GF.wtMode;document.getElementById('wtBtn').classList.toggle('wt-on',GF.wtMode);updateLeg();render(1);render(2);sumSyncIfOpen();}
@@ -1939,13 +2010,14 @@ function toggleSrchFilter(){
 document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
 
 function resetAllFilters(){
-  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;
+  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;GF.hatchFilter=null;
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
-  ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});document.getElementById('polEsvlcBtn').classList.remove('on');document.getElementById('podEsvlcBtn').classList.remove('on');document.getElementById('rsFilterBtn').classList.remove('on','diff-on');
+  ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
   document.getElementById('wtRoundBtn').classList.remove('wt-on');document.getElementById('seqShowBtn').classList.remove('on','wt-on');
   document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
+  var sHB=document.getElementById('sameHatchBtn');var dHB=document.getElementById('diffHatchBtn');if(sHB){sHB.classList.remove('hatch-on');}if(dHB){dHB.classList.remove('hatch-diff-on');}
   clearWrange();clearSearch();
   GF.srchFilter=false;
   for(var k in GF.pods)GF.pods[k]=true;document.querySelectorAll('[data-pod]').forEach(function(b){b.classList.add('on')});
@@ -1954,7 +2026,7 @@ function resetAllFilters(){
 
 /* ── DIFF TOGGLE + LOG ── */
 function toggleDiffFilter(){if(!S.c1||!S.c2)return;GF.diffOnly=!GF.diffOnly;var btn=document.getElementById('diffToggleBtn');btn.classList.toggle('on',GF.diffOnly);btn.classList.toggle('diff-on',GF.diffOnly);clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
-function updateDiffToggleBtn(){var diffCount=DIFF_IDS.size;var badge=document.getElementById('diffToggleBadge');var logBtn=document.getElementById('diffLogBtn');var hasBoth=S.c1&&S.c2;if(hasBoth&&diffCount>0){badge.textContent=diffCount;badge.style.display='';logBtn.style.display='';}else{badge.style.display='none';logBtn.style.display='none';if(!hasBoth){GF.diffOnly=false;document.getElementById('diffToggleBtn').classList.remove('on','diff-on');}}}
+function updateDiffToggleBtn(){var diffCount=DIFF_IDS.size;var badge=document.getElementById('diffToggleBadge');var logBtn=document.getElementById('diffLogBtn');var sameHBtn=document.getElementById('sameHatchBtn');var diffHBtn=document.getElementById('diffHatchBtn');var hasBoth=S.c1&&S.c2;if(hasBoth&&diffCount>0){badge.textContent=diffCount;badge.style.display='';logBtn.style.display='';sameHBtn.style.display='';diffHBtn.style.display='';}else{badge.style.display='none';logBtn.style.display='none';sameHBtn.style.display='none';diffHBtn.style.display='none';if(!hasBoth){GF.diffOnly=false;GF.hatchFilter=null;document.getElementById('diffToggleBtn').classList.remove('on','diff-on');}}}
 
 /* ── BAY FILTER PANEL ── */
 var bayPanelOpen=false;
@@ -1997,7 +2069,7 @@ function refreshDiffList(){
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
     var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
-    h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2)" onmouseleave="if(S.hl){S.hl=null;render(1);render(2)}">';
+    h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
     h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes">'+chgs+'</div></div>';
@@ -2008,7 +2080,7 @@ function refreshDiffList(){
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
     var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
-    h+='<div class="diff-row diff-missing'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2)" onmouseleave="if(S.hl){S.hl=null;render(1);render(2)}">';
+    h+='<div class="diff-row diff-missing'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
     h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtPd).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
@@ -2019,7 +2091,7 @@ function refreshDiffList(){
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
     var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
-    h+='<div class="diff-row diff-appeared'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2)" onmouseleave="if(S.hl){S.hl=null;render(1);render(2)}">';
+    h+='<div class="diff-row diff-appeared'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
     h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtPd).join(', ')+'</span></span></div></div>';
@@ -2269,7 +2341,7 @@ function onMM(e,pn){
   // El hover también busca en el otro plan para mostrar tooltip completo
   var tc=c;
   if(c){var oC=pn===1?S.c2:S.c1;if(oC)for(var i=0;i<oC.length;i++){if(oC[i].id===c.id){tc=oC[i];break;}}}
-  if(c&&c.id!==S.hl){S.hl=c.id;render(1);render(2);}else if(!c&&S.hl){S.hl=null;render(1);render(2);}
+  if(c&&c.id!==S.hl){S.hl=c.id;render(1);render(2);lstHoverSync(c.id);}else if(!c&&S.hl){S.hl=null;render(1);render(2);lstHoverSync(null);}
   showTT(tc,e.clientX,e.clientY);
 }
 function onCl(e,pn){
@@ -2325,7 +2397,7 @@ function hitTestBayName(mx,my,L){
   }
   return null;
 }
-function onML(){if(S.hl){S.hl=null;render(1);render(2);}ttE.classList.add('hidden');}
+function onML(){if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null);}ttE.classList.add('hidden');}
 
 document.getElementById('c1').addEventListener('mousemove',function(e){onMM(e,1);});
 document.getElementById('c2').addEventListener('mousemove',function(e){onMM(e,2);});
@@ -3049,8 +3121,8 @@ function renderMoveList(){
     if(c.isOog)flags.push('<span style="color:#f57f17;font-weight:700">OOG</span>');
     h+='<div class="mw-row"><div class="mw-cinfo">';
     h+='<span class="mw-cid">'+c.id+'</span>';
-    h+='<span class="mw-cmeta">'+c.type+' &nbsp;·&nbsp; '+wt+' &nbsp;·&nbsp; '+(c.pod||'—')+(flags.length?' &nbsp;'+flags.join(' '):'')+' </span>';
-    h+='<span class="mw-cmeta" style="color:var(--fg)">'+pos+'</span>';
+    h+='<span class="mw-cmeta">'+c.type+' &nbsp;·&nbsp; '+(c.pod||'—')+(flags.length?' &nbsp;'+flags.join(' '):'')+' </span>';
+    h+='<span class="mw-cmeta" style="color:var(--fg);font-weight:600">'+wt+' &nbsp;·&nbsp; '+pos+'</span>';
     h+='</div>';
     h+='<button class="mw-del" onclick="mwRemoveItem('+i+')" title="Quitar"><i class="fa-solid fa-xmark"></i></button></div>';
   }
@@ -3072,7 +3144,7 @@ function renderPosStep(){
     h+='<div class="mw-psrow-top">';
     h+='<span class="mw-psrow-cid" title="'+c.id+'">'+c.id+'</span>';
     h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted)">'+c.type+'</span>';
-    h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted)">'+wt+'</span>';
+    h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;color:var(--fg)">'+wt+'</span>';
     if(c.pod)h+='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--accent)">'+c.pod+'</span>';
     h+='</div>';
     // Middle line: pos actual → input destino
@@ -3513,6 +3585,11 @@ function renderListado(){
   if(LST.changed.size)cnt+=' · <b>'+LST.changed.size+' mod.</b>';
   document.getElementById('listadoCount').innerHTML=cnt;
   document.getElementById('listadoTitle').textContent='Plan '+LST.pn+' · '+visRows.length;
+  // Re-apply cross-window hover highlight if active
+  if(S.hl){
+    var hlRow=document.querySelector('#listadoTable tr[data-id="'+S.hl+'"]');
+    if(hlRow)hlRow.classList.add('lst-hl');
+  }
 }
 
 // Click on list row: select/deselect container, sync to canvas
@@ -3537,8 +3614,26 @@ function lstRowClick(id,e){
     tr.classList.toggle('lst-sel',!!(S.sel&&S.sel.has&&S.sel.has(tid)));
   });
 }
-function lstRowHover(id){S.hl=id;render(1);render(2);}
-function lstRowHoverOut(){if(S.hl){S.hl=null;render(1);render(2);}}
+function lstRowHover(id){S.hl=id;render(1);render(2);
+  // Also highlight in diff panel if open
+  var tbl=document.getElementById('listadoTable');if(tbl){
+    var prev=tbl.querySelector('.lst-hl');if(prev)prev.classList.remove('lst-hl');
+    var row=tbl.querySelector('tr[data-id="'+id+'"]');
+    if(row)row.classList.add('lst-hl');
+  }
+}
+function lstRowHoverOut(){if(S.hl){S.hl=null;render(1);render(2);}
+  var tbl=document.getElementById('listadoTable');if(tbl){var prev=tbl.querySelector('.lst-hl');if(prev)prev.classList.remove('lst-hl');}
+}
+function lstHoverSync(id){
+  // Cross-window hover: highlight corresponding row in listado panel
+  var tbl=document.getElementById('listadoTable');if(!tbl)return;
+  // Remove previous hover highlight
+  var prev=tbl.querySelector('.lst-hl');if(prev)prev.classList.remove('lst-hl');
+  if(!id)return;
+  var row=tbl.querySelector('tr[data-id="'+id+'"]');
+  if(row){row.classList.add('lst-hl');row.scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
 function sortListado(col){if(LST.sortCol===col)LST.sortDir*=-1;else{LST.sortCol=col;LST.sortDir=1;}buildListadoHead();renderListado();}
 function filterListado(val){LST.filter=val;renderListado();}
 function lstEdit(id,col,val){
@@ -3549,7 +3644,14 @@ function lstEdit(id,col,val){
 }
 function exportListadoTSV(){
   var hdr=LST_COLS.map(function(c){return c.label;}).join('\t');
-  var lines=LST.rows.map(function(r){return LST_COLS.map(function(c){return r[c.key]||'';}).join('\t');});
+  var lines=LST.rows.map(function(r){
+    return LST_COLS.map(function(c){
+      var v=r[c.key]||'';
+      // For position column, pad back to 7 digits for export
+      if(c.key==='pos'&&v!=='—'){var digits=v.replace(/\D/g,'');if(digits.length>=5&&digits.length<7)v=digits.padStart(7,'0');}
+      return v;
+    }).join('\t');
+  });
   safeClipboard(hdr+'\n'+lines.join('\n'),function(){showToast('Copiados '+LST.rows.length+' contenedores (TSV)');});
 }
 function exportListadoBaplie(){

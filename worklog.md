@@ -313,3 +313,38 @@ Stage Summary:
 - Old position in diff list shows in normal color (no strikethrough)
 - Cargo filter group has all/none toggle button (✓✓ icon)
 - All changes saved to /home/z/my-project/download/baplie_viewer.html
+
+---
+Task ID: 5
+Agent: main
+Task: Implement 5 user-requested changes: VLC dropdown, weight in mover, cross-window hover, hatch filter, leading zero
+
+Work Log:
+- Replaced separate POL=VLC and POD=VLC buttons with a single VLC dropdown button containing POL=VLC, POD=VLC, and R/S as checkboxes
+- Added updateVlcDropdown() function to sync checkbox states and badge count
+- Added toggleVlcDropdown() to show/hide the dropdown, and click-outside handler to close it
+- Updated resetAllFilters() to reset VLC dropdown state instead of old button references
+- Made weight more prominent in mover window: larger font (11px), bold (600), separate from type info
+- Implemented cross-window hover highlighting: lstHoverSync() highlights listado row when hovering on canvas
+- Updated onMM() and onML() to call lstHoverSync() when S.hl changes
+- Updated lstRowHover/lstRowHoverOut to also add lst-hl CSS class visually
+- Updated renderListado() to re-apply lst-hl class after table re-render
+- Updated diff panel row event handlers to also call lstHoverSync()
+- Added Mismo H / Distinto H filter buttons in the main filter bar (visible when two plans with diffs are loaded)
+- Added GF.hatchFilter property (null/'same'/'diff')
+- Added toggleHatchFilter(mode) function with toggle behavior
+- Added hatch filter logic in passF_noTrt() that uses _findDiffInfo() and sameHatch()
+- Added _findDiffInfo(id) helper to look up diff data for a container
+- Updated updateDiffToggleBtn() to show/hide hatch buttons alongside diff log button
+- Updated resetAllFilters() to reset hatchFilter and button styles
+- Verified fmtPd() already strips leading zero for all display windows
+- Updated exportListadoTSV() to pad positions back to 7 digits for export
+- Updated help modal with new VLC dropdown, Mismo/Distinto H, and cross-window hover documentation
+
+Stage Summary:
+- VLC button is now a dropdown with POL=VLC, POD=VLC, R/S as cumulative toggles (badge shows count)
+- Weight shown prominently in mover window (bold, larger font)
+- Cross-window hover: hovering on canvas/listado/diff highlights the same container in all windows
+- Mismo H / Distinto H filter buttons appear when diffs exist, filter by same/different hatch moves
+- Leading zero removed in display (fmtPd), kept in exports (fmtP with 7-digit padding)
+- All changes saved to /home/z/my-project/download/baplie_viewer.html
