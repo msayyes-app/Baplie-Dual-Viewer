@@ -348,3 +348,31 @@ Stage Summary:
 - Mismo H / Distinto H filter buttons appear when diffs exist, filter by same/different hatch moves
 - Leading zero removed in display (fmtPd), kept in exports (fmtP with 7-digit padding)
 - All changes saved to /home/z/my-project/download/baplie_viewer.html
+
+---
+Task ID: 6
+Agent: main
+Task: Implement 7 user-requested fixes: POD=ESVLC blue, TRT improvement, weight in mover, click-select listado, same hatch white bg, hatch filter fix, print PDF
+
+Work Log:
+- Changed pC() to always return blue (#1565c0) for POD=ESVLC
+- Changed TRT dimming logic: now dims containers where BOTH POL !== ESVLC AND POD !== ESVLC (keeps VLC-colored containers visible)
+- Updated TRT button title, help text, and legend text
+- Made weight appear prominently between container ID and position in mover list (bold 12px)
+- Added lstSelSync() function that syncs listado row selection + scroll on canvas click
+- Added lstSelSync() call in onCl() (canvas click handler) for both select and deselect
+- Changed same-hatch diff rows from orange background to transparent (white)
+- Fixed hatch filter: now hides ALL non-diff containers when active (not just filtered diff containers)
+- Added Print button (🖨) in header that opens new window with canvas PNG images and print dialog
+- Added @media print CSS to hide UI elements and show only canvases
+- Added printBaplie() function that captures canvas toDataURL and opens print window
+
+Stage Summary:
+- POD=ESVLC always blue (#1565c0)
+- TRT keeps VLC (POL or POD) colored, dims transit
+- Weight shown prominently in mover between ID and position
+- Clicking container in bays highlights and scrolls listado
+- Same-hatch rows have no background tint (white)
+- Hatch filter now properly hides non-diff containers
+- Print/PDF button added with clean print layout
+- All changes saved to /home/z/my-project/download/baplie_viewer.html

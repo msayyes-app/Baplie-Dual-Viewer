@@ -148,7 +148,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 .diff-type-pill:hover{opacity:1}
 /* ── DIFF LOG POD COLOR + VERIFY ── */
 .diff-row.diff-moved{border-left:3px solid var(--diff-chg)}
-.diff-row.diff-same-hatch{background:rgba(239,108,0,.04)}
+.diff-row.diff-same-hatch{background:transparent}
 .diff-row.diff-diff-hatch{background:rgba(156,39,176,.05)}
 .diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.04)}
 .diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.04)}
@@ -321,6 +321,16 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 .gbtn.hatch-on{background:rgba(239,108,0,.12);border-color:#e65100;color:#e65100}
 .gbtn.hatch-diff-on{background:rgba(156,39,176,.1);border-color:#9c27b0;color:#9c27b0}
 
+/* ── PRINT ── */
+@media print{
+  body{background:#fff!important;color:#000!important;font-size:10px!important}
+  header,#filterBar,#legend,#lstPanel,#diffPanel,#sumPanel,#movePanel,#pickBanner,#copyToast,#dgModal,#helpModal,#rsModal,#seqModal,#podColorModal{display:none!important}
+  .pw{border:1px solid #ccc!important;background:#fff!important}
+  canvas{max-width:100%!important;height:auto!important}
+  #mainArea{flex-direction:column!important}
+  #col1,#col2{width:100%!important;border:none!important;display:block!important}
+}
+
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none menu-left">
@@ -345,6 +355,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   </button>
   <button class="mbtn" id="menuToggleBtn" onclick="toggleMenuPos()" title="Mover filtros a la izquierda o arriba"><i class="fa-solid fa-bars" style="font-size:12px"></i></button>
   <button class="mbtn" id="helpBtn" onclick="openHelp()" title="Ayuda — Instrucciones de uso" style="font-size:13px;font-weight:700;color:var(--accent)">?</button>
+  <button class="mbtn" id="printBtn" onclick="printBaplie()" title="Imprimir / Guardar como PDF" style="font-size:13px"><i class="fa-solid fa-print" style="font-size:12px"></i></button>
   <div class="srch-wrap">
     <input id="srchInput" type="text" placeholder="Buscar contenedor(es)…" oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
     <button id="srchClear" onclick="clearSearch()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
@@ -413,7 +424,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
         <div id="vlcRsItem" class="vlc-dd-item" onclick="toggleRsFilter()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s"><span class="vlc-chk" id="vlcRsChk" style="width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0"></span>R/S</div>
       </div>
     </div>
-    <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores con POL distinto de ESVLC">TRT</button>
+    <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores sin POL ni POD = ESVLC">TRT</button>
     <button class="gbtn" id="nonSelGrayBtn" onclick="toggleNonSelGray()" title="Atenuar en gris los contenedores no seleccionados o que no cumplan los filtros activos">No-sel</button>
   </div>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
@@ -705,7 +716,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li><span class="hk"><i class="fa-solid fa-palette" style="font-size:9px"></i></span> — Abre el selector de colores para personalizar cada POD.</li>
   <li><span class="hk">VLC ▼</span> — Desplegable con filtros acumulativos: <span class="hk">POL=VLC</span> (contenedores con POL=ESVLC), <span class="hk">POD=VLC</span> (contenedores con POD=ESVLC) y <span class="hk">R/S</span> (remociones). Son acumulativos entre sí: si varios están activos, se muestran los que cumplan cualquiera de ellos (OR lógico). El badge muestra cuántos filtros están activos.</li>
   <li><span class="hk">Mismo H</span> / <span class="hk">Distinto H</span> — Filtra los contenedores que se han movido entre planes mostrando solo los que se mueven dentro del mismo hatch o a un hatch distinto. Solo aparece cuando hay dos planes cargados con diferencias.</li>
-  <li><span class="hk">TRT</span> — Atenua en gris los contenedores con POL distinto de ESVLC (tránsito).</li>
+  <li><span class="hk">TRT</span> — Atenua en gris los contenedores cuyo POL y POD sean distintos de ESVLC (tránsito). Los contenedores con POL=VLC o POD=VLC mantienen su color.</li>
   <li><span class="hk">No-sel</span> — Atenua en gris los contenedores que no están seleccionados o no cumplen los filtros activos. Los seleccionados siempre se muestran.</li>
 </ul>
 </div>
@@ -1129,7 +1140,7 @@ function sameHatch(posA,posB){
 
 /* ── COLORES ── */
 function h2x(h,s,l){s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s;var x=c*(1-Math.abs((h/60)%2-1));var m=l-c/2;var r,g,b;if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}return'#'+((1<<24)+(Math.round((r+m)*255)<<16)+(Math.round((g+m)*255)<<8)+Math.round((b+m)*255)).toString(16).slice(1)}
-function pC(pod){if(!pod)return'#555555';if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
+function pC(pod){if(!pod)return'#555555';if(pod==='ESVLC')return'#1565c0';if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
 function lt(hex,n){var r=Math.min(255,parseInt(hex.slice(1,3),16)+n);var g=Math.min(255,parseInt(hex.slice(3,5),16)+n);var b=Math.min(255,parseInt(hex.slice(5,7),16)+n);return'rgb('+r+','+g+','+b+')'}
 function tC(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>140?'#000000':'#ffffff'}
 function parseSz(c){if(!c)return 20;var u=c.toUpperCase();if(is45ft(u))return 45;return(u.length>=4&&(u[0]==='4'||u[0]==='L'))?40:20;}
@@ -1185,14 +1196,15 @@ function passF_noTrt(c){
   // 6. Diff only
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
   // 6b. Hatch filter (same/diff hatch — only when two plans loaded and container has moved)
-  if(GF.hatchFilter&&DIFF_IDS.has(c.id)){
+  if(GF.hatchFilter){
+    if(!DIFF_IDS.has(c.id))return false; // hide non-diff containers when hatch filter active
     var dInfo=_findDiffInfo(c.id);
     if(dInfo&&dInfo.posChanged){
       var isSH=sameHatch(dInfo.a.positions,dInfo.b.positions);
       if(GF.hatchFilter==='same'&&!isSH)return false;
       if(GF.hatchFilter==='diff'&&isSH)return false;
     } else {
-      // Container didn't move position — hide when hatch filter active
+      // Container in diff but didn't move position — hide when hatch filter active
       return false;
     }
   }
@@ -1573,7 +1585,7 @@ function drawCell(ctx,x,y,w,h,c){
   ctx.save();
   var passesStrict=passF_noTrt(c);
   // TRT: dim containers that are not POL=ESVLC (tránsito)
-  var trtDimmed=GF.trt&&c.pol!=='ESVLC'&&!(c.isRemocion&&GF.rsFilter);
+  var trtDimmed=GF.trt&&c.pol!=='ESVLC'&&c.pod!=='ESVLC';
   // Non-sel gray: dim containers that don't pass current strict filter OR are not in the current selection
   var selActive=S.sel&&S.sel.size>0;
   var isInSel=selActive&&S.sel.has(c.id);
@@ -2277,7 +2289,7 @@ function updateLeg(){
   var lg=document.getElementById('legend');var h='';
   if(GF.wtMode){h+='<span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;width:60px;height:8px;border-radius:2px;border:1px solid var(--border);background:linear-gradient(to right,#ffffff,#000000);vertical-align:middle"></span>Peso: 0t → 35t</span>';}
   else{for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;if(!GF.pods[k])h+='<span style="opacity:.3"><span class="lem"></span>'+k+'</span>';else h+='<span><span class="lsw" style="background:'+POD_MAP[k]+'"></span>'+k+'</span>';}h+='<span><span class="lem"></span>MT</span>';h+='<span><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #ffeb3b;vertical-align:middle;margin-right:3px"></span>OOG</span>';h+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ce93d8;vertical-align:middle;margin-right:3px"></span>45\'</span>';h+='<span><span style="display:inline-block;width:12px;height:10px;border-radius:2px;border:1.5px solid #e65100;vertical-align:middle;margin-right:3px"></span>RS</span>';}
-  if(GF.trt)h+='<span style="margin-left:6px;opacity:.6"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:#888;opacity:.3;vertical-align:middle;margin-right:3px"></span>POD no sel. atenuado</span>';
+  if(GF.trt)h+='<span style="margin-left:6px;opacity:.6"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:#888;opacity:.3;vertical-align:middle;margin-right:3px"></span>Sin POL/POD=VLC atenuado</span>';
   h+='<span class="ml-auto opacity-40">Clic: seleccionar &middot; Ctrl+Clic: multi &middot; Ctrl+C: copiar</span>';
   lg.innerHTML=h;
 }
@@ -2360,7 +2372,7 @@ function onCl(e,pn){
   var clickedPos=hitTestPos(mx,my,L);
   // Intercept for move wizard
   if(MW.active&&mwInterceptClick(c,clickedPos,pn))return;
-  if(!c){S.sel=null;render(1);render(2);sumSyncIfOpen();return;}
+  if(!c){S.sel=null;render(1);render(2);sumSyncIfOpen();lstSelSync();return;}
   if(e.ctrlKey||e.metaKey){
     // Multi-selección con Ctrl
     if(!S.sel)S.sel=new Set();
@@ -2370,7 +2382,7 @@ function onCl(e,pn){
     // Clic simple: seleccionar uno solo
     if(S.sel&&S.sel.has&&S.sel.has(c.id)){S.sel=null;}else{S.sel=new Set([c.id]);}
   }
-  render(1);render(2);sumSyncIfOpen();
+  render(1);render(2);sumSyncIfOpen();lstSelSync();
   // Centrar AMBAS vistas en el contenedor seleccionado (o el primero si hay multi-sel)
   if(S.sel&&S.sel.size>=1){
     var firstId=S.sel.size===1?Array.from(S.sel)[0]:Array.from(S.sel)[0];
@@ -3121,8 +3133,8 @@ function renderMoveList(){
     if(c.isOog)flags.push('<span style="color:#f57f17;font-weight:700">OOG</span>');
     h+='<div class="mw-row"><div class="mw-cinfo">';
     h+='<span class="mw-cid">'+c.id+'</span>';
-    h+='<span class="mw-cmeta">'+c.type+' &nbsp;·&nbsp; '+(c.pod||'—')+(flags.length?' &nbsp;'+flags.join(' '):'')+' </span>';
-    h+='<span class="mw-cmeta" style="color:var(--fg);font-weight:600">'+wt+' &nbsp;·&nbsp; '+pos+'</span>';
+    h+='<span class="mw-cmeta" style="color:var(--fg);font-weight:700;font-size:12px">'+wt+'</span>';
+    h+='<span class="mw-cmeta">'+c.type+' &nbsp;·&nbsp; '+(c.pod||'—')+(flags.length?' &nbsp;'+flags.join(' '):'')+' &nbsp;·&nbsp; '+pos+'</span>';
     h+='</div>';
     h+='<button class="mw-del" onclick="mwRemoveItem('+i+')" title="Quitar"><i class="fa-solid fa-xmark"></i></button></div>';
   }
@@ -3607,12 +3619,21 @@ function lstRowClick(id,e){
     var firstId=Array.from(S.sel)[0];
     scrollToContainer(firstId);
   }
-  render(1);render(2);sumSyncIfOpen();
-  // Update row highlights
+  render(1);render(2);sumSyncIfOpen();lstSelSync();
+}
+function lstSelSync(){
+  // Sync listado row selection highlights with S.sel, and scroll to first selected
+  var tbl=document.getElementById('listadoTable');if(!tbl)return;
   document.querySelectorAll('#listadoTbody tr').forEach(function(tr){
     var tid=tr.getAttribute('data-id');
     tr.classList.toggle('lst-sel',!!(S.sel&&S.sel.has&&S.sel.has(tid)));
   });
+  // Scroll to first selected row
+  if(S.sel&&S.sel.size>=1){
+    var firstId=Array.from(S.sel)[0];
+    var row=tbl.querySelector('tr[data-id="'+firstId+'"]');
+    if(row)row.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
 }
 function lstRowHover(id){S.hl=id;render(1);render(2);
   // Also highlight in diff panel if open
@@ -3993,6 +4014,32 @@ function exportSummaryTSV(){
   }
   var tsv=rows.map(function(r){return r.join('\t')}).join('\n');
   safeClipboard(tsv,function(){showToast('Resumen copiado al portapapeles');});
+}
+
+/* ── PRINT / EXPORT PDF ── */
+function printBaplie(){
+  // Render both canvases at full resolution for printing, then open print dialog
+  // First, temporarily make canvases visible at full size
+  var c1=document.getElementById('c1');var c2=document.getElementById('c2');
+  if(!c1&&!c2){showToast('Sin datos para imprimir');return;}
+  // Open a new window with the canvas images for clean printing
+  var w=window.open('','_blank','width=1200,height=800');
+  if(!w){showToast('Permite ventanas emergentes para imprimir');return;}
+  var h='<!DOCTYPE html><html><head><title>BAPLIE Dual Viewer — Impresión</title>';
+  h+='<style>body{margin:0;padding:10px;font-family:DM Sans,sans-serif;background:#fff;color:#000}';
+  h+='h2{font-size:14px;margin:8px 0 4px;color:#333}';
+  h+='img{max-width:100%;border:1px solid #ccc;margin:4px 0 16px;break-inside:avoid}';
+  h+='@media print{h2{font-size:12px}img{border:1px solid #999;margin:2px 0 8px}}';
+  h+='</style></head><body>';
+  h+='<h2>Plan 1'+(S.shipName1?' — '+S.shipName1:'')+'</h2>';
+  if(c1&&S._L1)h+='<img src="'+c1.toDataURL('image/png')+'" style="width:100%">';
+  else h+='<p style="color:#999">Sin datos</p>';
+  h+='<h2>Plan 2'+(S.shipName2?' — '+S.shipName2:'')+'</h2>';
+  if(c2&&S._L2)h+='<img src="'+c2.toDataURL('image/png')+'" style="width:100%">';
+  else h+='<p style="color:#999">Sin datos</p>';
+  h+='<script>setTimeout(function(){window.print();},500);<\/script>';
+  h+='</body></html>';
+  w.document.write(h);w.document.close();
 }
 
 /* ── TOGGLE MENU POSITION (left sidebar vs top bar) ── */
