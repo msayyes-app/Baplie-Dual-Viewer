@@ -1142,7 +1142,7 @@ function sameHatch(posA,posB){
 
 /* ── COLORES ── */
 function h2x(h,s,l){s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s;var x=c*(1-Math.abs((h/60)%2-1));var m=l-c/2;var r,g,b;if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}return'#'+((1<<24)+(Math.round((r+m)*255)<<16)+(Math.round((g+m)*255)<<8)+Math.round((b+m)*255)).toString(16).slice(1)}
-function pC(pod){if(!pod)return'#555555';if(pod==='ESVLC'){POD_MAP['ESVLC']='#1565c0';if(POD_ORDER.indexOf('ESVLC')<0)POD_ORDER.push('ESVLC');return'#1565c0'}if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
+function pC(pod){if(!pod)return'#555555';if(pod==='ESVLC'){POD_MAP['ESVLC']='#4eccfd';if(POD_ORDER.indexOf('ESVLC')<0)POD_ORDER.push('ESVLC');return'#4eccfd'}if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
 function lt(hex,n){var r=Math.min(255,parseInt(hex.slice(1,3),16)+n);var g=Math.min(255,parseInt(hex.slice(3,5),16)+n);var b=Math.min(255,parseInt(hex.slice(5,7),16)+n);return'rgb('+r+','+g+','+b+')'}
 function tC(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>140?'#000000':'#ffffff'}
 function parseSz(c){if(!c)return 20;var u=c.toUpperCase();if(is45ft(u))return 45;return(u.length>=4&&(u[0]==='4'||u[0]==='L'))?40:20;}
@@ -1595,7 +1595,7 @@ function drawCell(ctx,x,y,w,h,c){
   if(!passesStrict&&!dimmed&&!isInSel){ctx.restore();return;}
   if(dimmed){
     // Verified containers: show with faded color instead of full gray
-    if(verifiedDimmed&&!trtDimmed&&!nonSelDimmed){
+    if(verifiedDimmed&&!trtDimmed&&!nonSelDimmed&&!hatchDimmed){
       var vCol;
       if(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[c.id])vCol=DIFF_INDIVIDUAL_COLORS[c.id];
       else if(GF.wtMode)vCol=wtColor(c);
@@ -1609,6 +1609,23 @@ function drawCell(ctx,x,y,w,h,c){
       // Small green check mark in corner
       ctx.globalAlpha=0.6;ctx.fillStyle='#388e3c';ctx.font='bold 7px sans-serif';ctx.textAlign='right';ctx.textBaseline='top';
       ctx.fillText('\u2713',x+w-2,y+1);
+      ctx.restore();return;
+    }
+    // Hatch-dimmed: show with faded original color + pattern overlay to distinguish from TRT gray
+    if(hatchDimmed&&!trtDimmed&&!nonSelDimmed&&!verifiedDimmed){
+      var hCol;
+      if(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[c.id])hCol=DIFF_INDIVIDUAL_COLORS[c.id];
+      else if(GF.wtMode)hCol=wtColor(c);
+      else hCol=pC(c.pod);
+      ctx.globalAlpha=0.18;ctx.fillStyle=hCol;ctx.fillRect(x,y,w,h);
+      ctx.strokeStyle='rgba(128,128,128,0.25)';ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);
+      // Diagonal lines pattern to clearly show it's hatch-filtered
+      ctx.globalAlpha=0.12;ctx.strokeStyle='#888888';ctx.lineWidth=0.5;ctx.beginPath();
+      for(var dl=-h;dl<w;dl+=5){ctx.moveTo(x+dl,y+h);ctx.lineTo(x+dl+h,y);}
+      ctx.stroke();
+      ctx.globalAlpha=0.3;ctx.fillStyle=document.body.classList.contains('dark')?'#ffffff':'#000000';
+      var fsH=Math.min(h-4,w>=36?8:6)+GF.wtFontSize;fsH=Math.max(5,fsH);ctx.font='500 '+fsH+'px "IBM Plex Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(fmtW(c),x+w/2,y+h/2+.5);
       ctx.restore();return;
     }
     ctx.globalAlpha=0.20;ctx.fillStyle='#888888';ctx.fillRect(x,y,w,h);
@@ -1753,7 +1770,7 @@ function hitTest(mx,my,L){
   var CH2=L.cellH||CH;
 
   if((L.effectiveView||L.view)==='3b'){
-    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break}}if(ri<0)continue;var row=L.sR[ri],bay=p.bay;var pairBay=(bay%2===0)?bay-1:bay+1;var tiersSet=new Set();if(L.plan[bay])for(var r in L.plan[bay])for(var t in L.plan[bay][r])if(passF_noTrt(L.plan[bay][r][t]))tiersSet.add(Number(t));if(L.plan[pairBay])for(var r in L.plan[pairBay])for(var t in L.plan[pairBay][r])if(passF_noTrt(L.plan[pairBay][r][t]))tiersSet.add(Number(t));for(var _ti3=0;_ti3<BAY_TRIPLES.length;_ti3++){var _tr3=BAY_TRIPLES[_ti3];if(_tr3.lo===bay||_tr3.mid===bay||_tr3.hi===bay){if(L.plan[_tr3.lo])for(var _r in L.plan[_tr3.lo])for(var _t in L.plan[_tr3.lo][_r])tiersSet.add(Number(_t));if(_tr3.mid!==null&&L.plan[_tr3.mid])for(var _r in L.plan[_tr3.mid])for(var _t in L.plan[_tr3.mid][_r])tiersSet.add(Number(_t));if(_tr3.hi&&L.plan[_tr3.hi])for(var _r in L.plan[_tr3.hi])for(var _t in L.plan[_tr3.hi][_r])tiersSet.add(Number(_t));break;}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b});var tY={};var yy=MT_OFF;for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=yy;yy+=(L.cellH||CH)}if(cubT.length>0&&bodT.length>0)yy+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=yy;yy+=(L.cellH||CH)}var allT=cubT.concat(bodT);for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return gC(L.plan,bay,row,tier)||null;}}}return null;
+    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break}}if(ri<0)continue;var row=L.sR[ri],bay=p.bay;var pairBay=(bay%2===0)?bay-1:bay+1;var tiersSet=new Set();if(L.plan[bay])for(var r in L.plan[bay])for(var t in L.plan[bay][r])if(passF(L.plan[bay][r][t]))tiersSet.add(Number(t));if(L.plan[pairBay])for(var r in L.plan[pairBay])for(var t in L.plan[pairBay][r])if(passF(L.plan[pairBay][r][t]))tiersSet.add(Number(t));for(var _ti3=0;_ti3<BAY_TRIPLES.length;_ti3++){var _tr3=BAY_TRIPLES[_ti3];if(_tr3.lo===bay||_tr3.mid===bay||_tr3.hi===bay){if(L.plan[_tr3.lo])for(var _r in L.plan[_tr3.lo])for(var _t in L.plan[_tr3.lo][_r])if(passF(L.plan[_tr3.lo][_r][_t]))tiersSet.add(Number(_t));if(_tr3.mid!==null&&L.plan[_tr3.mid])for(var _r in L.plan[_tr3.mid])for(var _t in L.plan[_tr3.mid][_r])if(passF(L.plan[_tr3.mid][_r][_t]))tiersSet.add(Number(_t));if(_tr3.hi&&L.plan[_tr3.hi])for(var _r in L.plan[_tr3.hi])for(var _t in L.plan[_tr3.hi][_r])if(passF(L.plan[_tr3.hi][_r][_t]))tiersSet.add(Number(_t));break;}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b});var tY={};var yy=MT_OFF;for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=yy;yy+=(L.cellH||CH)}if(cubT.length>0&&bodT.length>0)yy+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=yy;yy+=(L.cellH||CH)}var allT=cubT.concat(bodT);for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return gC(L.plan,bay,row,tier)||null;}}}return null;
   }
   for(var i=0;i<L.grps.length;i++){var p=L.gP[i];if(!p)continue;var g=L.grps[i];var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break}}if(ri<0)continue;var row=L.sR[ri],bay=g[0];var bt=getAlignedTiers(L.plan,g);var allT=bt.cub.concat(bt.bod);var tY={};var yy=MT_OFF;for(var j=bt.cub.length-1;j>=0;j--){tY[bt.cub[j]]=yy;yy+=(L.cellH||CH)}if(bt.cub.length>0&&bt.bod.length>0)yy+=20;for(var j=bt.bod.length-1;j>=0;j--){tY[bt.bod[j]]=yy;yy+=(L.cellH||CH)}for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return gC(L.plan,bay,row,tier)||null;}}}return null;
 }
@@ -1763,7 +1780,7 @@ function hitTestPos(mx,my,L){
   if(!L)return null;
 
   if((L.effectiveView||L.view)==='3b'){
-    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break;}}if(ri<0)continue;var row=L.sR[ri],bay=p.bay;var pairBay=(bay%2===0)?bay-1:bay+1;var tiersSet=new Set();if(L.plan[bay])for(var r in L.plan[bay])for(var t in L.plan[bay][r])tiersSet.add(Number(t));if(L.plan[pairBay])for(var r in L.plan[pairBay])for(var t in L.plan[pairBay][r])tiersSet.add(Number(t));for(var _ti4=0;_ti4<BAY_TRIPLES.length;_ti4++){var _tr4=BAY_TRIPLES[_ti4];if(_tr4.lo===bay||_tr4.mid===bay||_tr4.hi===bay){if(L.plan[_tr4.lo])for(var _r4 in L.plan[_tr4.lo])for(var _t4 in L.plan[_tr4.lo][_r4])tiersSet.add(Number(_t4));if(_tr4.mid!==null&&L.plan[_tr4.mid])for(var _r4 in L.plan[_tr4.mid])for(var _t4 in L.plan[_tr4.mid][_r4])tiersSet.add(Number(_t4));if(_tr4.hi&&L.plan[_tr4.hi])for(var _r4 in L.plan[_tr4.hi])for(var _t4 in L.plan[_tr4.hi][_r4])tiersSet.add(Number(_t4));break;}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b;});var tY={};var yy=MT_OFF;for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=yy;yy+=(L.cellH||CH);}if(cubT.length>0&&bodT.length>0)yy+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=yy;yy+=(L.cellH||CH);}var allT=cubT.concat(bodT);for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return{bay:bay,row:row,tier:tier};}}}return null;
+    for(var i=0;i<L.gP.length;i++){var p=L.gP[i];if(!p)continue;var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break;}}if(ri<0)continue;var row=L.sR[ri],bay=p.bay;var pairBay=(bay%2===0)?bay-1:bay+1;var tiersSet=new Set();if(L.plan[bay])for(var r in L.plan[bay])for(var t in L.plan[bay][r])if(passF(L.plan[bay][r][t]))tiersSet.add(Number(t));if(L.plan[pairBay])for(var r in L.plan[pairBay])for(var t in L.plan[pairBay][r])if(passF(L.plan[pairBay][r][t]))tiersSet.add(Number(t));for(var _ti4=0;_ti4<BAY_TRIPLES.length;_ti4++){var _tr4=BAY_TRIPLES[_ti4];if(_tr4.lo===bay||_tr4.mid===bay||_tr4.hi===bay){if(L.plan[_tr4.lo])for(var _r4 in L.plan[_tr4.lo])for(var _t4 in L.plan[_tr4.lo][_r4])if(passF(L.plan[_tr4.lo][_r4][_t4]))tiersSet.add(Number(_t4));if(_tr4.mid!==null&&L.plan[_tr4.mid])for(var _r4 in L.plan[_tr4.mid])for(var _t4 in L.plan[_tr4.mid][_r4])if(passF(L.plan[_tr4.mid][_r4][_t4]))tiersSet.add(Number(_t4));if(_tr4.hi&&L.plan[_tr4.hi])for(var _r4 in L.plan[_tr4.hi])for(var _t4 in L.plan[_tr4.hi][_r4])if(passF(L.plan[_tr4.hi][_r4][_t4]))tiersSet.add(Number(_t4));break;}}var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});var deckBase=82;for(var ii=0;ii<cubT.length;ii++){if(cubT[ii]<82){deckBase=72;break;}}cubT=fillT(cubT,deckBase);bodT.sort(function(a,b){return a-b;});var tY={};var yy=MT_OFF;for(var j=cubT.length-1;j>=0;j--){tY[cubT[j]]=yy;yy+=(L.cellH||CH);}if(cubT.length>0&&bodT.length>0)yy+=20;for(var j=bodT.length-1;j>=0;j--){tY[bodT[j]]=yy;yy+=(L.cellH||CH);}var allT=cubT.concat(bodT);for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return{bay:bay,row:row,tier:tier};}}}return null;
   }
   for(var i=0;i<L.grps.length;i++){var p=L.gP[i];if(!p)continue;var g=L.grps[i];var lx=(mx-p.x)/p.sc,ly=(my-p.y)/p.sc;if(lx<0||lx>L.gw||ly<0||ly>L.fgh)continue;var ri=-1;for(var j=0;j<L.sR.length;j++){if(lx>=L.rO[j]&&lx<L.rO[j]+L.slotW){ri=j;break;}}if(ri<0)continue;var row=L.sR[ri],bay=g[0];var bt=getAlignedTiers(L.plan,g);var allT=bt.cub.concat(bt.bod);var tY={};var yy=MT_OFF;for(var j=bt.cub.length-1;j>=0;j--){tY[bt.cub[j]]=yy;yy+=(L.cellH||CH);}if(bt.cub.length>0&&bt.bod.length>0)yy+=20;for(var j=bt.bod.length-1;j>=0;j--){tY[bt.bod[j]]=yy;yy+=(L.cellH||CH);}for(var ti=0;ti<allT.length;ti++){var tier=allT[ti];if(ly>=tY[tier]&&ly<=tY[tier]+(L.cellH||CH)){return{bay:bay,row:row,tier:tier};}}}return null;
 }
@@ -1827,7 +1844,7 @@ function getTierY(L,bayNum,tier,sc){
   if(!tier)return null;
   var pairBay=(bayNum%2===0)?bayNum-1:bayNum+1;
   var tiersSet=new Set();
-  function addT(b){if(!L.plan[b])return;for(var r in L.plan[b])for(var t in L.plan[b][r])tiersSet.add(Number(t));}
+  function addT(b){if(!L.plan[b])return;for(var r in L.plan[b])for(var t in L.plan[b][r])if(passF(L.plan[b][r][t]))tiersSet.add(Number(t));}
   addT(bayNum);addT(pairBay);
   for(var _ti5=0;_ti5<BAY_TRIPLES.length;_ti5++){var _tr5=BAY_TRIPLES[_ti5];if(_tr5.lo===bayNum||_tr5.mid===bayNum||_tr5.hi===bayNum){addT(_tr5.lo);if(_tr5.mid!==null)addT(_tr5.mid);if(_tr5.hi)addT(_tr5.hi);break;}}
   var cubT=[],bodT=[];tiersSet.forEach(function(t){if(t>=70)cubT.push(t);else bodT.push(t);});
@@ -1912,7 +1929,7 @@ function openPodColorModal(){
   document.getElementById('podColorModal').style.display='flex';
 }
 function closePodColorModal(){document.getElementById('podColorModal').style.display='none';}
-function setPodColor(pod,color){if(pod==='ESVLC')color='#1565c0';POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
+function setPodColor(pod,color){if(pod==='ESVLC')color='#4eccfd';POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
 function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function togglePodEsvlc(){GF.podEsvlc=!GF.podEsvlc;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleRsFilter(){GF.rsFilter=!GF.rsFilter;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
@@ -2083,7 +2100,7 @@ function refreshDiffList(){
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
     var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
-    h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
+    h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" data-id="'+d.id+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
     var wtTxt=d.b.weight?(d.b.weight/1000).toFixed(1).replace('.',',')+'t':(d.a.weight?(d.a.weight/1000).toFixed(1).replace('.',',')+'t':'');
@@ -2095,7 +2112,7 @@ function refreshDiffList(){
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
     var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
-    h+='<div class="diff-row diff-missing'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
+    h+='<div class="diff-row diff-missing'+verifiedCls+'" data-id="'+d.id+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
     var wtTxt=d.a.weight?(d.a.weight/1000).toFixed(1).replace('.',',')+'t':'';
@@ -2107,7 +2124,7 @@ function refreshDiffList(){
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
     var podBgStyle=rowCol?'background:'+rowCol+'22;':'';
     var verifiedCls=isVerified?' verified-row':'';
-    h+='<div class="diff-row diff-appeared'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
+    h+='<div class="diff-row diff-appeared'+verifiedCls+'" data-id="'+d.id+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
     var wtTxt=d.b.weight?(d.b.weight/1000).toFixed(1).replace('.',',')+'t':'';
@@ -3677,13 +3694,10 @@ function lstRowHoverOut(){if(S.hl){S.hl=null;render(1);render(2);}
   var tbl=document.getElementById('listadoTable');if(tbl){var prev=tbl.querySelector('.lst-hl');if(prev)prev.classList.remove('lst-hl');}
 }
 function lstHoverSync(id){
-  // Cross-window hover: highlight corresponding row in listado panel
-  var tbl=document.getElementById('listadoTable');if(!tbl)return;
-  // Remove previous hover highlight
-  var prev=tbl.querySelector('.lst-hl');if(prev)prev.classList.remove('lst-hl');
-  if(!id)return;
-  var row=tbl.querySelector('tr[data-id="'+id+'"]');
-  if(row){row.classList.add('lst-hl');row.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  // Cross-window hover: highlight corresponding row in listado panel AND diff/log panel
+  var tbl=document.getElementById('listadoTable');if(tbl){var prev=tbl.querySelector('.lst-hl');if(prev)prev.classList.remove('lst-hl');if(id){var row=tbl.querySelector('tr[data-id="'+id+'"]');if(row){row.classList.add('lst-hl');row.scrollIntoView({block:'nearest',behavior:'smooth'});}}}
+  // Also highlight in diff/log panel
+  var diffBody=document.getElementById('diffModalBody');if(diffBody){var prevD=diffBody.querySelector('.diff-sel');if(prevD)prevD.classList.remove('diff-sel');if(id){var diffRow=diffBody.querySelector('.diff-row[data-id="'+id+'"]');if(diffRow){diffRow.classList.add('diff-sel');diffRow.scrollIntoView({block:'nearest',behavior:'smooth'});}}}
 }
 function sortListado(col){if(LST.sortCol===col)LST.sortDir*=-1;else{LST.sortCol=col;LST.sortDir=1;}buildListadoHead();renderListado();}
 function filterListado(val){LST.filter=val;renderListado();}
@@ -4081,6 +4095,12 @@ function printBaplie(){
     h+='<span style="font-size:13px;font-weight:500">'+opts[i].label+'</span>';
     h+='</label>';
   }
+  // Fit to page checkbox
+  h+='<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .15s;background:var(--card)" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+  h+='<input type="checkbox" id="printFitPage" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0">';
+  h+='<i class="fa-solid fa-compress" style="color:var(--accent);width:16px;text-align:center;flex-shrink:0"></i>';
+  h+='<span style="font-size:13px;font-weight:500">Ajustar a una sola p\u00e1gina</span>';
+  h+='</label>';
   h+='</div>';
   h+='<div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--card)">';
   h+='<button onclick="closePrintModal()" style="padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg)">Cancelar</button>';
@@ -4094,13 +4114,19 @@ function closePrintModal(){if(_printModal){_printModal.remove();_printModal=null
 function doPrint(){
   var sel=document.querySelector('input[name="printOpt"]:checked');
   var opt=sel?sel.value:'all';
+  var fitPage=document.getElementById('printFitPage')&&document.getElementById('printFitPage').checked;
   closePrintModal();
   var w=window.open('','_blank','width=1200,height=800');
   if(!w){showToast('Permite ventanas emergentes para imprimir');return;}
-  var h='<!DOCTYPE html><html><head><title>BAPLIE Dual Viewer — Impresion</title>';
-  h+='<style>@page{margin:10mm}body{margin:0;padding:0;font-family:DM Sans,sans-serif;background:#fff;color:#000;font-size:11px}';
-  h+='h2{font-size:13px;margin:16px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;break-after:avoid}';
-  h+='.bay-img{max-width:100%;border:1px solid #ccc;margin:4px 0 10px;break-inside:avoid;page-break-inside:avoid}';
+  var h='<!DOCTYPE html><html><head><title>BAPLIE Dual Viewer \u2014 Impresion</title>';
+  h+='<style>';
+  h+='@page{margin:8mm}';
+  h+='body{margin:0;padding:10px;font-family:DM Sans,sans-serif;background:#fff;color:#000;font-size:11px}';
+  h+='h2{font-size:13px;margin:12px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;break-after:avoid;break-inside:avoid}';
+  h+='.bay-block{break-inside:avoid;page-break-inside:avoid;margin:0 0 8px;display:inline-block;vertical-align:top}';
+  h+='.bay-img{max-width:100%;border:1px solid #ccc;display:block}';
+  h+='.plan-section{margin-bottom:16px}';
+  h+='.bays-grid{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}';
   h+='.print-table{width:100%;border-collapse:collapse;font-family:IBM Plex Mono,monospace;font-size:10px;margin:8px 0 16px}';
   h+='.print-table th{background:#f0f0f0;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px;border-bottom:2px solid #ccc;text-align:left;white-space:nowrap}';
   h+='.print-table td{padding:4px 8px;border-bottom:1px solid #eee;vertical-align:middle}';
@@ -4109,31 +4135,136 @@ function doPrint(){
   h+='.print-table tr.appeared td{border-left:3px solid #388e3c;background:#f5fff5}';
   h+='.print-table tr.same-hatch td{background:#fff}';
   h+='.print-table tr.diff-hatch td{background:#faf0ff}';
+  if(fitPage){
+    h+='@page{margin:5mm;size:A4 landscape}';
+    h+='.bays-grid{display:flex;flex-wrap:nowrap;overflow:hidden}';
+    h+='.bay-block{flex-shrink:1;min-width:0}';
+    h+='.bay-img{width:100%;height:auto;object-fit:contain}';
+  }
   h+='</style></head><body>';
+
+  // Render plan bays as individual images
+  function renderPlanBays(pn){
+    var cvEl=document.getElementById('c'+pn);
+    var L=pn===1?S._L1:S._L2;
+    if(!cvEl||!L)return'<p style="color:#999">Sin datos</p>';
+    var is3b=(L.effectiveView||L.view)==='3b';
+    var bayImages=[];
+    // For each group/bay, render to a separate canvas
+    if(is3b){
+      for(var i=0;i<L.gP.length;i++){
+        var p=L.gP[i];if(!p)continue;
+        var tc=document.createElement('canvas');
+        var CH2=L.cellH||CH;
+        var fgh=p.fgh||L.fgh;
+        var bayW=Math.ceil(L.gw*p.sc)+12;
+        var bayH=Math.ceil(fgh*p.sc)+12;
+        var dpr=2;
+        tc.width=bayW*dpr;tc.height=bayH*dpr;
+        var tctx=tc.getContext('2d');
+        tctx.setTransform(dpr,0,0,dpr,0,0);
+        tctx.fillStyle='#ffffff';tctx.fillRect(0,0,bayW,bayH);
+        // Ensure light mode for print
+        var wasDark=document.body.classList.contains('dark');
+        document.body.classList.remove('dark');
+        tctx.save();tctx.translate(6,6);tctx.scale(p.sc,p.sc);
+        drawSingleBay(tctx,p.bay,L);
+        tctx.restore();
+        if(wasDark)document.body.classList.add('dark');
+        bayImages.push({src:tc.toDataURL('image/png'),label:String(p.bay).padStart(3,'0'),w:bayW,h:bayH});
+      }
+    } else {
+      for(var i=0;i<L.grps.length;i++){
+        var p=L.gP[i];if(!p)continue;
+        var g=L.grps[i];
+        var CH2=L.cellH||CH;
+        var fgh=p.fgh||L.fgh;
+        var bayW=Math.ceil(L.gw*p.sc)+12;
+        var bayH=Math.ceil(fgh*p.sc)+12;
+        var dpr=2;
+        var tc=document.createElement('canvas');
+        tc.width=bayW*dpr;tc.height=bayH*dpr;
+        var tctx=tc.getContext('2d');
+        tctx.setTransform(dpr,0,0,dpr,0,0);
+        tctx.fillStyle='#ffffff';tctx.fillRect(0,0,bayW,bayH);
+        var wasDark2=document.body.classList.contains('dark');
+        document.body.classList.remove('dark');
+        tctx.save();tctx.translate(6,6);tctx.scale(p.sc,p.sc);
+        drawGroup(tctx,g,L);
+        tctx.restore();
+        if(wasDark2)document.body.classList.add('dark');
+        var lbl=g.map(function(b){return String(b).padStart(3,'0')}).join('/');
+        bayImages.push({src:tc.toDataURL('image/png'),label:lbl,w:bayW,h:bayH});
+      }
+    }
+    if(fitPage&&bayImages.length>0){
+      // Calculate layout to fit all bays on a single A4 landscape page
+      var pageW=1040,pageH=680; // A4 landscape usable area in px at 96dpi with margins
+      // First try to find best grid layout (cols x rows) that minimizes scaling
+      var bestScale=0,bestCols=1,bestRows=1;
+      for(var nCols=1;nCols<=bayImages.length;nCols++){
+        var nRows=Math.ceil(bayImages.length/nCols);
+        // Calculate total width and height for this grid
+        var gridW=0,gridH=0;
+        for(var c=0;c<nCols;c++){
+          var colW=0;
+          for(var rr=0;rr<nRows;rr++){
+            var idx=rr*nCols+c;
+            if(idx<bayImages.length)colW=Math.max(colW,bayImages[idx].w);
+          }
+          gridW+=colW+6;
+        }
+        for(var rr=0;rr<nRows;rr++){
+          var rowH=0;
+          for(var c=0;c<nCols;c++){
+            var idx=rr*nCols+c;
+            if(idx<bayImages.length)rowH=Math.max(rowH,bayImages[idx].h);
+          }
+          gridH+=rowH+6;
+        }
+        var sc=Math.min(pageW/gridW,pageH/gridH,1);
+        if(sc>bestScale){bestScale=sc;bestCols=nCols;bestRows=nRows;}
+      }
+      var nRows2=Math.ceil(bayImages.length/bestCols);
+      var result='<div style="display:grid;grid-template-columns:repeat('+bestCols+',1fr);gap:4px;transform:scale('+bestScale+');transform-origin:top left">';
+      for(var i=0;i<bayImages.length;i++){
+        result+='<div class="bay-block"><img class="bay-img" src="'+bayImages[i].src+'" style="max-width:100%;height:auto"></div>';
+      }
+      result+='</div>';
+      return result;
+    }
+    var result='<div class="bays-grid">';
+    for(var i=0;i<bayImages.length;i++){
+      result+='<div class="bay-block"><img class="bay-img" src="'+bayImages[i].src+'"></div>';
+    }
+    result+='</div>';
+    return result;
+  }
+
   if(opt==='all'||opt==='f1'){
-    var c1=document.getElementById('c1');
-    h+='<h2>Plan 1'+(S.shipName1?' — '+S.shipName1:'')+'</h2>';
-    if(c1&&S._L1)h+='<img class="bay-img" src="'+c1.toDataURL('image/png')+'">';
-    else h+='<p style="color:#999">Sin datos</p>';
+    h+='<div class="plan-section">';
+    h+='<h2>Plan 1'+(S.shipName1?' \u2014 '+S.shipName1:'')+'</h2>';
+    h+=renderPlanBays(1);
+    h+='</div>';
   }
   if(opt==='all'||opt==='f2'){
-    var c2=document.getElementById('c2');
-    h+='<h2>Plan 2'+(S.shipName2?' — '+S.shipName2:'')+'</h2>';
-    if(c2&&S._L2)h+='<img class="bay-img" src="'+c2.toDataURL('image/png')+'">';
-    else h+='<p style="color:#999">Sin datos</p>';
+    h+='<div class="plan-section">';
+    h+='<h2>Plan 2'+(S.shipName2?' \u2014 '+S.shipName2:'')+'</h2>';
+    h+=renderPlanBays(2);
+    h+='</div>';
   }
   if(opt==='lst'){
     // Print listado as table
     var cts=LST.pn===1?S.c1:S.c2;if(!cts){h+='<p style="color:#999">Sin datos</p>';}
     else{
-      h+='<h2>Listado — Plan '+LST.pn+(LST.pn===1?(S.shipName1?' — '+S.shipName1:''):(S.shipName2?' — '+S.shipName2:''))+'</h2>';
+      h+='<h2>Listado \u2014 Plan '+LST.pn+(LST.pn===1?(S.shipName1?' \u2014 '+S.shipName1:''):(S.shipName2?' \u2014 '+S.shipName2:''))+'</h2>';
       h+='<table class="print-table"><thead><tr>';
       LST_COLS.forEach(function(col){h+='<th>'+col.label+'</th>';});
       h+='</tr></thead><tbody>';
       var vis=LST.rows;
       for(var i=0;i<vis.length;i++){
         var r=vis[i];
-        h+='<tr>';
+        h+='<tr style="break-inside:avoid;page-break-inside:avoid">';
         LST_COLS.forEach(function(col){h+='<td>'+(r[col.key]||'')+'</td>';});
         h+='</tr>';
       }
@@ -4149,7 +4280,7 @@ function doPrint(){
       for(var i=0;i<_diffRows.length;i++){
         var d=_diffRows[i];
         var cls=d.tipo==='MODIFICADO'?(d.sameHatch?'same-hatch':'diff-hatch'):d.tipo==='SOLO_P1'?'missing':'appeared';
-        h+='<tr class="'+cls+'">';
+        h+='<tr class="'+cls+'" style="break-inside:avoid;page-break-inside:avoid">';
         h+='<td>'+(d.tipo==='MODIFICADO'?'M':d.tipo==='SOLO_P1'?'-':'+')+'</td>';
         h+='<td style="font-weight:700;color:#0288d1">'+d.id+'</td>';
         var wt='';
