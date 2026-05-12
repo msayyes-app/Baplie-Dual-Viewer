@@ -376,3 +376,23 @@ Stage Summary:
 - Hatch filter now properly hides non-diff containers
 - Print/PDF button added with clean print layout
 - All changes saved to /home/z/my-project/download/baplie_viewer.html
+
+---
+Task ID: 7
+Agent: main
+Task: Fix 5 user-reported issues in BAPLIE viewer
+
+Work Log:
+- Fixed POD=ESVLC containers not displaying: pC() now registers ESVLC in POD_MAP and POD_ORDER so it appears in GF.pods filter; setPodColor() now forces '#1565c0' for ESVLC
+- Added weight display in LOG (diff panel) between container ID and position changes: new .diff-weight CSS class, wtTxt variable in refreshDiffList() for moved/missing/appeared rows
+- Added diff panel selection highlighting: new .diff-sel CSS class, diffSelSync() function that syncs diff row highlights with S.sel; called from lstSelSync() and from diff row click handler
+- Fixed hatch filter to reflect in bay canvas: removed hatch filter from passF_noTrt() (was hiding containers completely), added hatchDimmed in drawCell() that dims non-matching containers instead of hiding; hatch filter in diff list still hides rows via direct check in refreshDiffList()
+- Replaced printBaplie() with full print dialog: modal with radio options (Todo, Solo Archivo 1, Solo Archivo 2, Listado activo, Log de cambios); doPrint() generates clean HTML with @page margins, break-inside:avoid on bay images, proper table formatting; added #printModal to @media print exclusion list
+
+Stage Summary:
+- POD=ESVLC containers now always show (fixed filter inclusion bug) and always blue
+- Weight appears in LOG between container ID and position changes
+- Clicking a container in bays highlights it in both listado and diff panel
+- Hatch filter dims non-matching containers in canvas instead of hiding them entirely
+- Print dialog offers 5 options with proper page-break-avoid for bay images
+- All changes saved to /home/z/my-project/download/baplie_viewer.html

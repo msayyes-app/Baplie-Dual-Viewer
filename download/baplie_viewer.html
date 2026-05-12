@@ -136,6 +136,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 .diff-row{display:flex;align-items:baseline;gap:8px;padding:4px 10px;border-radius:4px;margin-bottom:2px;font-size:12px;line-height:1.5;transition:opacity .3s}
 .diff-row:nth-child(even){background:rgba(128,128,128,.03)}
 .diff-id{font-weight:700;font-size:12px;color:var(--accent);white-space:nowrap;flex-shrink:0;min-width:110px}
+.diff-weight{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;flex-shrink:0;margin-right:2px}
 .diff-changes{font-size:11px;color:var(--fg);line-height:1.5;flex:1;min-width:0}
 .diff-changes .chg-label{color:var(--muted);font-weight:600;font-size:10px;margin-right:2px}
 .diff-changes .chg-arrow{color:var(--muted);margin:0 3px;font-size:10px}
@@ -149,6 +150,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 /* ── DIFF LOG POD COLOR + VERIFY ── */
 .diff-row.diff-moved{border-left:3px solid var(--diff-chg)}
 .diff-row.diff-same-hatch{background:transparent}
+.diff-row.diff-sel{background:rgba(253,216,53,.15)!important;outline:1px solid rgba(253,216,53,.4)}
 .diff-row.diff-diff-hatch{background:rgba(156,39,176,.05)}
 .diff-row.diff-missing{border-left:3px solid var(--diff-del);background:rgba(198,40,40,.04)}
 .diff-row.diff-appeared{border-left:3px solid var(--diff-add);background:rgba(56,142,60,.04)}
@@ -324,7 +326,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 /* ── PRINT ── */
 @media print{
   body{background:#fff!important;color:#000!important;font-size:10px!important}
-  header,#filterBar,#legend,#lstPanel,#diffPanel,#sumPanel,#movePanel,#pickBanner,#copyToast,#dgModal,#helpModal,#rsModal,#seqModal,#podColorModal{display:none!important}
+  header,#filterBar,#legend,#lstPanel,#diffPanel,#sumPanel,#movePanel,#pickBanner,#copyToast,#dgModal,#helpModal,#rsModal,#seqModal,#podColorModal,#printModal{display:none!important}
   .pw{border:1px solid #ccc!important;background:#fff!important}
   canvas{max-width:100%!important;height:auto!important}
   #mainArea{flex-direction:column!important}
@@ -1140,7 +1142,7 @@ function sameHatch(posA,posB){
 
 /* ── COLORES ── */
 function h2x(h,s,l){s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s;var x=c*(1-Math.abs((h/60)%2-1));var m=l-c/2;var r,g,b;if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}return'#'+((1<<24)+(Math.round((r+m)*255)<<16)+(Math.round((g+m)*255)<<8)+Math.round((b+m)*255)).toString(16).slice(1)}
-function pC(pod){if(!pod)return'#555555';if(pod==='ESVLC')return'#1565c0';if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
+function pC(pod){if(!pod)return'#555555';if(pod==='ESVLC'){POD_MAP['ESVLC']='#1565c0';if(POD_ORDER.indexOf('ESVLC')<0)POD_ORDER.push('ESVLC');return'#1565c0'}if(!POD_MAP[pod]){POD_MAP[pod]=h2x((POD_ORDER.length*137.508+60)%360,65,45);POD_ORDER.push(pod)}return POD_MAP[pod]}
 function lt(hex,n){var r=Math.min(255,parseInt(hex.slice(1,3),16)+n);var g=Math.min(255,parseInt(hex.slice(3,5),16)+n);var b=Math.min(255,parseInt(hex.slice(5,7),16)+n);return'rgb('+r+','+g+','+b+')'}
 function tC(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>140?'#000000':'#ffffff'}
 function parseSz(c){if(!c)return 20;var u=c.toUpperCase();if(is45ft(u))return 45;return(u.length>=4&&(u[0]==='4'||u[0]==='L'))?40:20;}
@@ -1196,18 +1198,8 @@ function passF_noTrt(c){
   // 6. Diff only
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
   // 6b. Hatch filter (same/diff hatch — only when two plans loaded and container has moved)
-  if(GF.hatchFilter){
-    if(!DIFF_IDS.has(c.id))return false; // hide non-diff containers when hatch filter active
-    var dInfo=_findDiffInfo(c.id);
-    if(dInfo&&dInfo.posChanged){
-      var isSH=sameHatch(dInfo.a.positions,dInfo.b.positions);
-      if(GF.hatchFilter==='same'&&!isSH)return false;
-      if(GF.hatchFilter==='diff'&&isSH)return false;
-    } else {
-      // Container in diff but didn't move position — hide when hatch filter active
-      return false;
-    }
-  }
+  // NOTE: hatch filter dimming is handled in drawCell, not here, so the bay structure remains visible
+  // In passF_noTrt we only apply hatch filter to the LOG list, not to the canvas visibility
   // 7. Rango de peso (MT excluido si hay filtro de peso)
   if(GF.wtMin!==null||GF.wtMax!==null){
     if(c.isEmpty)return false;
@@ -1592,7 +1584,13 @@ function drawCell(ctx,x,y,w,h,c){
   var nonSelDimmed=GF.nonSelGray&&( !isInSel && ( !passesStrict || selActive ) );
   // Verified dim: dim containers that are verified in the diff log
   var verifiedDimmed=DIFF_VERIFIED.has(c.id);
-  var dimmed=trtDimmed||nonSelDimmed||verifiedDimmed;
+  // Hatch filter dim: dim containers that don't match the hatch filter
+  var hatchDimmed=false;
+  if(GF.hatchFilter){
+    if(!DIFF_IDS.has(c.id)){hatchDimmed=true;}
+    else{var dInfo=_findDiffInfo(c.id);if(dInfo&&dInfo.posChanged){var isSH=sameHatch(dInfo.a.positions,dInfo.b.positions);if(GF.hatchFilter==='same'&&!isSH)hatchDimmed=true;if(GF.hatchFilter==='diff'&&isSH)hatchDimmed=true;}else{hatchDimmed=true;}}
+  }
+  var dimmed=trtDimmed||nonSelDimmed||verifiedDimmed||hatchDimmed;
   // A container that doesn't pass strict (hidden normally) only draws if dimming modes active OR it's in the current selection
   if(!passesStrict&&!dimmed&&!isInSel){ctx.restore();return;}
   if(dimmed){
@@ -1914,7 +1912,7 @@ function openPodColorModal(){
   document.getElementById('podColorModal').style.display='flex';
 }
 function closePodColorModal(){document.getElementById('podColorModal').style.display='none';}
-function setPodColor(pod,color){POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
+function setPodColor(pod,color){if(pod==='ESVLC')color='#1565c0';POD_MAP[pod]=color;rebuildPods();updateLeg();render(1);render(2);}
 function togglePolEsvlc(){GF.polEsvlc=!GF.polEsvlc;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function togglePodEsvlc(){GF.podEsvlc=!GF.podEsvlc;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
 function toggleRsFilter(){GF.rsFilter=!GF.rsFilter;updateVlcDropdown();clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();}
@@ -1949,7 +1947,7 @@ function toggleHatchFilter(mode){
   var diffBtn=document.getElementById('diffHatchBtn');
   if(sameBtn){sameBtn.classList.toggle('hatch-on',GF.hatchFilter==='same');sameBtn.classList.remove('hatch-diff-on');}
   if(diffBtn){diffBtn.classList.toggle('hatch-diff-on',GF.hatchFilter==='diff');diffBtn.classList.remove('hatch-on');}
-  clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+  clearSelIfNeeded();render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();if(document.getElementById('diffPanel').classList.contains('open'))refreshDiffList();
 }
 // Close VLC dropdown when clicking outside
 document.addEventListener('click',function(e){
@@ -2064,7 +2062,11 @@ function refreshDiffList(){
   function podDot(pod,id){var col=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[id])?DIFF_INDIVIDUAL_COLORS[id]:pC(pod);var active=(DIFF_COLOR_MODE==='pod'||DIFF_COLOR_MODE==='individual')?'pod-color-active':'';return '<span class="diff-pod-dot '+active+'" style="background:'+col+'" title="POD: '+pod+'" onclick="diffPodColorClick(\''+pod+'\',this,event)"></span>';}
   function tickHtml(id){var v=DIFF_VERIFIED.has(id);return '<span class="diff-tick'+(v?' verified':'')+'" data-diff-id="'+id+'" onclick="toggleDiffVerify(\''+id+'\')" title="'+(v?'Verificado — clic para desmarcar':'Clic para verificar')+'">'+(v?'<i class="fa-solid fa-check" style="font-size:9px"></i>':'')+'</span>';}
   var h='';var count=0;var vCount=0;
-  for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;count++;
+  for(var i=0;i<moved.length;i++){var d=moved[i];if(!rowVisible(d,['moved']))continue;
+    // Hatch filter: skip rows that don't match
+    if(GF.hatchFilter&&d.posChanged){var isSH=sameHatch(d.a.positions,d.b.positions);if(GF.hatchFilter==='same'&&!isSH)continue;if(GF.hatchFilter==='diff'&&isSH)continue;}
+    if(GF.hatchFilter&&!d.posChanged)continue;
+    count++;
     var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
     var chgs='';
     if(d.posChanged)chgs+=chgFld('POS',d.a.positions.map(fmtPd).join(', '),d.b.positions.map(fmtPd).join(', '));
@@ -2084,9 +2086,10 @@ function refreshDiffList(){
     h+='<div class="diff-row diff-moved '+hatchCls+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
-    h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes">'+chgs+'</div></div>';
+    var wtTxt=d.b.weight?(d.b.weight/1000).toFixed(1).replace('.',',')+'t':(d.a.weight?(d.a.weight/1000).toFixed(1).replace('.',',')+'t':'');
+    h+='<div class="diff-id">'+d.id+'</div>'+(wtTxt?'<div class="diff-weight">'+wtTxt+'</div>':'')+'<div class="diff-changes">'+chgs+'</div></div>';
     _diffRows.push({tipo:'MODIFICADO',id:d.id,cambios:[d.posChanged?'POS':'',d.podChanged?'POD':'',d.polChanged?'POL':'',d.stateChanged?'ESTADO':'',d.wtChanged?'PESO':'',d.sztpChanged?'SZTP':''].filter(Boolean).join('|'),p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||'',sameHatch:isSameHatch});}
-  for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;count++;
+  for(var i=0;i<missing.length;i++){var d=missing[i];if(!rowVisible(d,['missing']))continue;if(GF.hatchFilter)continue;count++;
     var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
     var pod=d.a.pod||'';var podCol=pC(pod);
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
@@ -2095,9 +2098,10 @@ function refreshDiffList(){
     h+='<div class="diff-row diff-missing'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
-    h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtPd).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
+    var wtTxt=d.a.weight?(d.a.weight/1000).toFixed(1).replace('.',',')+'t':'';
+    h+='<div class="diff-id">'+d.id+'</div>'+(wtTxt?'<div class="diff-weight">'+wtTxt+'</div>':'')+'<div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from">'+d.a.positions.map(fmtPd).join(', ')+'</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-del)">eliminado</span></span></div></div>';
     _diffRows.push({tipo:'SOLO_P1',id:d.id,cambios:'MISSING',p1_pos:d.a.positions.map(fmtP).join(' '),p1_pol:d.a.pol||'',p1_pod:d.a.pod||'',p1_estado:d.a.isEmpty?'MT':'Full',p1_peso:d.a.weight?(d.a.weight/1000).toFixed(1):'',p1_tipo:d.a.type||'',p2_pos:'',p2_pol:'',p2_pod:'',p2_estado:'',p2_peso:'',p2_tipo:'',sameHatch:null});}
-  for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;count++;
+  for(var i=0;i<appeared.length;i++){var d=appeared[i];if(!rowVisible(d,['appeared']))continue;if(GF.hatchFilter)continue;count++;
     var isVerified=DIFF_VERIFIED.has(d.id);if(isVerified)vCount++;
     var pod=d.b.pod||'';var podCol=pC(pod);
     var rowCol=(DIFF_COLOR_MODE==='individual'&&DIFF_INDIVIDUAL_COLORS[d.id])?DIFF_INDIVIDUAL_COLORS[d.id]:(DIFF_COLOR_MODE==='pod'?podCol:'');
@@ -2106,7 +2110,8 @@ function refreshDiffList(){
     h+='<div class="diff-row diff-appeared'+verifiedCls+'" style="'+podBgStyle+'" onmouseenter="S.hl=\''+d.id+'\';render(1);render(2);lstHoverSync(\''+d.id+'\')" onmouseleave="if(S.hl){S.hl=null;render(1);render(2);lstHoverSync(null)}">';
     h+=tickHtml(d.id);
     h+=podDot(pod,d.id);
-    h+='<div class="diff-id">'+d.id+'</div><div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtPd).join(', ')+'</span></span></div></div>';
+    var wtTxt=d.b.weight?(d.b.weight/1000).toFixed(1).replace('.',',')+'t':'';
+    h+='<div class="diff-id">'+d.id+'</div>'+(wtTxt?'<div class="diff-weight">'+wtTxt+'</div>':'')+'<div class="diff-changes"><span class="chg-field"><span class="chg-label">POS</span><span class="chg-from" style="opacity:.3">nuevo</span><span class="chg-arrow">\u2192</span><span class="chg-to" style="color:var(--diff-add)">'+d.b.positions.map(fmtPd).join(', ')+'</span></span></div></div>';
     _diffRows.push({tipo:'SOLO_P2',id:d.id,cambios:'APPEARED',p1_pos:'',p1_pol:'',p1_pod:'',p1_estado:'',p1_peso:'',p1_tipo:'',p2_pos:d.b.positions.map(fmtP).join(' '),p2_pol:d.b.pol||'',p2_pod:d.b.pod||'',p2_estado:d.b.isEmpty?'MT':'Full',p2_peso:d.b.weight?(d.b.weight/1000).toFixed(1):'',p2_tipo:d.b.type||'',sameHatch:null});}
   if(count===0)h+='<div style="color:var(--muted);font-size:12px;padding:16px 0;text-align:center"><i class="fa-solid fa-filter" style="margin-right:6px"></i>Ningún contenedor coincide con el filtro activo.</div>';
   listEl.innerHTML=h;
@@ -2228,7 +2233,7 @@ function openDiffModal(){
       }
       // Scroll to in both plans
       scrollToContainer(id);
-      render(1);render(2);
+      render(1);render(2);lstSelSync();
     });
   }
 }
@@ -3634,6 +3639,31 @@ function lstSelSync(){
     var row=tbl.querySelector('tr[data-id="'+firstId+'"]');
     if(row)row.scrollIntoView({block:'nearest',behavior:'smooth'});
   }
+  // Also sync diff panel selection
+  diffSelSync();
+}
+function diffSelSync(){
+  // Sync diff panel row selection highlights with S.sel
+  var listEl=document.getElementById('diffRowsList');if(!listEl)return;
+  listEl.querySelectorAll('.diff-row').forEach(function(row){
+    var idEl=row.querySelector('.diff-id');
+    if(!idEl)return;
+    var id=idEl.textContent.trim();
+    row.classList.toggle('diff-sel',!!(S.sel&&S.sel.has&&S.sel.has(id)));
+  });
+  // Scroll to first selected row in diff panel
+  if(S.sel&&S.sel.size>=1){
+    var firstId=Array.from(S.sel)[0];
+    var dRow=listEl.querySelector('.diff-row .diff-id');
+    // Find the row containing the selected container ID
+    var allIds=listEl.querySelectorAll('.diff-id');
+    for(var i=0;i<allIds.length;i++){
+      if(allIds[i].textContent.trim()===firstId){
+        allIds[i].closest('.diff-row').scrollIntoView({block:'nearest',behavior:'smooth'});
+        break;
+      }
+    }
+  }
 }
 function lstRowHover(id){S.hl=id;render(1);render(2);
   // Also highlight in diff panel if open
@@ -4017,27 +4047,125 @@ function exportSummaryTSV(){
 }
 
 /* ── PRINT / EXPORT PDF ── */
+var _printModal=null;
 function printBaplie(){
-  // Render both canvases at full resolution for printing, then open print dialog
-  // First, temporarily make canvases visible at full size
-  var c1=document.getElementById('c1');var c2=document.getElementById('c2');
-  if(!c1&&!c2){showToast('Sin datos para imprimir');return;}
-  // Open a new window with the canvas images for clean printing
+  // Build print options dialog
+  if(_printModal){_printModal.remove();_printModal=null;}
+  var hasF1=!!(S.c1&&S.c1.length);
+  var hasF2=!!(S.c2&&S.c2.length);
+  var hasLst=document.getElementById('lstPanel').classList.contains('open');
+  var hasDiff=document.getElementById('diffPanel').classList.contains('open');
+  if(!hasF1&&!hasF2&&!hasLst&&!hasDiff){showToast('Sin datos para imprimir');return;}
+  var m=document.createElement('div');
+  m.id='printModal';
+  m.style.cssText='position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)';
+  var h='<div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:460px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)">';
+  h+='<div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--card)">';
+  h+='<div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(2,136,209,.12);color:var(--accent);flex-shrink:0"><i class="fa-solid fa-print"></i></div>';
+  h+='<span style="font-weight:700;font-size:15px;flex:1">Imprimir / Guardar PDF</span>';
+  h+='<button onclick="closePrintModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px;border-radius:4px" onmouseover="this.style.color=\'var(--fg)\'" onmouseout="this.style.color=\'var(--muted)\'">&times;</button>';
+  h+='</div>';
+  h+='<div style="padding:16px 20px;flex:1;overflow:auto">';
+  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Selecciona qu\u00e9 contenido imprimir:</div>';
+  // Options
+  var opts=[];
+  if(hasF1&&hasF2)opts.push({id:'all',label:'Todo (Archivo 1 + Archivo 2)',icon:'fa-clone'});
+  if(hasF1)opts.push({id:'f1',label:'Solo Archivo 1'+(S.shipName1?' — '+S.shipName1:''),icon:'fa-file'});
+  if(hasF2)opts.push({id:'f2',label:'Solo Archivo 2'+(S.shipName2?' — '+S.shipName2:''),icon:'fa-file'});
+  if(hasLst)opts.push({id:'lst',label:'Listado activo (Plan '+LST.pn+')',icon:'fa-table'});
+  if(hasDiff)opts.push({id:'diff',label:'Log de cambios ('+_diffRows.length+' entradas)',icon:'fa-list-ul'});
+  for(var i=0;i<opts.length;i++){
+    h+='<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .15s;background:var(--card)" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+    h+='<input type="radio" name="printOpt" value="'+opts[i].id+'" '+(i===0?'checked':'')+' style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0">';
+    h+='<i class="fa-solid '+opts[i].icon+'" style="color:var(--accent);width:16px;text-align:center;flex-shrink:0"></i>';
+    h+='<span style="font-size:13px;font-weight:500">'+opts[i].label+'</span>';
+    h+='</label>';
+  }
+  h+='</div>';
+  h+='<div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--card)">';
+  h+='<button onclick="closePrintModal()" style="padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg)">Cancelar</button>';
+  h+='<button onclick="doPrint()" style="padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff"><i class="fa-solid fa-print" style="margin-right:4px"></i>Imprimir</button>';
+  h+='</div></div>';
+  m.innerHTML=h;
+  document.body.appendChild(m);
+  _printModal=m;
+}
+function closePrintModal(){if(_printModal){_printModal.remove();_printModal=null;}}
+function doPrint(){
+  var sel=document.querySelector('input[name="printOpt"]:checked');
+  var opt=sel?sel.value:'all';
+  closePrintModal();
   var w=window.open('','_blank','width=1200,height=800');
   if(!w){showToast('Permite ventanas emergentes para imprimir');return;}
-  var h='<!DOCTYPE html><html><head><title>BAPLIE Dual Viewer — Impresión</title>';
-  h+='<style>body{margin:0;padding:10px;font-family:DM Sans,sans-serif;background:#fff;color:#000}';
-  h+='h2{font-size:14px;margin:8px 0 4px;color:#333}';
-  h+='img{max-width:100%;border:1px solid #ccc;margin:4px 0 16px;break-inside:avoid}';
-  h+='@media print{h2{font-size:12px}img{border:1px solid #999;margin:2px 0 8px}}';
+  var h='<!DOCTYPE html><html><head><title>BAPLIE Dual Viewer — Impresion</title>';
+  h+='<style>@page{margin:10mm}body{margin:0;padding:0;font-family:DM Sans,sans-serif;background:#fff;color:#000;font-size:11px}';
+  h+='h2{font-size:13px;margin:16px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;break-after:avoid}';
+  h+='.bay-img{max-width:100%;border:1px solid #ccc;margin:4px 0 10px;break-inside:avoid;page-break-inside:avoid}';
+  h+='.print-table{width:100%;border-collapse:collapse;font-family:IBM Plex Mono,monospace;font-size:10px;margin:8px 0 16px}';
+  h+='.print-table th{background:#f0f0f0;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px;border-bottom:2px solid #ccc;text-align:left;white-space:nowrap}';
+  h+='.print-table td{padding:4px 8px;border-bottom:1px solid #eee;vertical-align:middle}';
+  h+='.print-table tr.moved td{border-left:3px solid #e65100}';
+  h+='.print-table tr.missing td{border-left:3px solid #c62828;background:#fff5f5}';
+  h+='.print-table tr.appeared td{border-left:3px solid #388e3c;background:#f5fff5}';
+  h+='.print-table tr.same-hatch td{background:#fff}';
+  h+='.print-table tr.diff-hatch td{background:#faf0ff}';
   h+='</style></head><body>';
-  h+='<h2>Plan 1'+(S.shipName1?' — '+S.shipName1:'')+'</h2>';
-  if(c1&&S._L1)h+='<img src="'+c1.toDataURL('image/png')+'" style="width:100%">';
-  else h+='<p style="color:#999">Sin datos</p>';
-  h+='<h2>Plan 2'+(S.shipName2?' — '+S.shipName2:'')+'</h2>';
-  if(c2&&S._L2)h+='<img src="'+c2.toDataURL('image/png')+'" style="width:100%">';
-  else h+='<p style="color:#999">Sin datos</p>';
-  h+='<script>setTimeout(function(){window.print();},500);<\/script>';
+  if(opt==='all'||opt==='f1'){
+    var c1=document.getElementById('c1');
+    h+='<h2>Plan 1'+(S.shipName1?' — '+S.shipName1:'')+'</h2>';
+    if(c1&&S._L1)h+='<img class="bay-img" src="'+c1.toDataURL('image/png')+'">';
+    else h+='<p style="color:#999">Sin datos</p>';
+  }
+  if(opt==='all'||opt==='f2'){
+    var c2=document.getElementById('c2');
+    h+='<h2>Plan 2'+(S.shipName2?' — '+S.shipName2:'')+'</h2>';
+    if(c2&&S._L2)h+='<img class="bay-img" src="'+c2.toDataURL('image/png')+'">';
+    else h+='<p style="color:#999">Sin datos</p>';
+  }
+  if(opt==='lst'){
+    // Print listado as table
+    var cts=LST.pn===1?S.c1:S.c2;if(!cts){h+='<p style="color:#999">Sin datos</p>';}
+    else{
+      h+='<h2>Listado — Plan '+LST.pn+(LST.pn===1?(S.shipName1?' — '+S.shipName1:''):(S.shipName2?' — '+S.shipName2:''))+'</h2>';
+      h+='<table class="print-table"><thead><tr>';
+      LST_COLS.forEach(function(col){h+='<th>'+col.label+'</th>';});
+      h+='</tr></thead><tbody>';
+      var vis=LST.rows;
+      for(var i=0;i<vis.length;i++){
+        var r=vis[i];
+        h+='<tr>';
+        LST_COLS.forEach(function(col){h+='<td>'+(r[col.key]||'')+'</td>';});
+        h+='</tr>';
+      }
+      h+='</tbody></table>';
+    }
+  }
+  if(opt==='diff'){
+    // Print diff log as table
+    if(!_diffRows.length){h+='<p style="color:#999">Sin cambios</p>';}
+    else{
+      h+='<h2>Log de cambios'+(S.shipName1?' ('+S.shipName1:'')+(S.shipName2?' vs '+S.shipName2:')':'')+'</h2>';
+      h+='<table class="print-table"><thead><tr><th></th><th>Contenedor</th><th>Peso</th><th>Cambios</th><th>Hatch</th><th>P1 Pos</th><th>P1 POL</th><th>P1 POD</th><th>P1 Peso</th><th>P2 Pos</th><th>P2 POL</th><th>P2 POD</th><th>P2 Peso</th></tr></thead><tbody>';
+      for(var i=0;i<_diffRows.length;i++){
+        var d=_diffRows[i];
+        var cls=d.tipo==='MODIFICADO'?(d.sameHatch?'same-hatch':'diff-hatch'):d.tipo==='SOLO_P1'?'missing':'appeared';
+        h+='<tr class="'+cls+'">';
+        h+='<td>'+(d.tipo==='MODIFICADO'?'M':d.tipo==='SOLO_P1'?'-':'+')+'</td>';
+        h+='<td style="font-weight:700;color:#0288d1">'+d.id+'</td>';
+        var wt='';
+        if(d.tipo==='MODIFICADO'||d.tipo==='SOLO_P2'){wt=d.p2_peso?d.p2_peso+'t':(d.p1_peso?d.p1_peso+'t':'');}
+        else if(d.tipo==='SOLO_P1'){wt=d.p1_peso?d.p1_peso+'t':'';}
+        h+='<td>'+wt+'</td>';
+        h+='<td>'+d.cambios+'</td>';
+        h+='<td>'+(d.sameHatch===null?'':d.sameHatch?'Si':'No')+'</td>';
+        h+='<td>'+d.p1_pos+'</td><td>'+d.p1_pol+'</td><td>'+d.p1_pod+'</td><td>'+(d.p1_peso?d.p1_peso+'t':'')+'</td>';
+        h+='<td>'+d.p2_pos+'</td><td>'+d.p2_pol+'</td><td>'+d.p2_pod+'</td><td>'+(d.p2_peso?d.p2_peso+'t':'')+'</td>';
+        h+='</tr>';
+      }
+      h+='</tbody></table>';
+    }
+  }
+  h+='<script>setTimeout(function(){window.print();},600);<\/script>';
   h+='</body></html>';
   w.document.write(h);w.document.close();
 }
