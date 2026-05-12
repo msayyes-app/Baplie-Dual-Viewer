@@ -396,3 +396,23 @@ Stage Summary:
 - Hatch filter dims non-matching containers in canvas instead of hiding them entirely
 - Print dialog offers 5 options with proper page-break-avoid for bay images
 - All changes saved to /home/z/my-project/download/baplie_viewer.html
+---
+Task ID: 1
+Agent: main
+Task: Fix bodega slot colors, print quality, print view config, canvas pointer alignment, hatch filter
+
+Work Log:
+- Lightened --cvhold CSS variable: dark mode #090d17 → #182035, light mode #c8cdd4 → #dde0e5
+- Increased print DPR from 2 to 6 for sharp fonts when zoomed in PDF
+- Rewrote renderPlanBays() for 3b mode: renders each TRIO as a single combined image so trio hatch cannot split across pages
+- Added .trio-block and .page-bay CSS classes for proper page-break control
+- View 4 (1b) print: each bay gets its own page with page-break-before:always
+- Set _drawCellFullInfo=true for View 4 printing to show full container info (type, weight, POL)
+- Added CSS scale correction to onMM/onCl mouse handlers for pointer alignment when filters change layout
+- Fixed passF() to return true when GF.hatchFilter is active, so hatch-dimmed containers are drawn in canvas
+- Verified POD=VLC color is already #4ECCFD = RGB(78,204,253)
+
+Stage Summary:
+- All 7 tasks completed successfully
+- baplie_viewer.html syntax validated with no errors
+- Key changes: CSS colors, print DPR 6x, trio group rendering, View 4 page-per-bay, mouse scale correction, hatch filter in passF

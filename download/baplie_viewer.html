@@ -82,9 +82,9 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <style>
-:root{--bg:#0b0f19;--panel:#131926;--card:#1a2236;--border:#263354;--muted:#6b7fa3;--accent:#4fc3f7;--fg:#dce4f0;--cvbg:#0e1525;--cvhold:#090d17;--grid:#263354;--hatch:#3d5070;--diff-add:#2e7d32;--diff-chg:#e65100;--diff-del:#b71c1c}
-body{--bg:#eef0f4;--panel:#ffffff;--card:#f5f6f8;--border:#cdd2da;--muted:#6c757d;--accent:#0288d1;--fg:#1a1a2e;--cvbg:#dfe3e8;--cvhold:#c8cdd4;--grid:#a0a8b4;--hatch:#78829a;--diff-add:#388e3c;--diff-chg:#ef6c00;--diff-del:#c62828}
-body.dark{--bg:#0b0f19;--panel:#131926;--card:#1a2236;--border:#263354;--muted:#6b7fa3;--accent:#4fc3f7;--fg:#dce4f0;--cvbg:#0e1525;--cvhold:#090d17;--grid:#263354;--hatch:#3d5070;--diff-add:#2e7d32;--diff-chg:#e65100;--diff-del:#b71c1c}
+:root{--bg:#0b0f19;--panel:#131926;--card:#1a2236;--border:#263354;--muted:#6b7fa3;--accent:#4fc3f7;--fg:#dce4f0;--cvbg:#0e1525;--cvhold:#182035;--grid:#263354;--hatch:#3d5070;--diff-add:#2e7d32;--diff-chg:#e65100;--diff-del:#b71c1c}
+body{--bg:#eef0f4;--panel:#ffffff;--card:#f5f6f8;--border:#cdd2da;--muted:#6c757d;--accent:#0288d1;--fg:#1a1a2e;--cvbg:#dfe3e8;--cvhold:#dde0e5;--grid:#a0a8b4;--hatch:#78829a;--diff-add:#388e3c;--diff-chg:#ef6c00;--diff-del:#c62828}
+body.dark{--bg:#0b0f19;--panel:#131926;--card:#1a2236;--border:#263354;--muted:#6b7fa3;--accent:#4fc3f7;--fg:#dce4f0;--cvbg:#0e1525;--cvhold:#182035;--grid:#263354;--hatch:#3d5070;--diff-add:#2e7d32;--diff-chg:#e65100;--diff-del:#b71c1c}
 body{background:var(--bg);color:var(--fg);font-family:'DM Sans',sans-serif}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--panel)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .pw{position:relative;overflow:auto}.pw.drag-over::after{content:'';position:absolute;inset:6px;border:2px dashed var(--accent);border-radius:8px;pointer-events:none;z-index:10}
@@ -1213,13 +1213,15 @@ function passF_noTrt(c){
   if(GF.bays){var cBayOk=false;for(var pi=0;pi<c.positions.length;pi++){if(bayPassF(c.positions[pi].bay)){cBayOk=true;break;}}if(!cBayOk)return false;}
   return true;
 }
-// passF: con TRT dim-pass
+// passF: con TRT dim-pass + hatch filter dim-pass
 function passF(c){
   if(passF_noTrt(c))return true;
   // TRT mode: show all containers but dim those with pol != ESVLC (transit)
   if(GF.trt)return true;
   // Non-sel gray: show all containers, dim those not passing strict filter
   if(GF.nonSelGray)return true;
+  // Hatch filter: show all containers, dim those not matching hatch filter
+  if(GF.hatchFilter)return true;
   return false;
 }
 // passF_noTrt_ignPod: kept for compatibility
@@ -2366,8 +2368,14 @@ function showToast(msg){var t=document.getElementById('copyToast');t.textContent
 
 /* ── MOUSE EVENTS + CTRL+CLIC MULTI + CTRL+C COPIAR ── */
 function onMM(e,pn){
-  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();
   var L=pn===1?S._L1:S._L2;if(!L)return;
+  // Account for any CSS scaling (e.g., when filters change layout size)
+  var cssW=parseFloat(cvEl.style.width)||rect.width;
+  var cssH=parseFloat(cvEl.style.height)||rect.height;
+  var sx=cssW>0&&rect.width>0?cssW/rect.width:1;
+  var sy=cssH>0&&rect.height>0?cssH/rect.height:1;
+  var mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;
   // Change cursor on bay name header
   var bayHov=hitTestBayName(mx,my,L);
   cvEl.style.cursor=bayHov!==null?'pointer':'';
@@ -2379,8 +2387,13 @@ function onMM(e,pn){
   showTT(tc,e.clientX,e.clientY);
 }
 function onCl(e,pn){
-  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  var cvEl=document.getElementById('c'+pn);var rect=cvEl.getBoundingClientRect();
   var L=pn===1?S._L1:S._L2;if(!L)return;
+  var cssW2=parseFloat(cvEl.style.width)||rect.width;
+  var cssH2=parseFloat(cvEl.style.height)||rect.height;
+  var sx2=cssW2>0&&rect.width>0?cssW2/rect.width:1;
+  var sy2=cssH2>0&&rect.height>0?cssH2/rect.height:1;
+  var mx=(e.clientX-rect.left)*sx2,my=(e.clientY-rect.top)*sy2;
   // Check if click is on a bay name header
   var bayClicked=hitTestBayName(mx,my,L);
   if(bayClicked!==null&&bayClicked!==undefined){
@@ -4127,6 +4140,11 @@ function doPrint(){
   h+='.bay-img{max-width:100%;border:1px solid #ccc;display:block}';
   h+='.plan-section{margin-bottom:16px}';
   h+='.bays-grid{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}';
+  h+='.trio-block{break-inside:avoid;page-break-inside:avoid;page-break-after:auto;margin:0 0 8px;display:inline-block;vertical-align:top}';
+  h+='.trio-img{max-width:100%;border:1px solid #ccc;display:block}';
+  h+='.page-bay{break-before:page;page-break-before:always;break-inside:avoid;page-break-inside:avoid;margin:0;padding:0}';
+  h+='.page-bay:first-child{break-before:auto;page-break-before:auto}';
+  h+='.page-bay img{width:100%;max-width:100%;border:1px solid #ccc;display:block}';
   h+='.print-table{width:100%;border-collapse:collapse;font-family:IBM Plex Mono,monospace;font-size:10px;margin:8px 0 16px}';
   h+='.print-table th{background:#f0f0f0;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px;border-bottom:2px solid #ccc;text-align:left;white-space:nowrap}';
   h+='.print-table td{padding:4px 8px;border-bottom:1px solid #eee;vertical-align:middle}';
@@ -4140,71 +4158,102 @@ function doPrint(){
     h+='.bays-grid{display:flex;flex-wrap:nowrap;overflow:hidden}';
     h+='.bay-block{flex-shrink:1;min-width:0}';
     h+='.bay-img{width:100%;height:auto;object-fit:contain}';
+    h+='.trio-block{flex-shrink:1;min-width:0}';
+    h+='.trio-img{width:100%;height:auto;object-fit:contain}';
   }
   h+='</style></head><body>';
 
-  // Render plan bays as individual images
+  // Render plan bays as high-resolution images
+  var PRINT_DPR=6; // High DPR for sharp fonts when zoomed in PDF
+
   function renderPlanBays(pn){
     var cvEl=document.getElementById('c'+pn);
     var L=pn===1?S._L1:S._L2;
     if(!cvEl||!L)return'<p style="color:#999">Sin datos</p>';
     var is3b=(L.effectiveView||L.view)==='3b';
+    var is1b=(L.view==='1b');
     var bayImages=[];
-    // For each group/bay, render to a separate canvas
+
+    // Ensure light mode for print
+    var wasDark=document.body.classList.contains('dark');
+    document.body.classList.remove('dark');
+
+    try{
+    var prevDrawCellFullInfo=_drawCellFullInfo;
     if(is3b){
-      for(var i=0;i<L.gP.length;i++){
-        var p=L.gP[i];if(!p)continue;
+      // For View 1 (3b) and View 2 (5b): render each TRIO as a single image
+      // so the trio hatch cannot be split across pages
+      for(var gi=0;gi<L.grps.length;gi++){
+        var g=L.grps[gi];
+        // Find gP entries belonging to this group
+        var groupPE=[];var minGX=Infinity,maxGX=0,minGY=Infinity,maxGXW=0;
+        for(var pi=0;pi<L.gP.length;pi++){
+          var pp=L.gP[pi];if(!pp)continue;
+          // A gP entry belongs to this group if its bay is in the group
+          if(g.indexOf(pp.bay)>=0){
+            groupPE.push(pp);
+            if(pp.x<minGX)minGX=pp.x;
+            if(pp.x+L.gw*pp.sc>maxGX)maxGX=pp.x+L.gw*pp.sc;
+            if(pp.y<minGY)minGY=pp.y;
+            var thisH=L.fgh*pp.sc;
+            if(pp.y+thisH>maxGX)maxGXW=Math.max(maxGXW,pp.y+thisH);
+          }
+        }
+        if(!groupPE.length)continue;
+        // Compute bounding box for the trio
+        var totalW=0;var grpH=0;
+        // Sort groupPE by bay number to get left-to-right order
+        groupPE.sort(function(a,b){return a.bay-b.bay;});
+        var bayW=L.gw*L.sc;
+        var bayH=L.fgh*L.sc;
+        totalW=groupPE.length*(bayW+6)-6+12;
+        grpH=bayH+12;
         var tc=document.createElement('canvas');
-        var CH2=L.cellH||CH;
-        var fgh=p.fgh||L.fgh;
-        var bayW=Math.ceil(L.gw*p.sc)+12;
-        var bayH=Math.ceil(fgh*p.sc)+12;
-        var dpr=2;
-        tc.width=bayW*dpr;tc.height=bayH*dpr;
+        tc.width=Math.ceil(totalW*PRINT_DPR);tc.height=Math.ceil(grpH*PRINT_DPR);
         var tctx=tc.getContext('2d');
-        tctx.setTransform(dpr,0,0,dpr,0,0);
-        tctx.fillStyle='#ffffff';tctx.fillRect(0,0,bayW,bayH);
-        // Ensure light mode for print
-        var wasDark=document.body.classList.contains('dark');
-        document.body.classList.remove('dark');
-        tctx.save();tctx.translate(6,6);tctx.scale(p.sc,p.sc);
-        drawSingleBay(tctx,p.bay,L);
-        tctx.restore();
-        if(wasDark)document.body.classList.add('dark');
-        bayImages.push({src:tc.toDataURL('image/png'),label:String(p.bay).padStart(3,'0'),w:bayW,h:bayH});
+        tctx.setTransform(PRINT_DPR,0,0,PRINT_DPR,0,0);
+        tctx.fillStyle='#ffffff';tctx.fillRect(0,0,totalW,grpH);
+        // Draw each bay of the trio side by side
+        for(var bi=0;bi<groupPE.length;bi++){
+          var p=groupPE[bi];
+          tctx.save();
+          tctx.translate(6+bi*(bayW+6),6);
+          tctx.scale(p.sc,p.sc);
+          drawSingleBay(tctx,p.bay,L);
+          tctx.restore();
+        }
+        var lbl=g.map(function(b){return String(b).padStart(3,'0')}).join('/');
+        bayImages.push({src:tc.toDataURL('image/png'),label:lbl,w:totalW,h:grpH,isTrio:true});
       }
     } else {
+      // For View 3 (2b) and View 4 (1b): render each bay/group individually
+      // Set _drawCellFullInfo for View 4 (1b) to show full container info
+      _drawCellFullInfo=is1b;
       for(var i=0;i<L.grps.length;i++){
         var p=L.gP[i];if(!p)continue;
         var g=L.grps[i];
-        var CH2=L.cellH||CH;
-        var fgh=p.fgh||L.fgh;
         var bayW=Math.ceil(L.gw*p.sc)+12;
-        var bayH=Math.ceil(fgh*p.sc)+12;
-        var dpr=2;
+        var bayH=Math.ceil(L.fgh*p.sc)+12;
         var tc=document.createElement('canvas');
-        tc.width=bayW*dpr;tc.height=bayH*dpr;
+        tc.width=bayW*PRINT_DPR;tc.height=bayH*PRINT_DPR;
         var tctx=tc.getContext('2d');
-        tctx.setTransform(dpr,0,0,dpr,0,0);
+        tctx.setTransform(PRINT_DPR,0,0,PRINT_DPR,0,0);
         tctx.fillStyle='#ffffff';tctx.fillRect(0,0,bayW,bayH);
-        var wasDark2=document.body.classList.contains('dark');
-        document.body.classList.remove('dark');
         tctx.save();tctx.translate(6,6);tctx.scale(p.sc,p.sc);
         drawGroup(tctx,g,L);
         tctx.restore();
-        if(wasDark2)document.body.classList.add('dark');
         var lbl=g.map(function(b){return String(b).padStart(3,'0')}).join('/');
-        bayImages.push({src:tc.toDataURL('image/png'),label:lbl,w:bayW,h:bayH});
+        bayImages.push({src:tc.toDataURL('image/png'),label:lbl,w:bayW,h:bayH,isTrio:false});
       }
     }
+    }finally{if(wasDark)document.body.classList.add('dark');_drawCellFullInfo=prevDrawCellFullInfo||false;}
+
     if(fitPage&&bayImages.length>0){
       // Calculate layout to fit all bays on a single A4 landscape page
       var pageW=1040,pageH=680; // A4 landscape usable area in px at 96dpi with margins
-      // First try to find best grid layout (cols x rows) that minimizes scaling
       var bestScale=0,bestCols=1,bestRows=1;
       for(var nCols=1;nCols<=bayImages.length;nCols++){
         var nRows=Math.ceil(bayImages.length/nCols);
-        // Calculate total width and height for this grid
         var gridW=0,gridH=0;
         for(var c=0;c<nCols;c++){
           var colW=0;
@@ -4225,14 +4274,38 @@ function doPrint(){
         var sc=Math.min(pageW/gridW,pageH/gridH,1);
         if(sc>bestScale){bestScale=sc;bestCols=nCols;bestRows=nRows;}
       }
-      var nRows2=Math.ceil(bayImages.length/bestCols);
       var result='<div style="display:grid;grid-template-columns:repeat('+bestCols+',1fr);gap:4px;transform:scale('+bestScale+');transform-origin:top left">';
       for(var i=0;i<bayImages.length;i++){
-        result+='<div class="bay-block"><img class="bay-img" src="'+bayImages[i].src+'" style="max-width:100%;height:auto"></div>';
+        var cls=bayImages[i].isTrio?'trio-block':'bay-block';
+        var imgCls=bayImages[i].isTrio?'trio-img':'bay-img';
+        result+='<div class="'+cls+'"><img class="'+imgCls+'" src="'+bayImages[i].src+'" style="max-width:100%;height:auto"></div>';
       }
       result+='</div>';
       return result;
     }
+
+    // Not fit-to-page: respect view layout
+    if(is1b){
+      // View 4 (1b): each bay on its own page with maximum info
+      var result='<div>';
+      for(var i=0;i<bayImages.length;i++){
+        result+='<div class="page-bay"><img src="'+bayImages[i].src+'"></div>';
+      }
+      result+='</div>';
+      return result;
+    }
+
+    if(is3b){
+      // View 1/2 (3b): keep trios together, never split across pages
+      var result='<div class="bays-grid">';
+      for(var i=0;i<bayImages.length;i++){
+        result+='<div class="trio-block"><img class="trio-img" src="'+bayImages[i].src+'"></div>';
+      }
+      result+='</div>';
+      return result;
+    }
+
+    // View 3 (2b): standard layout with page-break-inside:avoid per bay
     var result='<div class="bays-grid">';
     for(var i=0;i<bayImages.length;i++){
       result+='<div class="bay-block"><img class="bay-img" src="'+bayImages[i].src+'"></div>';
