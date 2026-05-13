@@ -416,3 +416,34 @@ Stage Summary:
 - All 7 tasks completed successfully
 - baplie_viewer.html syntax validated with no errors
 - Key changes: CSS colors, print DPR 6x, trio group rendering, View 4 page-per-bay, mouse scale correction, hatch filter in passF
+---
+Task ID: 2
+Agent: main
+Task: Fix hatch naming, subtotals selection, resizable panels, view dropdown, per-file summary button
+
+Work Log:
+- Fixed hatch naming in sumGetVal: now uses even bay (mid) as name (e.g., "02" for bays 01+02+03), no 20'/40' split
+- Added subtotal rows in summary table (by first dimension), with clickable count cells (sumSelectSubtotal)
+- Added sumSelectAll function for total row click to select all filtered containers
+- Added sumSelectSubtotal function for subtotal rows, supporting Ctrl+click
+- Added sumFilters div to summary panel HTML with RS filter, Hatch filter, and weight range config
+- Added SUM_CFG.plan field to track which plan the summary is for
+- Updated toggleSummary(pn) to accept plan number and set SUM_CFG.plan
+- Updated sumSelect to use SUM_CFG.plan for scrollToBay
+- Added Resumen button per-file in updateTB toolbar (Plan 1 and Plan 2)
+- Removed old sumBtn from header (summary now per-file only)
+- Put view buttons (Vista 1-4) in dropdown (toggleViewDD) instead of individual buttons
+- Made col1/col2 resizable via col1Resize handle between them
+- Added resize handlers for diffPanel, sumPanel, movePanel via makePanelResizable
+- Added CSS for .pvt-sel, .sum-subtotal, #col1Resize:hover
+- Updated togFS to reset flex when toggling fullscreen
+
+Stage Summary:
+- Hatch dimension now named by even bay (02, 04, etc.) including both 20' and 40'
+- Subtotal rows are selectable (click on count cell)
+- Total row is selectable (click on any cell)
+- All panels (col1/col2, diffPanel, sumPanel, movePanel, lstPanel) are resizable
+- View buttons are in a dropdown menu, Listado stays as separate button
+- Summary button is per-file in each panel toolbar
+- Added RS filter, Hatch filter, weight range config to summary
+- JS syntax validated successfully
