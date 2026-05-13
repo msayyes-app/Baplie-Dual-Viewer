@@ -447,3 +447,29 @@ Stage Summary:
 - Summary button is per-file in each panel toolbar
 - Added RS filter, Hatch filter, weight range config to summary
 - JS syntax validated successfully
+---
+Task ID: 1
+Agent: main
+Task: Fix BAPLIE viewer - hatch naming, subtotal selection, sub-column alignment, resizable panels, view dropdown
+
+Work Log:
+- Read uploaded latest baplie_viewer.html from /home/z/my-project/upload/
+- Fixed hatch naming: sumGetVal('hatch') and hatch filter dropdown now use even bay (tr.mid) instead of odd bay (tr.lo), e.g. "Hatch 02" for bays 01,02,03
+- Fixed subtotal selection: Added onclick handlers to column total cells when hasSub is true (they were missing); Added onclick to column headers when hasSub is true for column selection
+- Fixed _esc() function: Added single-quote escaping (&#39;) to prevent JS syntax errors in onclick attributes when hatch values contain apostrophes like "02(20')"
+- Fixed sub-column header alignment: Changed hardcoded colspan="2" to colspan=subVals.length to match actual number of sub-values
+- Made col1/col2 panels resizable: Added #colResize handle div between col1 and col2, with drag-to-resize JS logic; handle shows/hides with col2
+- Updated togFS, loadPanel, clearPanel to handle colResize visibility
+- Rewrote updateTB(): View buttons (Vista 1-5) now in dropdown menu; Added per-file "Resumen" button in each plan's toolbar
+- Added openSummaryFor(pn) function that sets SUM_CFG._sumPn and opens summary for specific plan
+- Updated renderSummary, _applySumSel, sumPvtGrandClick, sumPvtSubCellClick to use SUM_CFG._sumPn instead of hardcoded S.c1
+- Added plan label "(Plan N)" in summary header
+- Added CSS for .vdd-wrap, .vdd-menu, .vdd-item, #colResize
+- Copied final file to /home/z/my-project/download/baplie_viewer.html
+
+Stage Summary:
+- All 5 issues from user's request have been addressed
+- Key fix: _esc() not escaping single quotes was likely the root cause of "subtotales no se seleccionan"
+- Summary panel now works per-file (Plan 1 or Plan 2)
+- View buttons consolidated into dropdown, resumen button per plan
+- Column resize handle added between Plan 1 and Plan 2
