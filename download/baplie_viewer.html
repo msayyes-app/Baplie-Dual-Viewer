@@ -4276,7 +4276,7 @@ var SUM_PRESETS=[
   {r:'bay', c:'cargo',v:'count',l:'Bay × Carga',   i:'fa-boxes-stacked'},
   {r:'cargo',c:'size',v:'weight',l:'Carga × Tamaño peso',i:'fa-scale-balanced'}
 ];
-var SUM_CFG={pvtRow:'pod',pvtCol:'size',pvtVal:'count',pvtSub:null,sumRS:null,sumHatch:null,_sumPn:1};
+var SUM_CFG={pvtRow:'pod',pvtCol:'size',pvtVal:'count',pvtSub:null,sumRS:null,sumHatch:null,_sumPn:0};
 var SUM_DATA={};
 var SUM_PVT_SEL={}; // cell selections map
 var SUM_WRNG=[0,15,23,26,99]; // weight range boundaries (5 segments)
@@ -4324,13 +4324,9 @@ function sumPvtVal(c,key){
 function toggleSummary(){
   var p=document.getElementById('sumPanel');
   if(p.classList.contains('open')){closeSummary();return;}
-  // Determine which plan to summarize: prefer plan 1 if loaded, else plan 2
-  var sumPn=1;
-  if(!S.c1&&S.c2)sumPn=2;
-  else if(S.c1&&S.c2)sumPn=SUM_CFG._sumPn||1;
-  var cts=sumPn===2?S.c2:S.c1;
-  if(!cts){showToast('Carga un BAPLIE primero');return;}
-  SUM_CFG._sumPn=sumPn;
+  // Header button: combine both plans as one
+  if(!S.c1&&!S.c2){showToast('Carga un BAPLIE primero');return;}
+  SUM_CFG._sumPn=0; // 0 = combined mode
   p.classList.add('open');
   renderSummary();
   setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);
@@ -4339,13 +4335,24 @@ function closeSummary(){
   document.getElementById('sumPanel').classList.remove('open');
   setTimeout(function(){if(S.L1)render(1);if(S.L2)render(2);},50);
 }
+// Helper: get containers for current summary mode (_sumPn: 0=combined, 1=plan1, 2=plan2)
+function _getSumCts(){
+  var pn=SUM_CFG._sumPn||0;
+  if(pn===0)return[].concat(S.c1||[],S.c2||[]);
+  return pn===2?S.c2:S.c1;
+}
+// Helper: label for current summary mode
+function _getSumLabel(){
+  var pn=SUM_CFG._sumPn||0;
+  if(pn===0)return S.c1&&S.c2?'Combinado':(S.c1?'Plan 1':'Plan 2');
+  return 'Plan '+pn;
+}
 
 function renderSummary(){
-  var sumPn=SUM_CFG._sumPn||1;
-  var cts=sumPn===2?S.c2:S.c1;if(!cts)return;
+  var cts=_getSumCts();if(!cts||!cts.length)return;
   // Update plan label in header
   var planLabel=document.getElementById('sumPlanLabel');
-  if(planLabel)planLabel.textContent='(Plan '+sumPn+')';
+  if(planLabel)planLabel.textContent='('+_getSumLabel()+')';
   // Apply summary-specific filters
   var filtered=cts.filter(passF_noTrt);
   if(SUM_CFG.sumRS==='rs')filtered=filtered.filter(function(c){return c.isRemocion;});
@@ -4542,8 +4549,7 @@ function _isColSelected(cv){
 
 function sumPvtSubCellClick(rv,cv,sv){
   // Select containers in this sub-cell
-  var sumPn=SUM_CFG._sumPn||1;
-  var cts=sumPn===2?S.c2:S.c1;if(!cts)return;
+  var cts=_getSumCts();if(!cts)return;
   var ids=new Set();
   cts.filter(passF_noTrt).forEach(function(c){
     if(sumGetVal(c,SUM_CFG.pvtRow)===rv&&sumGetVal(c,SUM_CFG.pvtCol)===cv&&sumGetVal(c,SUM_CFG.pvtSub)===sv){
@@ -4641,8 +4647,7 @@ function sumPvtColClick(cv){
 }
 function sumPvtGrandClick(){
   S.sel=new Set();
-  var sumPn=SUM_CFG._sumPn||1;
-  var cts=sumPn===2?S.c2:S.c1;if(!cts)return;
+  var cts=_getSumCts();if(!cts)return;
   var filtered=cts.filter(passF_noTrt);
   if(SUM_CFG.sumRS==='rs')filtered=filtered.filter(function(c){return c.isRemocion;});
   else if(SUM_CFG.sumRS==='nors')filtered=filtered.filter(function(c){return !c.isRemocion;});
@@ -4654,8 +4659,7 @@ function sumPvtGrandClick(){
 function _applySumSel(){
   var ids=new Set();
   var d=SUM_DATA;if(!d.cellIds)return;
-  var sumPn=SUM_CFG._sumPn||1;
-  var cts=sumPn===2?S.c2:S.c1;if(!cts)return;
+  var cts=_getSumCts();if(!cts)return;
   for(var ck in SUM_PVT_SEL){
     if(ck.startsWith('row:')){
       var rv=ck.slice(4);d.colVals.forEach(function(cv){var k=rv+'|'+cv;if(d.cellIds[k])d.cellIds[k].forEach(function(id){ids.add(id);});});
