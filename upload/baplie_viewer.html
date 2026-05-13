@@ -4301,9 +4301,8 @@ function sumGetVal(c,key){
       if(hi<0)return'-';
       var tr=BAY_TRIPLES[hi];
       // Hatch is named by even bay (mid), e.g. hatch 02 = bays 01,02,03
-      var lbl=tr.mid!==null?String(tr.mid).padStart(2,'0'):String(tr.lo).padStart(2,'0');
-      var is40=parseSz(c.type)>=40;
-      return is40?lbl+"(40')":lbl+"(20')";
+      // Includes both 20' and 40' containers from the trio
+      return tr.mid!==null?String(tr.mid).padStart(2,'0'):String(tr.lo).padStart(2,'0');
     case 'wrng':
       if(c.isEmpty)return'MT';
       var wt=(c.weight||0)/1000;
@@ -4458,7 +4457,7 @@ function renderSummary(){
     colVals.forEach(function(cv){
       var colC=_sumGetColor(SUM_CFG.pvtCol,cv);
       var colSel=_isColSelected(cv)?'pvt-clicked':'';
-      h+='<th colspan="'+subVals.length+'" class="'+colSel+'" style="color:'+colC+';border-bottom:2px solid '+colC+';text-align:center;cursor:pointer" onclick="sumPvtColClick(\''+_esc(cv)+'\')" title="Seleccionar columna '+_esc(cv)+'">'+_esc(cv)+'</th>';
+      h+='<th colspan="'+subVals.length+'" class="'+colSel+'" style="color:'+colC+';border-bottom:2px solid '+colC+';text-align:center;cursor:pointer" onclick="sumPvtColClick(\''+_js(cv)+'\')" title="Seleccionar columna '+_esc(cv)+'">'+_esc(cv)+'</th>';
     });
     h+='<th rowspan="2" style="color:var(--accent);vertical-align:middle">Total</th></tr><tr><th class="pvt-corner pvt-rh" style="border:none;background:transparent"></th>';
     colVals.forEach(function(cv){
@@ -4479,7 +4478,7 @@ function renderSummary(){
   rowVals.forEach(function(rv){
     var rowC=_sumGetColor(SUM_CFG.pvtRow,rv);
     var rowSel=_isRowSelected(rv)?'pvt-clicked':'';
-    h+='<tr><td class="pvt-rl '+rowSel+'" style="color:'+rowC+'" onclick="sumPvtRowClick(\''+_esc(rv)+'\')" title="Seleccionar fila '+_esc(rv)+'">'+_esc(rv)+'</td>';
+    h+='<tr><td class="pvt-rl '+rowSel+'" style="color:'+rowC+'" onclick="sumPvtRowClick(\''+_js(rv)+'\')" title="Seleccionar fila '+_esc(rv)+'">'+_esc(rv)+'</td>';
     if(hasSub){
       colVals.forEach(function(cv){
         subVals.forEach(function(sv){
@@ -4487,7 +4486,7 @@ function renderSummary(){
           var intensity=v/maxVal;var subC=_sumGetColor(SUM_CFG.pvtSub,sv);
           var bg=intensity>0?_sumPctBg(intensity,subC):'transparent';
           var txt=SUM_CFG.pvtVal==='count'?(v||''):(v?v.toFixed(1).replace('.',','):'');
-          h+='<td style="background:'+bg+';cursor:'+(v>0?'pointer':'default')+';font-size:10px" onclick="sumPvtSubCellClick(\''+_esc(rv)+'\',\''+_esc(cv)+'\',\''+_esc(sv)+'\')" title="'+_esc(rv)+' \u00d7 '+_esc(cv)+' ('+_esc(sv)+') = '+v+'">'+txt+'</td>';
+          h+='<td style="background:'+bg+';cursor:'+(v>0?'pointer':'default')+';font-size:10px" onclick="sumPvtSubCellClick(\''+_js(rv)+'\',\''+_js(cv)+'\',\''+_js(sv)+'\')" title="'+_esc(rv)+' \u00d7 '+_esc(cv)+' ('+_esc(sv)+') = '+v+'">'+txt+'</td>';
         });
       });
     }else{
@@ -4498,12 +4497,12 @@ function renderSummary(){
         var txt=SUM_CFG.pvtVal==='count'?(v||''):(v?v.toFixed(1).replace('.',','):'');
         var ck=rv+'|'+cv;
         var clicked=SUM_PVT_SEL[ck]?'pvt-clicked':'';
-        h+='<td class="'+clicked+'" style="background:'+bg+';cursor:'+(v>0?'pointer':'default')+'" onclick="sumPvtCellClick(\''+_esc(rv)+'\',\''+_esc(cv)+'\')" title="'+_esc(rv)+' \u00d7 '+_esc(cv)+' = '+v+'">'+txt+'</td>';
+        h+='<td class="'+clicked+'" style="background:'+bg+';cursor:'+(v>0?'pointer':'default')+'" onclick="sumPvtCellClick(\''+_js(rv)+'\',\''+_js(cv)+'\')" title="'+_esc(rv)+' \u00d7 '+_esc(cv)+' = '+v+'">'+txt+'</td>';
       });
     }
     var rt=rowTotals[rv]||0;var rtTxt=SUM_CFG.pvtVal==='count'?rt:rt.toFixed(1).replace('.',',');
     var rowTotSel=_isRowSelected(rv)?'pvt-clicked':'';
-    h+='<td class="pvt-tot '+rowTotSel+'" onclick="sumPvtRowClick(\''+_esc(rv)+'\')" title="Seleccionar fila '+_esc(rv)+'">'+rtTxt+'</td></tr>';
+    h+='<td class="pvt-tot '+rowTotSel+'" onclick="sumPvtRowClick(\''+_js(rv)+'\')" title="Seleccionar fila '+_esc(rv)+'">'+rtTxt+'</td></tr>';
   });
   h+='<tr><td class="pvt-rtot">Total</td>';
   if(hasSub){
@@ -4514,14 +4513,14 @@ function renderSummary(){
         var ctTxt=SUM_CFG.pvtVal==='count'?colSubTot:colSubTot.toFixed(1).replace('.',',');
         var subC=_sumGetColor(SUM_CFG.pvtSub,sv);
         var colSel=_isColSelected(cv)?'pvt-clicked':'';
-        h+='<td class="pvt-ctot '+colSel+'" style="border-top:2px solid '+subC+';font-size:10px;cursor:pointer" onclick="sumPvtColClick(\''+_esc(cv)+'\')" title="Seleccionar columna '+_esc(cv)+'">'+ctTxt+'</td>';
+        h+='<td class="pvt-ctot '+colSel+'" style="border-top:2px solid '+subC+';font-size:10px;cursor:pointer" onclick="sumPvtColClick(\''+_js(cv)+'\')" title="Seleccionar columna '+_esc(cv)+'">'+ctTxt+'</td>';
       });
     });
   }else{
     colVals.forEach(function(cv){var ct=colTotals[cv]||0;var ctTxt=SUM_CFG.pvtVal==='count'?ct:ct.toFixed(1).replace('.',',');
       var colC=_sumGetColor(SUM_CFG.pvtCol,cv);
       var colSel=_isColSelected(cv)?'pvt-clicked':'';
-      h+='<td class="pvt-ctot '+colSel+'" style="border-top:2px solid '+colC+'" onclick="sumPvtColClick(\''+_esc(cv)+'\')" title="Seleccionar columna '+_esc(cv)+'">'+ctTxt+'</td>';
+      h+='<td class="pvt-ctot '+colSel+'" style="border-top:2px solid '+colC+'" onclick="sumPvtColClick(\''+_js(cv)+'\')" title="Seleccionar columna '+_esc(cv)+'">'+ctTxt+'</td>';
     });
   }
   var gtTxt=SUM_CFG.pvtVal==='count'?grandTotal:grandTotal.toFixed(1).replace('.',',');
@@ -4801,7 +4800,9 @@ function _pTextCol(c){
   if(GF.wtMode)return((c.weight||0)>17500?'#ffffff':'#000000');
   return _pTc(_pCol(c));
 }
-function _esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function _esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// JS-string escaper for onclick attributes: backslash-escape single quotes and backslashes
+function _js(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
 function _computeTiers(bay,L){
   var tiersSet=new Set();
