@@ -473,3 +473,20 @@ Stage Summary:
 - Summary panel now works per-file (Plan 1 or Plan 2)
 - View buttons consolidated into dropdown, resumen button per plan
 - Column resize handle added between Plan 1 and Plan 2
+
+---
+Task ID: 1-3
+Agent: Main
+Task: Three enhancements to baplie_viewer.html
+
+Work Log:
+- Read and analyzed the full baplie_viewer.html codebase (~5400 lines)
+- Task 1: Fixed bidirectional filter sync by adding missing lstSyncIfOpen/sumSyncIfOpen calls in setGF() function for size filter
+- Task 2: Removed RS as a cargo type - removed "Añadir R/S" button from header, removed RS toggle from filter bar, updated passF_noTrt/passF_noTrt_ignPod to not treat RS as cargo type, moved "Añadir R/S" action to VLC dropdown, updated updateRsBadge() to use VLC dropdown badge, updated help text and legend
+- Task 3: Added HI (Handling Instructions) function - added header button, modal HTML, JS functions (openHiModal, parseHiLines, previewHiList, applyHiList, clearManualHi, updateHiBadge), HI display in drawCell (2-char code at bottom-left with purple background pill), HI in tooltip, HI in listado table, HI as summary pivot dimension, HI in SVG print rendering, HI re-application on file load, HI cleanup on panel clear, HI help section, HI legend entry
+
+Stage Summary:
+- Bidirectional filter sync: setGF() now properly calls render/sumSync for all filter changes
+- RS is no longer a cargo type: accessible only via VLC dropdown for filtering, "Añadir R/S" moved to VLC dropdown
+- HI function: full feature including smart parsing (2-column or table with header detection), 2-char display on plan, filterable in summary, tooltip/listado integration
+- All JS syntax validated successfully

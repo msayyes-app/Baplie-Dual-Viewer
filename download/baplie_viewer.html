@@ -366,7 +366,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 /* ── PRINT ── */
 @media print{
   body{background:#fff!important;color:#000!important;font-size:10px!important}
-  header,#filterBar,#legend,#lstPanel,#diffPanel,#sumPanel,#movePanel,#pickBanner,#copyToast,#dgModal,#helpModal,#rsModal,#seqModal,#podColorModal,#printModal{display:none!important}
+  header,#filterBar,#legend,#lstPanel,#diffPanel,#sumPanel,#movePanel,#pickBanner,#copyToast,#dgModal,#helpModal,#rsModal,#seqModal,#hiModal,#podColorModal,#printModal{display:none!important}
   .pw{border:1px solid #ccc!important;background:#fff!important}
   canvas{max-width:100%!important;height:auto!important}
   #mainArea{flex-direction:column!important}
@@ -386,11 +386,12 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <button class="gbtn" id="moveBtn" onclick="openMoveWizard()" title="Mover contenedores y generar nuevo BAPLIE" style="border-color:#7c3aed;color:#7c3aed">
     <i class="fa-solid fa-arrows-up-down-left-right" style="font-size:10px"></i> Mover
   </button>
-  <button class="gbtn" id="addRsBtn" onclick="openRsModal()" title="Añadir contenedores como remociones (R/S)" style="border-color:#e65100;color:#e65100">
-    <i class="fa-solid fa-circle-xmark" style="font-size:10px"></i> Añadir R/S
-  </button>
+
   <button class="gbtn" id="addSeqBtn" onclick="openSeqModal()" title="Añadir secuencia de carga (Bay Seq)" style="border-color:#1565c0;color:#1565c0">
     <i class="fa-solid fa-sort-numeric-down" style="font-size:10px"></i> Secuencia
+  </button>
+  <button class="gbtn" id="addHiBtn" onclick="openHiModal()" title="Añadir Handling Instructions (HI)" style="border-color:#7c3aed;color:#7c3aed">
+    <i class="fa-solid fa-hand" style="font-size:10px"></i> HI
   </button>
   <button class="gbtn" id="sumBtn" onclick="toggleSummary()" title="Resumen interactivo del BAPLIE">
     <i class="fa-solid fa-chart-pie" style="font-size:10px"></i> Resumen
@@ -429,8 +430,8 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     <button class="gbtn on" id="showRfBtn" onclick="toggleShow('rf')" title="Reefer — clic para ocultar">RF</button>
     <button class="gbtn on" id="showDgBtn" onclick="toggleShow('dg')" title="Peligrosos — clic para ocultar">DG</button>
     <button class="gbtn on" id="showOogBtn" onclick="toggleShow('oog')" title="Sobredimensionados — clic para ocultar">OOG</button>
-    <button class="gbtn on" id="showRsBtn" onclick="toggleShow('rs')" title="Remociones — clic para ocultar">RS</button>
-    <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG/RS) — clic para ocultar">GEN</button>
+
+    <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG) — clic para ocultar">GEN</button>
     <button class="gbtn" id="cargoAllBtn" onclick="toggleCargoAll()" title="Mostrar/ocultar todos los tipos de carga" style="font-size:10px;padding:2px 5px"><i class="fa-solid fa-check-double" style="font-size:9px"></i></button>
   </div>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
@@ -464,6 +465,8 @@ body.menu-left #filterBar .wrange-inp{width:36px}
         <div id="vlcPodItem" class="vlc-dd-item" onclick="togglePodEsvlc()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s"><span class="vlc-chk" id="vlcPodChk" style="width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0"></span>POD=VLC</div>
         <div style="height:1px;background:var(--border);margin:3px 8px"></div>
         <div id="vlcRsItem" class="vlc-dd-item" onclick="toggleRsFilter()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s"><span class="vlc-chk" id="vlcRsChk" style="width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0"></span>R/S</div>
+        <div style="height:1px;background:var(--border);margin:3px 8px"></div>
+        <div class="vlc-dd-item" onclick="openRsModal();closeVlcDropdown()" style="padding:6px 12px;cursor:pointer;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:500;display:flex;align-items:center;gap:8px;transition:background .1s;color:#e65100"><i class="fa-solid fa-circle-xmark" style="font-size:10px"></i><span>Añadir R/S</span><span id="vlcRsBadge" style="display:none;background:#e65100;color:#fff;padding:0 5px;border-radius:3px;font-size:9px;font-weight:700;margin-left:auto"></span></div>
       </div>
     </div>
     <button class="gbtn" id="trtBtn" onclick="toggleTrt()" title="Atenuar en gris los contenedores sin POL ni POD = ESVLC">TRT</button>
@@ -692,6 +695,30 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     </div>
   </div>
 </div>
+<!-- HI (Handling Instructions) ADD MODAL -->
+<div id="hiModal" style="position:fixed;inset:0;z-index:1002;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(124,58,237,.15);color:#7c3aed;flex-shrink:0"><i class="fa-solid fa-hand"></i></div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:15px">Añadir HI (Handling Instructions)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Asignar códigos HI a contenedores <span id="hiModalCount" style="display:none;color:#7c3aed;font-weight:600"></span></div>
+      </div>
+      <button onclick="clearManualHi()" title="Quitar todos los HI manuales" style="background:none;border:1px solid var(--border);cursor:pointer;color:var(--muted);font-size:10px;padding:3px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;transition:all .15s" onmouseover="this.style.borderColor='#c62828';this.style.color='#c62828'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"><i class="fa-solid fa-eraser" style="font-size:9px;margin-right:3px"></i>Limpiar</button>
+      <button onclick="closeHiModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px;border-radius:4px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="overflow:auto;padding:16px 18px;flex:1;font-size:13px;line-height:1.7">
+      <p style="color:var(--muted);font-size:11px;margin-bottom:8px"><i class="fa-solid fa-circle-info" style="color:#7c3aed;margin-right:4px"></i>Pega desde Excel 2 columnas: <b>ID contenedor</b> y <b>código HI</b> (separados por tabulador). O pega una tabla completa: el parser buscará la columna con ID y la columna "HI" / "Handling Instructions". El código HI se muestra como 2 caracteres en la parte inferior izquierda del slot.</p>
+      <textarea id="hiPasteArea" placeholder="MSMU1234567&#9;ST&#10;TCKU9876543&#9;HW&#10;CSLU5555123&#9;FR" style="width:100%;min-height:120px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none"></textarea>
+      <div id="hiPreview" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-height:200px;overflow-y:auto"></div>
+      <div id="hiCountInfo" style="display:none;margin-top:8px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace"></div>
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;background:var(--card)">
+      <button onclick="closeHiModal()" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg);transition:all .15s">Cancelar</button>
+      <button id="hiApplyBtn" onclick="applyHiList()" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:#7c3aed;color:#fff;transition:all .15s"><i class="fa-solid fa-check" style="font-size:9px;margin-right:4px"></i>Aplicar</button>
+    </div>
+  </div>
+</div>
 <footer class="px-5 py-1.5 flex items-center gap-4 shrink-0 text-xs flex-wrap" style="background:var(--panel);border-top:1px solid var(--border);color:var(--muted)" id="legend">
   <span style="margin-left:auto;opacity:.45;font-size:10px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">© 2026 MSaYYeS · BAPLIE Dual Viewer</span>
 </footer>
@@ -749,7 +776,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <ul>
   <li><span class="hk">Todos</span> / <span class="hk">20'</span> / <span class="hk">40'</span> / <span class="hk">45'</span> — Filtra por tamaño de contenedor. <span class="hk">Todos</span> desactiva el filtro; los demás son conmutables.</li>
   <li><span class="hk">F+E</span> / <span class="hk">Full</span> / <span class="hk">MT</span> — Muestra todos, solo llenos o solo vacíos.</li>
-  <li><span class="hk">RF</span> / <span class="hk">DG</span> / <span class="hk">OOG</span> / <span class="hk">RS</span> / <span class="hk">GEN</span> — Activa/desactiva la visibilidad de cada tipo de carga (Reefer, Peligroso, Sobredimensionado, Remoción, General). Cuando están apagados (sin resaltar), esos contenedores desaparecen del plano.</li>
+  <li><span class="hk">RF</span> / <span class="hk">DG</span> / <span class="hk">OOG</span> / <span class="hk">GEN</span> — Activa/desactiva la visibilidad de cada tipo de carga (Reefer, Peligroso, Sobredimensionado, General). Cuando están apagados (sin resaltar), esos contenedores desaparecen del plano. <span class="htip">RS no es un tipo de carga; se filtra desde el desplegable VLC.</span></li>
   <li><span class="hk"><i class="fa-solid fa-check-double" style="font-size:9px"></i></span> (junto a GEN) — Muestra/oculta todos los tipos de carga a la vez.</li>
   <li><span class="hk"><i class="fa-solid fa-code-compare" style="font-size:9px"></i> Diferencias</span> — Activa el resaltado naranja de los contenedores que difieren entre los dos planes. El badge muestra el total. <span class="htip">Requiere ambos archivos cargados.</span></li>
   <li><span class="hk"><i class="fa-solid fa-list-ul" style="font-size:9px"></i> Ver log</span> — Abre el panel lateral con el listado detallado de cambios: posición, POD, POL, peso, SZTP. Se puede filtrar por tipo de cambio. <span class="htip">Clic en una fila selecciona ese contenedor y centra ambas vistas.</span></li>
@@ -793,7 +820,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <ul>
   <li><span class="hk"><i class="fa-solid fa-moon" style="font-size:9px"></i></span> / <span class="hk"><i class="fa-solid fa-sun" style="font-size:9px"></i></span> — Cambia entre tema claro y oscuro.</li>
   <li><span class="hk"><i class="fa-solid fa-arrows-up-down-left-right" style="font-size:9px"></i> Mover</span> — Abre el asistente de movimiento de contenedores para reubicar y generar un nuevo BAPLIE.</li>
-  <li><span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> — Abre el diálogo para pegar IDs de contenedores y marcarlos como remociones. Los contenedores de tránsito se muestran con su POD y el círculo de remoción. El badge muestra cuántos contenedores están marcados manualmente.</li>
+  <li><span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> — Accesible desde el desplegable VLC. Abre el diálogo para pegar IDs de contenedores y marcarlos como remociones. Los contenedores de tránsito se muestran con su POD y el círculo de remoción. El badge muestra cuántos contenedores están marcados manualmente.</li>
   <li><span class="hk"><i class="fa-solid fa-sort-numeric-down" style="font-size:9px"></i> Secuencia</span> — Abre el diálogo para pegar desde Excel: ID contenedor + Bay Seq (orden de carga). Sustituye al peso al activar <span class="hk">Seq</span> o pulsar <span class="hk">W</span>.</li>
   <li><span class="hk"><i class="fa-solid fa-chart-pie" style="font-size:9px"></i> Resumen</span> — Abre la tabla dinámica interactiva (pivot table) para agrupar y contar contenedores por POD, SZTP, Bay, etc.</li>
   <li><span class="hk"><i class="fa-solid fa-bars" style="font-size:9px"></i></span> — Mueve la barra de filtros de la izquierda a arriba y viceversa.</li>
@@ -869,12 +896,12 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <h3>Añadir R/S (Remociones)</h3>
 <div class="hsec">
 <ul>
-  <li>Clica <span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> para abrir el diálogo de marcado manual de remociones.</li>
+  <li>Clica <span class="hk"><i class="fa-solid fa-circle-xmark" style="font-size:9px"></i> Añadir R/S</span> (en el desplegable VLC) para abrir el diálogo de marcado manual de remociones.</li>
   <li>Pega una lista de IDs de contenedores (uno por línea o separados por espacios/comas). La vista previa muestra si cada ID se encuentra en los planes cargados.</li>
   <li>Al aplicar, los contenedores se marcan como RS: se muestran con su POD y el círculo de remoción en el plano.</li>
   <li>El filtro <span class="hk">R/S</span> en la barra de POL permite ver solo las remociones. Es acumulativo con <span class="hk">POL=ESVLC</span>: si ambos están activos se ven los de Valencia y los RS.</li>
   <li>Cuando <span class="hk">R/S</span> y <span class="hk">TRT</span> están ambos activos, los RS prevalecen sobre TRT (no se atenuan).</li>
-  <li>El badge naranja en el botón indica cuántos contenedores están marcados manualmente como RS.</li>
+  <li>El badge naranja en el desplegable VLC indica cuántos contenedores están marcados manualmente como RS.</li>
 </ul>
 </div>
 
@@ -886,6 +913,17 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   <li>Al aplicar, el número de secuencia sustituye al peso en el plano.</li>
   <li><span class="hk">Seq</span> (junto a Redondeo) — Alterna entre mostrar peso o Bay Seq. También se activa/desactiva con la tecla <span class="hk">W</span>.</li>
   <li>El badge azul en el botón indica cuántos contenedores tienen secuencia asignada.</li>
+</ul>
+</div>
+
+<h3>Handling Instructions (HI)</h3>
+<div class="hsec">
+<ul>
+  <li>Clica <span class="hk"><i class="fa-solid fa-hand" style="font-size:9px"></i> HI</span> para abrir el diálogo donde pegar los códigos de Handling Instructions.</li>
+  <li>Puedes pegar 2 columnas (ID + código HI separados por tabulador) o una tabla completa con cabeceras: el parser buscará automáticamente la columna "HI" / "Handling Instructions" y la columna de IDs.</li>
+  <li>El código HI se limita a 2 caracteres y se muestra en el plano como una etiqueta morada en la parte inferior izquierda del slot, bien visible.</li>
+  <li>En el Resumen, HI es una dimensión filtrable: puedes agrupar por HI para ver distribución por código.</li>
+  <li>El badge morado en el botón indica cuántos contenedores tienen HI asignada.</li>
 </ul>
 </div>
 
@@ -1238,14 +1276,13 @@ function passF_noTrt(c){
   // 3. F/E (Full/Empty): mutuamente exclusivos
   if(GF.feMode==='full'&&c.isEmpty)return false;
   if(GF.feMode==='empty'&&!c.isEmpty)return false;
-  // 4. Tipo de carga: GF.hidden = blacklist de tipos a ocultar
+  // 4. Tipo de carga: GF.hidden = blacklist de tipos a ocultar (RS no es tipo de carga)
   if(GF.hidden.size>0){
-    var isSpec=c.isReefer||c.isDangerous||isOog(c)||c.isRemocion;
+    var isSpec=c.isReefer||c.isDangerous||isOog(c);
     if(GF.hidden.has('rf')&&c.isReefer)return false;
     if(GF.hidden.has('dg')&&c.isDangerous)return false;
     if(GF.hidden.has('oog')&&isOog(c))return false;
-    if(GF.hidden.has('rs')&&c.isRemocion)return false;
-    if(GF.hidden.has('gen')&&!isSpec)return false;
+    if(GF.hidden.has('gen')&&!isSpec&&!c.isRemocion)return false;
   }
   // 5. POD
   if(c.pod&&Object.keys(GF.pods).length>0&&!GF.pods[c.pod])return false;
@@ -1283,7 +1320,7 @@ function passF_noTrt_ignPod(c){
   if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
   if(GF.feMode==='full'&&c.isEmpty)return false;
   if(GF.feMode==='empty'&&!c.isEmpty)return false;
-  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c)||c.isRemocion;if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('rs')&&c.isRemocion)return false;if(GF.hidden.has('gen')&&!isSpec2)return false;}
+  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c);if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('gen')&&!isSpec2&&!c.isRemocion)return false;}
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
   if(GF.wtMin!==null||GF.wtMax!==null){if(c.isEmpty)return false;var wt=(c.weight||0)/1000;if(GF.wtMin!==null&&wt<GF.wtMin)return false;if(GF.wtMax!==null&&wt>GF.wtMax)return false;}
   if(GF.srchFilter&&S.sel&&S.sel.has&&!S.sel.has(c.id))return false;
@@ -2006,6 +2043,23 @@ function drawCell(ctx,x,y,w,h,c){
   }
   // 45ft
   if(c._is45ft){ctx.fillStyle='#ce93d8';ctx.beginPath();ctx.arc(x+w-3,y+3,2.5,0,Math.PI*2);ctx.fill();}
+  // HI (Handling Instructions): 2-char code at bottom-left of slot
+  if(c._hi){
+    var hiFs=Math.max(7,Math.min(w*0.28,h*0.28,12))+GF.wtFontSize;
+    ctx.font='bold '+hiFs+'px "IBM Plex Mono"';
+    ctx.textAlign='left';ctx.textBaseline='bottom';
+    // Background pill for visibility
+    var hiTxt=c._hi;
+    var hiMw=ctx.measureText(hiTxt).width;
+    ctx.fillStyle='rgba(124,58,237,0.85)';
+    var hiPad=2;
+    ctx.beginPath();
+    var hiRx=x+1,hiRy=y+h-hiFs-hiPad*2-1,hiRw=hiMw+hiPad*2,hiRh=hiFs+hiPad*2;
+    ctx.roundRect?ctx.roundRect(hiRx,hiRy,hiRw,hiRh,2):ctx.rect(hiRx,hiRy,hiRw,hiRh);
+    ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(hiTxt,x+1+hiPad,y+h-1-hiPad);
+  }
   // Texto peso + datos extra si la celda es suficientemente ancha
   ctx.fillStyle=textCol;
   if(_drawCellFullInfo){
@@ -2016,6 +2070,7 @@ function drawCell(ctx,x,y,w,h,c){
     lines.push(c.id||'');
     lines.push(fmtW(c));
     if(c.isRemocion&&c.pod)lines.push(c.pod);
+    if(c._hi)lines.push('HI:'+c._hi);
     var lineH=Math.min(fs2+2,h/Math.max(lines.length,1));
     var startY=y+h/2-(lines.length-1)*lineH/2;
     for(var li=0;li<lines.length;li++){
@@ -2186,7 +2241,7 @@ function setGF(key,val){
       b.classList.toggle('on',b.dataset.val==='all'?GF.size.size===0:GF.size.has(b.dataset.val));
     });
   }
-  else{clearSelIfNeeded();render(1);render(2);}
+  clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 
 // F/E exclusive filter
@@ -2207,7 +2262,7 @@ function toggleShow(type){
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 function toggleCargoAll(){
-  var types=['rf','dg','oog','rs','gen'];
+  var types=['rf','dg','oog','gen'];
   var anyHidden=types.some(function(t){return GF.hidden.has(t);});
   if(anyHidden){types.forEach(function(t){GF.hidden.delete(t);});}
   else{types.forEach(function(t){GF.hidden.add(t);});}
@@ -2219,7 +2274,7 @@ function toggleCargoAll(){
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 function updateCargoAllBtn(){
-  var types=['rf','dg','oog','rs','gen'];
+  var types=['rf','dg','oog','gen'];
   var allOn=types.every(function(t){return !GF.hidden.has(t);});
   var allOff=types.every(function(t){return GF.hidden.has(t);});
   var btn=document.getElementById('cargoAllBtn');
@@ -2267,6 +2322,10 @@ function toggleVlcDropdown(){
   var isOpen=dd.style.display!=='none';
   dd.style.display=isOpen?'none':'block';
   if(!isOpen)updateVlcDropdown();
+}
+function closeVlcDropdown(){
+  var dd=document.getElementById('vlcDropdown');
+  if(dd)dd.style.display='none';
 }
 function toggleHatchFilter(mode){
   if(!S.c1||!S.c2){showToast('Se necesitan dos planes para filtrar por hatch');return;}
@@ -2354,7 +2413,7 @@ function resetAllFilters(){
   GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;GF.hatchFilter=null;
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
-  ['Rf','Dg','Oog','Rs','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
+  ['Rf','Dg','Oog','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
   document.getElementById('wtRoundBtn').classList.remove('wt-on');document.getElementById('seqShowBtn').classList.remove('on','wt-on');
   document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
@@ -2655,7 +2714,7 @@ function lstSyncIfOpen(){
 function updateLeg(){
   var lg=document.getElementById('legend');var h='';
   if(GF.wtMode){h+='<span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;width:60px;height:8px;border-radius:2px;border:1px solid var(--border);background:linear-gradient(to right,#ffffff,#000000);vertical-align:middle"></span>Peso: 0t → 35t</span>';}
-  else{for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;if(!GF.pods[k])h+='<span style="opacity:.3"><span class="lem"></span>'+k+'</span>';else h+='<span><span class="lsw" style="background:'+POD_MAP[k]+'"></span>'+k+'</span>';}h+='<span><span class="lem"></span>MT</span>';h+='<span><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #ffeb3b;vertical-align:middle;margin-right:3px"></span>OOG</span>';h+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ce93d8;vertical-align:middle;margin-right:3px"></span>45\'</span>';h+='<span><span style="display:inline-block;width:12px;height:10px;border-radius:2px;border:1.5px solid #e65100;vertical-align:middle;margin-right:3px"></span>RS</span>';}
+  else{for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;if(!GF.pods[k])h+='<span style="opacity:.3"><span class="lem"></span>'+k+'</span>';else h+='<span><span class="lsw" style="background:'+POD_MAP[k]+'"></span>'+k+'</span>';}h+='<span><span class="lem"></span>MT</span>';h+='<span><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #ffeb3b;vertical-align:middle;margin-right:3px"></span>OOG</span>';h+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ce93d8;vertical-align:middle;margin-right:3px"></span>45\'</span>';if(_hiMap&&Object.keys(_hiMap).length>0)h+='<span><span style="display:inline-block;width:12px;height:10px;border-radius:2px;background:#7c3aed;vertical-align:middle;margin-right:3px;color:#fff;font-size:6px;font-weight:700;text-align:center;line-height:10px">HI</span>HI</span>';}
   if(GF.trt)h+='<span style="margin-left:6px;opacity:.6"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:#888;opacity:.3;vertical-align:middle;margin-right:3px"></span>Sin POL/POD=VLC atenuado</span>';
   h+='<span class="ml-auto opacity-40">Clic: seleccionar &middot; Ctrl+Clic: multi &middot; Ctrl+C: copiar</span>';
   lg.innerHTML=h;
@@ -2674,6 +2733,7 @@ function showTT(c,mx,my){
   h+='<div class="tr"><span>Posición</span><span>'+c.positions.map(fmtPd).join(', ')+'</span></div>';
   h+='<div class="tr"><span>Peso</span><span>'+(c.isEmpty?'MT':c.weight?(c.weight/1000).toFixed(1).replace('.',',')+' Tons':'-')+'</span></div>';
   if(c._baySeq!=null)h+='<div class="tr"><span>Bay Seq</span><span style="color:#1565c0;font-weight:600">'+c._baySeq+'</span></div>';
+  if(c._hi)h+='<div class="tr"><span>HI</span><span style="color:#7c3aed;font-weight:600">'+c._hi+'</span></div>';
   h+='<div class="tr"><span>Estado</span><span>'+(c.isEmpty?'Vacío':'Full')+'</span></div>';
   if(c.pol)h+='<div class="tr"><span>POL</span><span>'+c.pol+'</span></div>';
   if(c.pod)h+='<div class="tr"><span>POD</span><span>'+c.pod+'</span></div>';
@@ -2699,7 +2759,7 @@ function showTT(c,mx,my){
     if(c.origPos)h+='<div class="tr"><span>Pos. original</span><span>'+fmtPd(c.origPos)+'</span></div>';
   }
   if(DIFF_IDS.has(c.id)&&S.c1&&S.c2)h+='<div class="tr"><span>Cambio</span><span style="color:var(--diff-chg)">Difiere entre planes</span></div>';
-  var bd='';if(c.isEmpty)bd+='<span class="tbs" style="background:#263354;color:#6b7fa3">MT</span>';if(c.isDangerous)bd+='<span class="tbs" style="background:#c62828;color:#fff">DG</span>';if(c.isReefer)bd+='<span class="tbs" style="background:#00838f;color:#fff">RF</span>';if(hc)bd+='<span class="tbs" style="background:#e65100;color:#fff">HC</span>';if(isOog(c))bd+='<span class="tbs" style="background:#f9a825;color:#000">OOG</span>';if(c._is45ft)bd+='<span class="tbs" style="background:#8e24aa;color:#fff">45\'</span>';if(c.isRemocion)bd+='<span class="tbs" style="background:#e65100;color:#fff">RS</span>';if(bd)h+='<div class="tbg">'+bd+'</div>';
+  var bd='';if(c.isEmpty)bd+='<span class="tbs" style="background:#263354;color:#6b7fa3">MT</span>';if(c.isDangerous)bd+='<span class="tbs" style="background:#c62828;color:#fff">DG</span>';if(c.isReefer)bd+='<span class="tbs" style="background:#00838f;color:#fff">RF</span>';if(hc)bd+='<span class="tbs" style="background:#e65100;color:#fff">HC</span>';if(isOog(c))bd+='<span class="tbs" style="background:#f9a825;color:#000">OOG</span>';if(c._is45ft)bd+='<span class="tbs" style="background:#8e24aa;color:#fff">45\'</span>';if(c.isRemocion)bd+='<span class="tbs" style="background:#e65100;color:#fff">RS</span>';if(c._hi)bd+='<span class="tbs" style="background:#7c3aed;color:#fff">HI:'+c._hi+'</span>';if(bd)h+='<div class="tbg">'+bd+'</div>';
   ttE.innerHTML=h;ttE.classList.remove('hidden');
   var vw=window.innerWidth,vh=window.innerHeight,tx=mx+16,ty=my-10,tw=ttE.offsetWidth,th=ttE.offsetHeight;
   if(tx+tw>vw-10)tx=mx-tw-10;if(ty+th>vh-10)ty=vh-th-10;if(ty<10)ty=10;ttE.style.left=tx+'px';ttE.style.top=ty+'px';
@@ -3175,10 +3235,7 @@ function applyRsList(){
   }
   closeRsModal();
   if(applied>0){
-    // Make sure RS visibility is on
-    var rsBtn=document.getElementById('showRsBtn');
-    if(rsBtn&&!rsBtn.classList.contains('on')){rsBtn.classList.add('on');GF.hidden.delete('rs');}
-    // Update count badge on Añadir R/S button
+    // Update count badge
     updateRsBadge();
     render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
     showToast(applied+' contenedor(es) marcado(s) como RS');
@@ -3186,19 +3243,11 @@ function applyRsList(){
 }
 
 function updateRsBadge(){
-  var btn=document.getElementById('addRsBtn');
-  if(!btn)return;
-  var badge=btn.querySelector('.rs-badge');
-  if(_manualRsIds.size>0){
-    if(!badge){
-      badge=document.createElement('span');
-      badge.className='rs-badge';
-      badge.style.cssText='background:#e65100;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:2px;font-weight:700';
-      btn.appendChild(badge);
-    }
-    badge.textContent=_manualRsIds.size;
-  } else if(badge){
-    badge.remove();
+  // Update VLC dropdown badge
+  var vlcBadge=document.getElementById('vlcRsBadge');
+  if(vlcBadge){
+    if(_manualRsIds.size>0){vlcBadge.style.display='inline';vlcBadge.textContent=_manualRsIds.size;}
+    else{vlcBadge.style.display='none';}
   }
 }
 
@@ -3347,6 +3396,168 @@ function clearManualSeq(){
   if(mc)mc.style.display='none';
   showToast('Secuencias manuales eliminadas');
 }
+
+/* ── HI (Handling Instructions) ADD MODAL ── */
+var _hiMap={}; // { containerId: hiCode }
+
+function openHiModal(){
+  document.getElementById('hiPasteArea').value='';
+  document.getElementById('hiPreview').style.display='none';
+  document.getElementById('hiCountInfo').style.display='none';
+  var mc=document.getElementById('hiModalCount');
+  var hiCount=Object.keys(_hiMap).length;
+  if(hiCount>0){mc.style.display='inline';mc.textContent='('+hiCount+' asignado(s))';}
+  else{mc.style.display='none';}
+  document.getElementById('hiModal').style.display='flex';
+  var ta=document.getElementById('hiPasteArea');
+  ta.oninput=function(){previewHiList(ta.value);};
+  setTimeout(function(){ta.focus();},100);
+}
+function closeHiModal(){document.getElementById('hiModal').style.display='none';}
+document.getElementById('hiModal').addEventListener('click',function(e){if(e.target===this)closeHiModal();});
+
+function parseHiLines(val){
+  var lines=val.split(/[\n\r]+/).filter(Boolean);
+  if(lines.length===0)return[];
+  // Try to detect table format: first line might be headers
+  var firstParts=lines[0].split(/[\t,]+/);
+  // Check if first line is a header row with "HI" or "Handling" column
+  var hiColIdx=-1,idColIdx=-1;
+  for(var ci=0;ci<firstParts.length;ci++){
+    var h=firstParts[ci].trim().toUpperCase();
+    if(hiColIdx<0&&(/^(HI|HANDLING|HANDLING.?INST|HANDLING.?INSTRUCTION)/.test(h)))hiColIdx=ci;
+    if(idColIdx<0&&/^[A-Z]{4}\d{7}$/.test(firstParts[ci].trim().toUpperCase()))idColIdx=ci;
+  }
+  // If headers found, use them
+  var startLine=0;
+  if(hiColIdx>=0||idColIdx>=0){
+    // Check if first line has ANY container IDs - if so, it's not a header
+    var hasIdInFirst=/^[A-Z]{4}\d{7}$/.test(lines[0].split(/[\t,]+/)[0].trim().toUpperCase());
+    if(!hasIdInFirst){
+      startLine=1;
+      // Find columns from header
+      if(idColIdx<0){
+        // Try to find container ID column by header name
+        for(var ci2=0;ci2<firstParts.length;ci2++){
+          var h2=firstParts[ci2].trim().toUpperCase();
+          if(/^(CONTAINER|ID|CTNR|CTN|BOX)/.test(h2))idColIdx=ci2;
+        }
+      }
+    }
+  }
+  // If we found a header with HI column but no ID column, search data for ID pattern
+  var result=[];
+  for(var i=startLine;i<lines.length;i++){
+    var parts=lines[i].split(/[\t,]+/);
+    if(parts.length<2)continue;
+    var id='',hi='';
+    if(hiColIdx>=0&&startLine>0){
+      // Table mode: use detected columns
+      var idIdx=idColIdx>=0?idColIdx:0;
+      id=parts[idIdx]?parts[idIdx].trim().toUpperCase():'';
+      hi=parts[hiColIdx]?parts[hiColIdx].trim().toUpperCase():'';
+    }else{
+      // Simple 2-column mode: ID + HI
+      id=parts[0].trim().toUpperCase();
+      hi=parts[1].trim().toUpperCase();
+    }
+    if(/^[A-Z]{4}\d{7}$/.test(id)&&hi.length>0){
+      result.push({id:id,hi:hi.substring(0,2)}); // Limit to 2 characters
+    }
+  }
+  return result;
+}
+
+function previewHiList(val){
+  var items=parseHiLines(val);
+  var preview=document.getElementById('hiPreview');
+  var countEl=document.getElementById('hiCountInfo');
+  if(items.length===0){preview.style.display='none';countEl.style.display='none';return;}
+  var all=[].concat(S.c1||[],S.c2||[]);
+  var found=0,notFound=0,updated=0;
+  var h='<div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:4px;padding:4px 8px;font-size:10px;font-family:\'IBM Plex Mono\',monospace">';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">ID</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">HI</div>';
+  h+='<div style="font-weight:700;color:var(--muted);text-transform:uppercase">Estado</div>';
+  for(var i=0;i<items.length;i++){
+    var c=null;
+    for(var j=0;j<all.length;j++){if(all[j].id===items[i].id){c=all[j];break;}}
+    if(!c){
+      h+='<div style="color:#c62828">'+items[i].id+'</div><div>'+items[i].hi+'</div><div style="color:#c62828">No encontrado</div>';
+      notFound++;
+    } else if(_hiMap[items[i].id]!==undefined){
+      h+='<div style="color:#e65100">'+items[i].id+'</div><div>'+items[i].hi+'</div><div style="color:#e65100">Actualizar</div>';
+      updated++;
+    } else {
+      h+='<div>'+items[i].id+'</div><div>'+items[i].hi+'</div><div style="color:#388e3c">OK</div>';
+      found++;
+    }
+  }
+  h+='</div>';
+  preview.innerHTML=h;
+  preview.style.display='block';
+  countEl.style.display='block';
+  countEl.textContent=found+' nuevo(s) · '+updated+' actualizar · '+notFound+' no encontrado(s)';
+}
+
+function applyHiList(){
+  var val=document.getElementById('hiPasteArea').value;
+  var items=parseHiLines(val);
+  if(items.length===0)return;
+  var all=[].concat(S.c1||[],S.c2||[]);
+  var applied=0;
+  for(var i=0;i<items.length;i++){
+    _hiMap[items[i].id]=items[i].hi;
+    for(var j=0;j<all.length;j++){
+      if(all[j].id===items[i].id){
+        all[j]._hi=items[i].hi;
+        applied++;
+      }
+    }
+  }
+  closeHiModal();
+  if(applied>0){
+    updateHiBadge();
+    render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+    showToast(applied+' contenedor(es) con HI asignada');
+  }
+}
+
+function updateHiBadge(){
+  var btn=document.getElementById('addHiBtn');
+  if(!btn)return;
+  var badge=btn.querySelector('.hi-badge');
+  var cnt=Object.keys(_hiMap).length;
+  if(cnt>0){
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='hi-badge';
+      badge.style.cssText='background:#7c3aed;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:2px;font-weight:700';
+      btn.appendChild(badge);
+    }
+    badge.textContent=cnt;
+  } else if(badge){
+    badge.remove();
+  }
+}
+
+function clearManualHi(){
+  var cnt=Object.keys(_hiMap).length;
+  if(cnt===0)return;
+  var all=[].concat(S.c1||[],S.c2||[]);
+  for(var i=0;i<all.length;i++){
+    if(_hiMap[all[i].id]!==undefined){
+      delete all[i]._hi;
+    }
+  }
+  _hiMap={};
+  updateHiBadge();
+  render(1);render(2);lstSyncIfOpen();sumSyncIfOpen();
+  var mc=document.getElementById('hiModalCount');
+  if(mc)mc.style.display='none';
+  showToast('HI manuales eliminados');
+}
+
 function hexToRgb(hex){hex=hex.replace('#','');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return r+','+g+','+b;}
 
 /* ── PESO RANGE ── */
@@ -3839,6 +4050,13 @@ function clearPanel(pn){
     Object.keys(_seqMap).forEach(function(id){if(!remainingIds2.has(id))delete _seqMap[id];});
     updateSeqBadge();
   }
+  // Clean up HI data for containers being removed
+  if(Object.keys(_hiMap).length>0){
+    var remaining3=pn===1?S.c2:S.c1;
+    var remainingIds3=remaining3?new Set(remaining3.map(function(c){return c.id;})):new Set();
+    Object.keys(_hiMap).forEach(function(id){if(!remainingIds3.has(id))delete _hiMap[id];});
+    updateHiBadge();
+  }
   loadPanel(pn,[]);
   var lb=document.getElementById('lb'+pn);if(lb)lb.classList.remove('ok');
   var fn=document.getElementById('fn'+pn);if(fn)fn.textContent='Archivo '+pn;
@@ -3864,8 +4082,9 @@ var LST_COLS=[
   {key:'rf',    label:'RF/Tmp',    edit:false, w:65},
   {key:'oog',   label:'OOG',       edit:false, w:50},
   {key:'rs',    label:'RS',        edit:false, w:40},
+  {key:'hi',    label:'HI',        edit:false, w:40},
 ];
-function ctToRow(c){return{id:c.id,type:c.type||'',pos:c.positions&&c.positions.length?fmtPd(c.positions[0]):'—',wt:c.weight!==null&&c.weight!==undefined?String(c.weight):'',pol:c.pol||'',pod:c.pod||'',empty:c.isEmpty?'MT':'Full',dg:c.isDangerous?(c.dgClasses&&c.dgClasses.length?c.dgClasses.join('+'):'DG'):'',rf:c.isReefer?(c.temperature!==null&&c.temperature!==undefined?String(c.temperature)+'°C':'RF'):'',oog:c.isOog?(c.oogInfo||'OOG'):'',rs:c.isRemocion?'RS':'',_orig:c};}
+function ctToRow(c){return{id:c.id,type:c.type||'',pos:c.positions&&c.positions.length?fmtPd(c.positions[0]):'—',wt:c.weight!==null&&c.weight!==undefined?String(c.weight):'',pol:c.pol||'',pod:c.pod||'',empty:c.isEmpty?'MT':'Full',dg:c.isDangerous?(c.dgClasses&&c.dgClasses.length?c.dgClasses.join('+'):'DG'):'',rf:c.isReefer?(c.temperature!==null&&c.temperature!==undefined?String(c.temperature)+'°C':'RF'):'',oog:c.isOog?(c.oogInfo||'OOG'):'',rs:c.isRemocion?'RS':'',hi:c._hi||'',_orig:c};}
 function openListado(pn){
   var cts=pn===1?S.c1:S.c2;if(!cts||!cts.length){showToast('Sin datos en Plan '+pn);return;}
   LST.pn=pn;LST.filter='';LST.changed=new Set();LST.rows=cts.map(ctToRow);
@@ -4215,6 +4434,15 @@ function loadPanel(pn,cts){
       }
     }
   }
+  // Re-apply HI from _hiMap
+  var hiKeys=Object.keys(_hiMap);
+  if(hiKeys.length>0){
+    for(var hi2=0;hi2<cts.length;hi2++){
+      if(_hiMap[cts[hi2].id]!==undefined){
+        cts[hi2]._hi=_hiMap[cts[hi2].id];
+      }
+    }
+  }
   F[pn]={view:'3b'};Z[pn]=1;S.sel=null;S.hl=null;
   cvEl.style.display='block';em.classList.add('hid');
   if(pn===2){document.getElementById('col2').style.display='';document.getElementById('colResize').style.display='';} // show col2 and resize handle when plan2 loaded
@@ -4261,7 +4489,8 @@ var SUM_PF=[
   {k:'hd',   l:'D/H'},
   {k:'hatch',l:'Hatch'},
   {k:'wrng', l:'Rango Peso'},
-  {k:'rs',   l:'Remoción'}
+  {k:'rs',   l:'Remoción'},
+  {k:'hi',   l:'HI'}
 ];
 var SUM_PV=[
   {k:'count',l:'Conteo'},
@@ -4312,6 +4541,7 @@ function sumGetVal(c,key){
       }
       return b[b.length-1]+'+';
     case 'rs':return c.isRemocion?'RS':'No RS';
+    case 'hi':return c._hi||'Sin HI';
     default:return'-';
   }
 }
@@ -4611,7 +4841,6 @@ function _syncSumToGF(){
     GF.bays=null;
   }
   // Update plan filter bar buttons to match
-  var rsBtn=document.getElementById('showRsBtn');if(rsBtn)rsBtn.classList.toggle('on',!GF.hidden.has('rs'));
   var rsChk=document.getElementById('vlcRsChk');if(rsChk){rsChk.classList.toggle('checked',GF.rsFilter);rsChk.textContent=GF.rsFilter?'✓':'';}
   updateVlcDropdown();
   updateBayBtnLabel();
@@ -4664,6 +4893,7 @@ function _sumGetColor(dim,val){
     return wColors[Math.min(wIdx,wColors.length-1)];
   }
   if(dim==='rs'){return val==='RS'?(isDarkMode()?'#ffd93d':'#e65100'):isDarkMode()?'#4fc3f7':'#0288d1';}
+  if(dim==='hi'){if(val==='Sin HI')return'var(--muted)';var hiColors=['#7c3aed','#9c27b0','#00bcd4','#ff5722','#4caf50','#ff9800','#e91e63','#3f51b5'];var hc=0;for(var ci=0;ci<val.length;ci++)hc=(hc*31+val.charCodeAt(ci))&0x7fffffff;return hiColors[hc%hiColors.length];}
   return isDarkMode()?'#4fc3f7':'#0288d1';
 }
 function isDarkMode(){return document.body.classList.contains('dark');}
@@ -4915,6 +5145,13 @@ function _cellSVG(x,y,w,h,c,isFullInfo){
   }
   // 45ft dot
   if(c._is45ft)s+='<circle cx="'+(x+w-3)+'" cy="'+(y+3)+'" r="2.5" fill="#ce93d8"/>';
+  // HI badge (bottom-left)
+  if(c._hi){
+    var hiFs2=Math.max(7,Math.min(w*0.28,h*0.28,12));
+    var hiPad2=2;
+    s+='<rect x="'+(x+1)+'" y="'+(y+h-hiFs2-hiPad2*2-1)+'" width="'+(hiFs2*1.3+hiPad2*2)+'" height="'+(hiFs2+hiPad2*2)+'" rx="2" fill="rgba(124,58,237,0.85)"/>';
+    s+='<text x="'+(x+1+hiPad2)+'" y="'+(y+h-1-hiPad2)+'" fill="#ffffff" font-size="'+hiFs2+'" font-weight="bold" font-family="monospace" dominant-baseline="bottom">'+_esc(c._hi)+'</text>';
+  }
   // Weight text
   var wtStr=fmtW(c);
   if(isFullInfo){
@@ -4923,6 +5160,7 @@ function _cellSVG(x,y,w,h,c,isFullInfo){
     lines.push(c.id||'');
     lines.push(wtStr);
     if(c.isRemocion&&c.pod)lines.push(c.pod);
+    if(c._hi)lines.push('HI:'+c._hi);
     var lineH=Math.min(fs2+2,h/Math.max(lines.length,1));
     var startY=y+h/2-(lines.length-1)*lineH/2;
     for(var li=0;li<lines.length;li++){
