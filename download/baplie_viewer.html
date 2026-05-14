@@ -4349,6 +4349,8 @@ function _getSumLabel(){
 }
 
 function renderSummary(){
+  // Sync plan filters → summary state before rendering
+  _syncGFToSum();
   var cts=_getSumCts();if(!cts||!cts.length)return;
   // Update plan label in header
   var planLabel=document.getElementById('sumPlanLabel');
@@ -4590,7 +4592,58 @@ function sumChgFilters(){
   var hEl=document.getElementById('sumHatchFilter');
   if(hEl){var hv=hEl.value;SUM_CFG.sumHatch=hv===''?null:parseInt(hv);}
   SUM_PVT_SEL={};
+  _syncSumToGF();
   renderSummary();
+  render(1);render(2);lstSyncIfOpen();
+}
+// Sync summary filters to plan GF state
+function _syncSumToGF(){
+  // RS filter: summary → plan
+  if(SUM_CFG.sumRS==='rs'){GF.rsFilter=true;GF.hidden.delete('rs');}
+  else if(SUM_CFG.sumRS==='nors'){GF.rsFilter=false;GF.hidden.add('rs');}
+  else{GF.rsFilter=false;GF.hidden.delete('rs');}
+  // Hatch filter: summary → plan bay filter
+  if(SUM_CFG.sumHatch!==null&&BAY_TRIPLES.length>SUM_CFG.sumHatch){
+    var tr=BAY_TRIPLES[SUM_CFG.sumHatch];
+    var baySet=new Set();baySet.add(tr.lo);if(tr.mid!==null){baySet.add(tr.mid);baySet.add(tr.hi);}
+    GF.bays=baySet;
+  }else if(SUM_CFG.sumHatch===null){
+    GF.bays=null;
+  }
+  // Update plan filter bar buttons to match
+  var rsBtn=document.getElementById('showRsBtn');if(rsBtn)rsBtn.classList.toggle('on',!GF.hidden.has('rs'));
+  var rsChk=document.getElementById('vlcRsChk');if(rsChk){rsChk.classList.toggle('checked',GF.rsFilter);rsChk.textContent=GF.rsFilter?'✓':'';}
+  updateVlcDropdown();
+  updateBayBtnLabel();
+  // Sync bay triple buttons
+  var btns=document.querySelectorAll('.bay-triple-btn[data-bay-lo]');
+  for(var i=0;i<btns.length;i++){
+    var lo_=parseInt(btns[i].getAttribute('data-bay-lo'));
+    var on_=!GF.bays||GF.bays.has(lo_);
+    btns[i].classList.toggle('on',on_);btns[i].textContent=on_?'Visible':'Oculto';
+  }
+}
+// Sync plan GF state to summary filter dropdowns
+function _syncGFToSum(){
+  // RS: derive from GF.rsFilter and GF.hidden
+  if(GF.rsFilter)SUM_CFG.sumRS='rs';
+  else if(GF.hidden.has('rs'))SUM_CFG.sumRS='nors';
+  else SUM_CFG.sumRS=null;
+  // Hatch: derive from GF.bays
+  if(!GF.bays){SUM_CFG.sumHatch=null;}
+  else{
+    // Find which hatch matches the current bay set
+    var found=null;
+    for(var i=0;i<BAY_TRIPLES.length;i++){
+      var tr=BAY_TRIPLES[i];
+      var hatchBays=new Set([tr.lo]);if(tr.mid!==null){hatchBays.add(tr.mid);hatchBays.add(tr.hi);}
+      var match=true;
+      if(GF.bays.size!==hatchBays.size){match=false;}
+      else{hatchBays.forEach(function(b){if(!GF.bays.has(b))match=false;});}
+      if(match){found=i;break;}
+    }
+    SUM_CFG.sumHatch=found;
+  }
 }
 function sumApplyPreset(r,c,v){
   SUM_CFG.pvtRow=r;SUM_CFG.pvtCol=c;SUM_CFG.pvtVal=v;SUM_CFG.pvtSub=null;SUM_PVT_SEL={};
@@ -4678,9 +4731,11 @@ function _applySumSel(){
       if(d.cellIds[ck])d.cellIds[ck].forEach(function(id){ids.add(id);});
     }
   }
-  if(ids.size>0){S.sel=ids;showToast('Seleccionados '+ids.size+' contenedor'+(ids.size!==1?'es':''));}
-  else{S.sel=new Set();}
+  if(ids.size>0){S.sel=ids;GF.srchFilter=true;showToast('Seleccionados '+ids.size+' contenedor'+(ids.size!==1?'es':''));}
+  else{S.sel=new Set();GF.srchFilter=false;}
   render(1);render(2);_renderSumSelBar();
+  // Update search filter button state
+  var fBtn=document.getElementById('srchFilterBtn');if(fBtn)fBtn.classList.toggle('on',GF.srchFilter);
 }
 function _renderSumSelBar(){
   var bar=document.getElementById('sumSelBar');
