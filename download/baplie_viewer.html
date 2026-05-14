@@ -314,7 +314,7 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 
 /* ── LEFT SIDEBAR (filtro bar alternate) ── */
 body.menu-left #mainArea{flex-direction:row}
-body.menu-left #filterBar{flex-direction:column;align-items:stretch;width:210px;min-width:170px;max-width:280px;padding:8px 6px;gap:6px;overflow-y:auto;flex-shrink:0;border-right:1px solid var(--border);border-bottom:none}
+body.menu-left #filterBar{flex-direction:column;align-items:stretch;width:210px;min-width:140px;max-width:500px;padding:8px 6px;gap:6px;overflow-y:auto;overflow-x:hidden;flex-shrink:0;border-right:1px solid var(--border);border-bottom:none;position:relative}
 body.menu-left #filterBar > *{width:100%}
 body.menu-left #filterBar .fgroup{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
 body.menu-left #filterBar .fgroup-sep{display:none}
@@ -322,6 +322,9 @@ body.menu-left #filterBar .fgroup-label{display:block;margin-bottom:2px;font-siz
 body.menu-left #filterBar .gbtn{font-size:10px;padding:2px 6px}
 body.menu-left #filterBar .wrange-wrap{width:auto}
 body.menu-left #filterBar .wrange-inp{width:36px}
+#filterResize{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:10;display:none}
+body.menu-left #filterResize{display:block}
+#filterResize:hover,#filterResize.dragging{background:var(--accent);opacity:.4}
 
 /* ── HELP MODAL ── */
 #helpModal{position:fixed;inset:0;z-index:1100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
@@ -412,6 +415,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
   </div>
 </header>
 <div id="filterBar" class="px-4 py-1.5 flex items-center gap-2 shrink-0 flex-wrap" style="background:var(--panel);border-bottom:1px solid var(--border)">
+  <div id="filterResize"></div>
   <div class="fgroup" style="display:inline-flex;align-items:center;gap:4px">
     <span class="fgroup-label" style="color:var(--muted)" class="text-xs font-semibold uppercase tracking-wider">Filtros</span>
     <button class="gbtn on" id="sizeAllBtn" data-gf="size" data-val="all" onclick="setGF('size','all')">Todos</button>
@@ -432,6 +436,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
     <button class="gbtn on" id="showOogBtn" onclick="toggleShow('oog')" title="Sobredimensionados — clic para ocultar">OOG</button>
 
     <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG) — clic para ocultar">GEN</button>
+    <button class="gbtn on" id="showHiBtn" onclick="toggleShow('hi')" title="Contenedores con HI — clic para ocultar" style="border-color:#7c3aed;color:#7c3aed">HI</button>
     <button class="gbtn" id="cargoAllBtn" onclick="toggleCargoAll()" title="Mostrar/ocultar todos los tipos de carga" style="font-size:10px;padding:2px 5px"><i class="fa-solid fa-check-double" style="font-size:9px"></i></button>
   </div>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
@@ -708,7 +713,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
       <button onclick="closeHiModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 8px;border-radius:4px"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="overflow:auto;padding:16px 18px;flex:1;font-size:13px;line-height:1.7">
-      <p style="color:var(--muted);font-size:11px;margin-bottom:8px"><i class="fa-solid fa-circle-info" style="color:#7c3aed;margin-right:4px"></i>Pega desde Excel 2 columnas: <b>ID contenedor</b> y <b>código HI</b> (separados por tabulador). O pega una tabla completa: el parser buscará la columna con ID y la columna "HI" / "Handling Instructions". El código HI se muestra como 2 caracteres en la parte inferior izquierda del slot.</p>
+      <p style="color:var(--muted);font-size:11px;margin-bottom:8px"><i class="fa-solid fa-circle-info" style="color:#7c3aed;margin-right:4px"></i>Pega desde Excel 2 columnas: <b>ID contenedor</b> y <b>código HI</b> (separados por tabulador). El código HI se muestra como 2 caracteres en la parte inferior izquierda del slot.</p>
       <textarea id="hiPasteArea" placeholder="MSMU1234567&#9;ST&#10;TCKU9876543&#9;HW&#10;CSLU5555123&#9;FR" style="width:100%;min-height:120px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none"></textarea>
       <div id="hiPreview" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-height:200px;overflow-y:auto"></div>
       <div id="hiCountInfo" style="display:none;margin-top:8px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace"></div>
@@ -776,7 +781,7 @@ body.menu-left #filterBar .wrange-inp{width:36px}
 <ul>
   <li><span class="hk">Todos</span> / <span class="hk">20'</span> / <span class="hk">40'</span> / <span class="hk">45'</span> — Filtra por tamaño de contenedor. <span class="hk">Todos</span> desactiva el filtro; los demás son conmutables.</li>
   <li><span class="hk">F+E</span> / <span class="hk">Full</span> / <span class="hk">MT</span> — Muestra todos, solo llenos o solo vacíos.</li>
-  <li><span class="hk">RF</span> / <span class="hk">DG</span> / <span class="hk">OOG</span> / <span class="hk">GEN</span> — Activa/desactiva la visibilidad de cada tipo de carga (Reefer, Peligroso, Sobredimensionado, General). Cuando están apagados (sin resaltar), esos contenedores desaparecen del plano. <span class="htip">RS no es un tipo de carga; se filtra desde el desplegable VLC.</span></li>
+  <li><span class="hk">RF</span> / <span class="hk">DG</span> / <span class="hk">OOG</span> / <span class="hk">GEN</span> / <span class="hk">HI</span> — Activa/desactiva la visibilidad de cada tipo de carga (Reefer, Peligroso, Sobredimensionado, General, Handling Instructions). Cuando están apagados (sin resaltar), esos contenedores desaparecen del plano. <span class="htip">RS no es un tipo de carga; se filtra desde el desplegable VLC.</span></li>
   <li><span class="hk"><i class="fa-solid fa-check-double" style="font-size:9px"></i></span> (junto a GEN) — Muestra/oculta todos los tipos de carga a la vez.</li>
   <li><span class="hk"><i class="fa-solid fa-code-compare" style="font-size:9px"></i> Diferencias</span> — Activa el resaltado naranja de los contenedores que difieren entre los dos planes. El badge muestra el total. <span class="htip">Requiere ambos archivos cargados.</span></li>
   <li><span class="hk"><i class="fa-solid fa-list-ul" style="font-size:9px"></i> Ver log</span> — Abre el panel lateral con el listado detallado de cambios: posición, POD, POL, peso, SZTP. Se puede filtrar por tipo de cambio. <span class="htip">Clic en una fila selecciona ese contenedor y centra ambas vistas.</span></li>
@@ -1283,6 +1288,7 @@ function passF_noTrt(c){
     if(GF.hidden.has('dg')&&c.isDangerous)return false;
     if(GF.hidden.has('oog')&&isOog(c))return false;
     if(GF.hidden.has('gen')&&!isSpec&&!c.isRemocion)return false;
+    if(GF.hidden.has('hi')&&c._hi)return false;
   }
   // 5. POD
   if(c.pod&&Object.keys(GF.pods).length>0&&!GF.pods[c.pod])return false;
@@ -1320,7 +1326,7 @@ function passF_noTrt_ignPod(c){
   if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
   if(GF.feMode==='full'&&c.isEmpty)return false;
   if(GF.feMode==='empty'&&!c.isEmpty)return false;
-  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c);if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('gen')&&!isSpec2&&!c.isRemocion)return false;}
+  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c);if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('gen')&&!isSpec2&&!c.isRemocion)return false;if(GF.hidden.has('hi')&&c._hi)return false;}
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
   if(GF.wtMin!==null||GF.wtMax!==null){if(c.isEmpty)return false;var wt=(c.weight||0)/1000;if(GF.wtMin!==null&&wt<GF.wtMin)return false;if(GF.wtMax!==null&&wt>GF.wtMax)return false;}
   if(GF.srchFilter&&S.sel&&S.sel.has&&!S.sel.has(c.id))return false;
@@ -2262,7 +2268,7 @@ function toggleShow(type){
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 function toggleCargoAll(){
-  var types=['rf','dg','oog','gen'];
+  var types=['rf','dg','oog','gen','hi'];
   var anyHidden=types.some(function(t){return GF.hidden.has(t);});
   if(anyHidden){types.forEach(function(t){GF.hidden.delete(t);});}
   else{types.forEach(function(t){GF.hidden.add(t);});}
@@ -2274,7 +2280,7 @@ function toggleCargoAll(){
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 function updateCargoAllBtn(){
-  var types=['rf','dg','oog','gen'];
+  var types=['rf','dg','oog','gen','hi'];
   var allOn=types.every(function(t){return !GF.hidden.has(t);});
   var allOff=types.every(function(t){return GF.hidden.has(t);});
   var btn=document.getElementById('cargoAllBtn');
@@ -2413,7 +2419,7 @@ function resetAllFilters(){
   GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;GF.hatchFilter=null;
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
-  ['Rf','Dg','Oog','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
+  ['Rf','Dg','Oog','Gen','Hi'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;document.getElementById('wtBtn').classList.remove('wt-on');
   document.getElementById('wtRoundBtn').classList.remove('wt-on');document.getElementById('seqShowBtn').classList.remove('on','wt-on');
   document.getElementById('diffToggleBtn').classList.remove('on','diff-on');document.getElementById('diffLogBtn').style.display='none';
@@ -3419,48 +3425,13 @@ document.getElementById('hiModal').addEventListener('click',function(e){if(e.tar
 function parseHiLines(val){
   var lines=val.split(/[\n\r]+/).filter(Boolean);
   if(lines.length===0)return[];
-  // Try to detect table format: first line might be headers
-  var firstParts=lines[0].split(/[\t,]+/);
-  // Check if first line is a header row with "HI" or "Handling" column
-  var hiColIdx=-1,idColIdx=-1;
-  for(var ci=0;ci<firstParts.length;ci++){
-    var h=firstParts[ci].trim().toUpperCase();
-    if(hiColIdx<0&&(/^(HI|HANDLING|HANDLING.?INST|HANDLING.?INSTRUCTION)/.test(h)))hiColIdx=ci;
-    if(idColIdx<0&&/^[A-Z]{4}\d{7}$/.test(firstParts[ci].trim().toUpperCase()))idColIdx=ci;
-  }
-  // If headers found, use them
-  var startLine=0;
-  if(hiColIdx>=0||idColIdx>=0){
-    // Check if first line has ANY container IDs - if so, it's not a header
-    var hasIdInFirst=/^[A-Z]{4}\d{7}$/.test(lines[0].split(/[\t,]+/)[0].trim().toUpperCase());
-    if(!hasIdInFirst){
-      startLine=1;
-      // Find columns from header
-      if(idColIdx<0){
-        // Try to find container ID column by header name
-        for(var ci2=0;ci2<firstParts.length;ci2++){
-          var h2=firstParts[ci2].trim().toUpperCase();
-          if(/^(CONTAINER|ID|CTNR|CTN|BOX)/.test(h2))idColIdx=ci2;
-        }
-      }
-    }
-  }
-  // If we found a header with HI column but no ID column, search data for ID pattern
+  // Simple 2-column mode: ID + HI (tab or comma separated)
   var result=[];
-  for(var i=startLine;i<lines.length;i++){
+  for(var i=0;i<lines.length;i++){
     var parts=lines[i].split(/[\t,]+/);
     if(parts.length<2)continue;
-    var id='',hi='';
-    if(hiColIdx>=0&&startLine>0){
-      // Table mode: use detected columns
-      var idIdx=idColIdx>=0?idColIdx:0;
-      id=parts[idIdx]?parts[idIdx].trim().toUpperCase():'';
-      hi=parts[hiColIdx]?parts[hiColIdx].trim().toUpperCase():'';
-    }else{
-      // Simple 2-column mode: ID + HI
-      id=parts[0].trim().toUpperCase();
-      hi=parts[1].trim().toUpperCase();
-    }
+    var id=parts[0].trim().toUpperCase();
+    var hi=parts[1].trim().toUpperCase();
     if(/^[A-Z]{4}\d{7}$/.test(id)&&hi.length>0){
       result.push({id:id,hi:hi.substring(0,2)}); // Limit to 2 characters
     }
@@ -4161,6 +4132,32 @@ function closeLst(){
   makeResizable('diffResize','diffPanel','right');
   makeResizable('sumResize','sumPanel','right');
   makeResizable('moveResize','movePanel','left');
+})();
+
+/* ── RESIZE HANDLE: filterBar sidebar width (menu-left mode) ── */
+(function(){
+  var resizing=false,startX=0,startW=0;
+  document.addEventListener('DOMContentLoaded',function(){
+    var handle=document.getElementById('filterResize');
+    if(!handle)return;
+    handle.addEventListener('mousedown',function(e){
+      if(!document.body.classList.contains('menu-left'))return;
+      resizing=true;startX=e.clientX;
+      var panel=document.getElementById('filterBar');
+      startW=panel.offsetWidth;
+      handle.classList.add('dragging');
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove',function(e){
+      if(!resizing)return;
+      var dx=e.clientX-startX;
+      var newW=Math.max(140,Math.min(500,startW+dx));
+      document.getElementById('filterBar').style.width=newW+'px';
+    });
+    document.addEventListener('mouseup',function(){
+      if(resizing){resizing=false;document.getElementById('filterResize').classList.remove('dragging');render(1);render(2);}
+    });
+  });
 })();
 
 /* ── RESIZE HANDLE: col1 / col2 split ── */
@@ -4973,7 +4970,7 @@ function _renderSumSelBar(){
   if(selCount===0){bar.style.display='none';return;}
   bar.style.display='flex';
   var h='<span class="sb-cnt">'+selCount+'</span><span class="sb-lbl">seleccionado'+(selCount!==1?'s':'')+'</span>';
-  h+='<button class="sb-clr" onclick="S.sel=new Set();render(1);render(2);_renderSumSelBar();SUM_PVT_SEL={};renderSummary()">Limpiar</button>';
+  h+='<button class="sb-clr" onclick="S.sel=new Set();GF.srchFilter=false;var fBtn=document.getElementById(\'srchFilterBtn\');if(fBtn)fBtn.classList.remove(\'on\');render(1);render(2);_renderSumSelBar();SUM_PVT_SEL={};renderSummary()">Limpiar</button>';
   if(selCount<=5){
     h+='<span class="sb-lbl">:</span>';
     S.sel.forEach(function(id){h+='<span class="sb-cnt" style="font-size:10px">'+id+'</span>';});
