@@ -315,15 +315,15 @@ body.dark .gbtn.wt-on{background:rgba(200,200,200,.1);border-color:#aaa;color:#c
 /* ── LEFT SIDEBAR (filtro bar alternate) ── */
 body.menu-left #mainArea{flex-direction:row}
 body.menu-left #filterBar{flex-direction:column;align-items:stretch;width:210px;min-width:140px;max-width:500px;padding:8px 6px;gap:6px;overflow-y:auto;overflow-x:hidden;flex-shrink:0;border-right:1px solid var(--border);border-bottom:none;position:relative}
-body.menu-left #filterBar > *{width:100%}
+body.menu-left #filterBar > *:not(#filterResize){width:100%}
 body.menu-left #filterBar .fgroup{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
 body.menu-left #filterBar .fgroup-sep{display:none}
 body.menu-left #filterBar .fgroup-label{display:block;margin-bottom:2px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);width:100%}
 body.menu-left #filterBar .gbtn{font-size:10px;padding:2px 6px}
 body.menu-left #filterBar .wrange-wrap{width:auto}
 body.menu-left #filterBar .wrange-inp{width:36px}
-#filterResize{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:10;display:none}
-body.menu-left #filterResize{display:block}
+#filterResize{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;background:transparent;z-index:10;display:none}
+body.menu-left #filterResize{display:block;width:6px!important}
 #filterResize:hover,#filterResize.dragging{background:var(--accent);opacity:.4}
 
 /* ── HELP MODAL ── */
@@ -5651,6 +5651,8 @@ function toggleMenuPos(){
   }else{
     MENU_POS='top';
     body.classList.remove('menu-left');
+    // Reset inline width so it doesn't carry over from sidebar resize
+    bar.style.width='';
     // Move filterBar back after header
     var header=document.querySelector('header');
     header.parentNode.insertBefore(bar,header.nextSibling);
