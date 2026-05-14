@@ -436,7 +436,7 @@ body.menu-left #filterResize{display:block;width:6px!important}
     <button class="gbtn on" id="showOogBtn" onclick="toggleShow('oog')" title="Sobredimensionados — clic para ocultar">OOG</button>
 
     <button class="gbtn on" id="showGenBtn" onclick="toggleShow('gen')" title="Carga general (no RF/DG/OOG) — clic para ocultar">GEN</button>
-    <button class="gbtn on" id="showHiBtn" onclick="toggleShow('hi')" title="Contenedores con HI — clic para ocultar">HI</button>
+    <button class="gbtn" id="showHiBtn" onclick="toggleHiIsolate()" title="Mostrar solo contenedores con HI">HI</button>
     <button class="gbtn" id="cargoAllBtn" onclick="toggleCargoAll()" title="Mostrar/ocultar todos los tipos de carga" style="font-size:10px;padding:2px 5px"><i class="fa-solid fa-check-double" style="font-size:9px"></i></button>
   </div>
   <div class="fgroup-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
@@ -1183,7 +1183,7 @@ function buildPlan(cts){var pl={};for(var i=0;i<cts.length;i++){var c=cts[i];for
 /* ── CONSTANTES Y ESTADO ── */
 var CW=28,CH=16,CGAP=8,LO=40,MT_OFF=40,MB=20;
 var Z={1:1,2:1},F={1:{view:'3b'},2:{view:'3b'}};
-var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,podEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,colorMode:0,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0,seqShow:false,hatchFilter:null,slotInfo:new Set(['wt'])};
+var GF={size:new Set(),feMode:'all',hidden:new Set(),pods:{},polEsvlc:false,podEsvlc:false,rsFilter:false,trt:false,bays:null,diffOnly:false,wtMode:false,colorMode:0,wtMin:null,wtMax:null,srchFilter:false,nonSelGray:false,wtRound:false,wtFontSize:0,seqShow:false,hatchFilter:null,hiIsolate:false,slotInfo:new Set(['wt'])};
 // S.sel ahora es: null | Set<string> (multi-selección)
 var S={c1:null,c2:null,L1:null,L2:null,_L1:null,_L2:null,hl:null,sel:null,srch:null,fs:null,raw1:null,raw2:null,shipName1:null,shipName2:null};
 
@@ -1326,8 +1326,9 @@ function passF_noTrt(c){
     if(GF.hidden.has('dg')&&c.isDangerous)return false;
     if(GF.hidden.has('oog')&&isOog(c))return false;
     if(GF.hidden.has('gen')&&!isSpec&&!c.isRemocion)return false;
-    if(GF.hidden.has('hi')&&c._hi)return false;
   }
+  // 4b. HI isolate: when active, show ONLY containers with HI
+  if(GF.hiIsolate&&!c._hi)return false;
   // 5. POD
   if(c.pod&&Object.keys(GF.pods).length>0&&!GF.pods[c.pod])return false;
   // 6. Diff only
@@ -1364,7 +1365,8 @@ function passF_noTrt_ignPod(c){
   if(GF.size.size>0){var csz=parseSz(c.type);if(!GF.size.has(String(csz)))return false;}
   if(GF.feMode==='full'&&c.isEmpty)return false;
   if(GF.feMode==='empty'&&!c.isEmpty)return false;
-  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c);if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('gen')&&!isSpec2&&!c.isRemocion)return false;if(GF.hidden.has('hi')&&c._hi)return false;}
+  if(GF.hidden.size>0){var isSpec2=c.isReefer||c.isDangerous||isOog(c);if(GF.hidden.has('rf')&&c.isReefer)return false;if(GF.hidden.has('dg')&&c.isDangerous)return false;if(GF.hidden.has('oog')&&isOog(c))return false;if(GF.hidden.has('gen')&&!isSpec2&&!c.isRemocion)return false;}
+  if(GF.hiIsolate&&!c._hi)return false;
   if(GF.diffOnly&&!DIFF_IDS.has(c.id))return false;
   if(GF.wtMin!==null||GF.wtMax!==null){if(c.isEmpty)return false;var wt=(c.weight||0)/1000;if(GF.wtMin!==null&&wt<GF.wtMin)return false;if(GF.wtMax!==null&&wt>GF.wtMax)return false;}
   if(GF.srchFilter&&S.sel&&S.sel.has&&!S.sel.has(c.id))return false;
@@ -2333,8 +2335,15 @@ function toggleShow(type){
   updateCargoAllBtn();
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
+// HI isolate: when active, show ONLY containers with HI
+function toggleHiIsolate(){
+  GF.hiIsolate=!GF.hiIsolate;
+  var btn=document.getElementById('showHiBtn');
+  if(btn)btn.classList.toggle('on',GF.hiIsolate);
+  clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);updateLeg();
+}
 function toggleCargoAll(){
-  var types=['rf','dg','oog','gen','hi'];
+  var types=['rf','dg','oog','gen'];
   var anyHidden=types.some(function(t){return GF.hidden.has(t);});
   if(anyHidden){types.forEach(function(t){GF.hidden.delete(t);});}
   else{types.forEach(function(t){GF.hidden.add(t);});}
@@ -2346,7 +2355,7 @@ function toggleCargoAll(){
   clearSelIfNeeded();lstSyncIfOpen();sumSyncIfOpen();render(1);render(2);
 }
 function updateCargoAllBtn(){
-  var types=['rf','dg','oog','gen','hi'];
+  var types=['rf','dg','oog','gen'];
   var allOn=types.every(function(t){return !GF.hidden.has(t);});
   var allOff=types.every(function(t){return GF.hidden.has(t);});
   var btn=document.getElementById('cargoAllBtn');
@@ -2518,10 +2527,10 @@ function toggleSrchFilter(){
 document.getElementById('srchInput').addEventListener('paste',function(e){setTimeout(function(){doSearch(e.target.value);},50);});
 
 function resetAllFilters(){
-  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.colorMode=0;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;GF.hatchFilter=null;GF.slotInfo=new Set(['wt']);
+  GF.size.clear();GF.feMode='all';GF.hidden.clear();GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;GF.trt=false;GF.wtMode=false;GF.colorMode=0;GF.bays=null;GF.diffOnly=false;GF.wtRound=false;GF.wtFontSize=0;GF.seqShow=false;GF.hatchFilter=null;GF.hiIsolate=false;GF.slotInfo=new Set(['wt']);
   document.querySelectorAll('[data-gf="size"]').forEach(function(b){b.classList.toggle('on',b.dataset.val==='all')});
   document.getElementById('feAllBtn').classList.add('on');document.getElementById('feFullBtn').classList.remove('on');document.getElementById('feEmptyBtn').classList.remove('on');
-  ['Rf','Dg','Oog','Gen','Hi'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
+  ['Rf','Dg','Oog','Gen'].forEach(function(t){var b=document.getElementById('show'+t+'Btn');if(b)b.classList.add('on');});var hiBtn=document.getElementById('showHiBtn');if(hiBtn)hiBtn.classList.remove('on');GF.polEsvlc=false;GF.podEsvlc=false;GF.rsFilter=false;updateVlcDropdown();
   document.getElementById('trtBtn').classList.remove('on','trt-on');document.getElementById('nonSelGrayBtn').classList.remove('on','trt-on');GF.nonSelGray=false;
   var wtBtn=document.getElementById('wtBtn');wtBtn.classList.remove('wt-on','diff-on');wtBtn.innerHTML='<i class="fa-solid fa-weight-hanging" style="font-size:10px"></i> Peso';
   document.getElementById('wtRoundBtn').classList.remove('wt-on');document.getElementById('seqShowBtn').classList.remove('on','wt-on');
@@ -2825,6 +2834,7 @@ function updateLeg(){
   if(GF.colorMode===1){h+='<span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;width:60px;height:8px;border-radius:2px;border:1px solid var(--border);background:linear-gradient(to right,#ffffff,#000000);vertical-align:middle"></span>Peso: 0t → 35t</span>';}
   else if(GF.colorMode===2){for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;if(!GF.pods[k])h+='<span style="opacity:.3"><span class="lem"></span>'+k+'</span>';else h+='<span><span class="lsw" style="background:'+POD_MAP[k]+'"></span>'+k+'</span>';}h+='<span style="margin-left:4px;font-size:10px;color:var(--muted)">+ peso</span>';}
   else{for(var i=0;i<POD_ORDER.length;i++){var k=POD_ORDER[i];if(!k)continue;if(!GF.pods[k])h+='<span style="opacity:.3"><span class="lem"></span>'+k+'</span>';else h+='<span><span class="lsw" style="background:'+POD_MAP[k]+'"></span>'+k+'</span>';}h+='<span><span class="lem"></span>MT</span>';h+='<span><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #ffeb3b;vertical-align:middle;margin-right:3px"></span>OOG</span>';h+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ce93d8;vertical-align:middle;margin-right:3px"></span>45\'</span>';if(_hiMap&&Object.keys(_hiMap).length>0)h+='<span><span style="display:inline-block;width:12px;height:10px;border-radius:2px;background:#7c3aed;vertical-align:middle;margin-right:3px;color:#fdd835;font-size:6px;font-weight:700;text-align:center;line-height:10px">HI</span>HI</span>';}
+  if(GF.hiIsolate)h+='<span style="margin-left:6px"><span style="display:inline-block;width:12px;height:10px;border-radius:2px;background:#7c3aed;vertical-align:middle;margin-right:3px;color:#fdd835;font-size:6px;font-weight:700;text-align:center;line-height:10px">HI</span> Solo HI</span>';
   if(GF.trt)h+='<span style="margin-left:6px;opacity:.6"><span style="display:inline-block;width:12px;height:8px;border-radius:2px;background:#888;opacity:.3;vertical-align:middle;margin-right:3px"></span>Sin POL/POD=VLC atenuado</span>';
   h+='<span class="ml-auto opacity-40">Clic: seleccionar &middot; Ctrl+Clic: multi &middot; Ctrl+C: copiar</span>';
   lg.innerHTML=h;
@@ -5252,7 +5262,7 @@ function _cellSVG(x,y,w,h,c,isFullInfo){
     var hiFs2=Math.max(7,Math.min(w*0.28,h*0.28,12));
     var hiPad2=2;
     s+='<rect x="'+(x+1)+'" y="'+(y+h-hiFs2-hiPad2*2-1)+'" width="'+(hiFs2*1.3+hiPad2*2)+'" height="'+(hiFs2+hiPad2*2)+'" rx="2" fill="rgba(124,58,237,0.85)"/>';
-    s+='<text x="'+(x+1+hiPad2)+'" y="'+(y+h-1-hiPad2)+'" fill="#ffffff" font-size="'+hiFs2+'" font-weight="bold" font-family="monospace" dominant-baseline="bottom">'+_esc(c._hi)+'</text>';
+    s+='<text x="'+(x+1+hiPad2)+'" y="'+(y+h-1-hiPad2)+'" fill="#fdd835" font-size="'+hiFs2+'" font-weight="bold" font-family="monospace" dominant-baseline="bottom">'+_esc(c._hi)+'</text>';
   }
   // Weight text
   var wtStr=fmtW(c);
